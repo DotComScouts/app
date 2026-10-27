@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 63: source export button aligned right on mobile -->
+<!-- DotComScouts Version 64: source export button aligned right on mobile -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts v63 – Freie .com-Domains</title>
@@ -249,7 +249,7 @@ async function fetchGDELTStories(){
  const queries=['"AI tool" OR "AI startup" OR "new AI app"','"launches" OR "introduces" OR "open-source tool"'];
  const out=new Map();
  for(const q of queries){
-  const params=new URLSearchParams({query:q,mode:'artlist',format:'jsonp',maxrecords:'50',timespan:'7d',sort:'datedesc'});
+  const params=new URLSearchParams({query:q,mode:'artlist',format:'json',maxrecords:'50',timespan:'7d',sort:'datedesc'});
   const url='https://api.gdeltproject.org/api/v2/doc/doc?'+params.toString();
   const j=await getGDELTJsonp(url);
   if(!j||!Array.isArray(j.articles))throw new Error('GDELT lieferte keine gültige Artikelliste');
