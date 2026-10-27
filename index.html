@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 59: GDELT news and Algolia HN search added; new sources appended -->
+<!-- DotComScouts Version 60: persistent source diagnostics and CSV export -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts v59 – Freie .com-Domains</title>
@@ -41,6 +41,7 @@
   .risk-pill{max-width:210px}
 }
 
+.source-diagnostics{margin-top:14px;padding-top:12px;border-top:1px solid #2b3954}.source-diagnostics .row{align-items:center;margin-bottom:8px}.source-diagnostics table{min-width:640px}.source-diagnostics td:last-child{max-width:340px;overflow-wrap:anywhere;white-space:normal}.source-diagnostics .hint{font-size:12px;line-height:1.4}
 </style></head>
 <body><main>
 <header><div class="brandline"><span class="brandmark">D</span><span class="brandtitle">DotComScouts</span></div><div class="brandclaim">Discover trends <span class="arrow">→</span> Find your next .com</div><h1>Freie .com-Domains finden</h1><p class="sub">DotComScouts kombiniert frühe Marktsignale mit kreativen Namensideen, um freie .com-Domains mit Potenzial für starke Marken zu finden. Alle Sprachrisiko-Kategorien werden zunächst angezeigt; du kannst sie bei Bedarf filtern.</p></header>
@@ -56,6 +57,7 @@
 </div>
 <div class="actions"><button class="primary" id="start">Trends prüfen → .coms finden</button><button id="stop" class="secondary" disabled>Stoppen</button></div>
 <div class="status" id="status">Bereit. Ein Knopfdruck startet Trendanalyse, Namensbildung und Live-Verfügbarkeitsprüfung.</div>
+<div class="source-diagnostics"><div class="row"><div><strong>Quellen-Diagnose</strong><div class="hint">Bleibt nach dem Durchlauf sichtbar, auch wenn Schritt 2 oder 3 weiterläuft.</div></div><button id="sourceCsv" class="secondary" disabled>Quellenfehler exportieren</button></div><div class="table-scroll"><table><thead><tr><th>Quelle</th><th>Status</th><th>Treffer</th><th>Dauer</th><th>Fehlerdetails</th></tr></thead><tbody id="sourceRows"><tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr></tbody></table></div></div>
 </section>
 
 <section class="panel">
@@ -82,7 +84,7 @@
 <script>
 (()=> {
 const $=id=>document.getElementById(id), HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen' ;
-let running=false,stopRequested=false,results=[],trendTerms=[],storyList=[];
+let running=false,stopRequested=false,results=[],trendTerms=[],storyList=[],sourceDiagnostics=[];
 const seen=new Set(loadSeen());
 function loadSeen(){try{return [...new Set([...JSON.parse(localStorage.getItem('domainScoutV9Seen')||'[]'),...JSON.parse(localStorage.getItem('domainScoutV11Seen')||'[]'),...JSON.parse(localStorage.getItem(STORE)||'[]')])]}catch(e){return []}}
 function saveSeen(){try{localStorage.setItem(STORE,JSON.stringify([...seen].slice(-20000)))}catch(e){}}
@@ -91,6 +93,19 @@ function saveSeenSources(){try{localStorage.setItem('dotComScoutSeenSources',JSO
 const seenSources=new Set(loadSeenSources());
 const wait=ms=>new Promise(r=>setTimeout(r,ms)), pick=a=>a[Math.floor(Math.random()*a.length)];
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function drawSourceDiagnostics(){
+ const body=$('sourceRows');
+ if(!sourceDiagnostics.length){body.innerHTML='<tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr>';$('sourceCsv').disabled=true;return}
+ body.innerHTML=sourceDiagnostics.map(d=>`<tr><td>${esc(d.source)}</td><td><span class="pill ${d.status==='OK'?'available':'error'}">${esc(d.status)}</span></td><td>${d.count==null?'—':d.count}</td><td>${d.ms==null?'—':(d.ms/1000).toFixed(1)+' s'}</td><td>${esc(d.error||'—')}</td></tr>`).join('');
+ $('sourceCsv').disabled=false;
+}
+async function runSource(source,fn,countOf=x=>Array.isArray(x)?x.length:null){
+ const d={source,status:'Läuft',count:null,ms:null,error:'',startedAt:new Date().toISOString()};sourceDiagnostics.push(d);drawSourceDiagnostics();const t=Date.now();
+ try{const value=await fn();d.status='OK';d.count=countOf(value);d.ms=Date.now()-t;d.finishedAt=new Date().toISOString();drawSourceDiagnostics();return value}
+ catch(e){d.status='FEHLER';d.ms=Date.now()-t;d.error=e?.message||String(e)||'Unbekannter Fehler';d.finishedAt=new Date().toISOString();drawSourceDiagnostics();throw e}
+}
+function exportSourceDiagnostics(){const cols=['source','status','count','duration_ms','error','startedAt','finishedAt'];const rows=[cols.join(';'),...sourceDiagnostics.map(d=>[d.source,d.status,d.count,d.ms,d.error,d.startedAt,d.finishedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';'))];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-quellendiagnose.csv';a.click();URL.revokeObjectURL(url)}
+
 const stopWords=new Set('about above after again against all also among another any are around article articles based because been before being below between both build builds built business businesses can could data day days developer developers does doing down each early even every first from future get getting give gives going good great hacker hackers has have here how into just keep last latest like link links live made make many market may more most much must new news next not now number only open other our over people per post posts product products project projects read real really recent release releases report research right same say says security should show since some something start starts story stories such tech technology than that their them then there these they thing things this those through time today top trend trends two under up use used using very via want was way well were what when where which while who why will with work working world would year years you your'.split(/\s+/));
 const generic=new Set('ai api app apps browser browsers model models open source opensource software tool tools platform platforms system systems agent agents workflow workflows code coding developer developers data cloud server servers startup startups game games gaming voice search engine automation automate digital online web mobile computer computers network networks security privacy identity battery batteries energy solar finance fintech crypto token tokens bitcoin blockchain payment payments pay sales sale lead leads team teams care health legal law learn learning education write writing image video media content creator creators plugin plugins extension extensions build building run running test testing guide how make use best fast free small super efficient native self hosted selfhosted local llm llms assistant assistants company companies launch launches launched release releases released update updates announcement announces introducing introduction official funding raised raises raising million billion series seed venture capital founder founders benchmark benchmarks performance results review reviews comparison vs versus why what when where how who all most some many every first latest today future world years year day days work jobs job market labor labour replacement replacing intelligence intelligent artificial'.split(/\s+/));
 const knownBrands=new Set('claude openai chatgpt anthropic google microsoft apple nvidia meta amazon tesla xai github gitlab docker kubernetes aws azure gemini perplexity llama mistral deepseek cursor replit vercel netlify stripe figma notion slack discord reddit tiktok instagram youtube blender jellyfin plex huggingface macos linux windows android ios wasm rust llvm nsa nasa usa ipad iphone ipod javascript typescript python java golang golanglang nodejs node react vue angular svelte nextjs npm pypi sql html css swift kotlin php ruby perl scala elixir haskell linux kernel android studio visualstudio vscode vscodecode firefox chrome safari edge cloudflare postgres postgresql mysql sqlite redis mongodb supabase firebase tailwind tensorflow pytorch ollama langchain langgraph llamaindex' .split(/\s+/));
@@ -452,17 +467,17 @@ async function checkAvail(n){
 }
 function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein Status geliefert|Antwortformat unbekannt|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
 async function run(){
- if(running)return;running=true;stopRequested=false;results=[];draw();$('start').disabled=true;$('stop').disabled=false;
+ if(running)return;running=true;stopRequested=false;results=[];sourceDiagnostics=[];drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
  const sourceUrlsToMark=[];let runHadAvailabilityErrors=false;
  try{
   const mode=$('mode').value;
   if(mode!=='brand'){
-   $('status').textContent='Schritt 1/3: aktuelle und neue Produkt- und Projektnamen aus Hacker News und GitHub sammeln …';
-   storyList=await fetchStories();
-   let githubRepos=[],githubNote='',extraStories=[],algoliaNote='',gdeltNote='';
-   try{githubRepos=await fetchGitHubRepos()}catch(ghe){githubNote=' GitHub nicht verfügbar ('+(ghe.message||'Fehler')+').'}
-   try{extraStories=extraStories.concat(await fetchAlgoliaStories())}catch(ae){algoliaNote=' Algolia-Suche nicht verfügbar ('+(ae.message||'Fehler')+').'}
-   try{extraStories=extraStories.concat(await fetchGDELTStories())}catch(ge){gdeltNote=' GDELT-Nachrichten nicht verfügbar ('+(ge.message||'Fehler')+').'}
+   $('status').textContent='Schritt 1/3: Hacker News, GitHub, Algolia und GDELT abfragen …';
+   let hnNote='',githubRepos=[],githubNote='',extraStories=[],algoliaNote='',gdeltNote='';
+   try{storyList=await runSource('Hacker News API',fetchStories)}catch(hne){storyList=[];hnNote=' Hacker News nicht verfügbar ('+(hne.message||'Fehler')+').'}
+   try{githubRepos=await runSource('GitHub Search API',fetchGitHubRepos)}catch(ghe){githubNote=' GitHub nicht verfügbar ('+(ghe.message||'Fehler')+').'}
+   try{extraStories=extraStories.concat(await runSource('Algolia Hacker News Search',fetchAlgoliaStories))}catch(ae){algoliaNote=' Algolia-Suche nicht verfügbar ('+(ae.message||'Fehler')+').'}
+   try{extraStories=extraStories.concat(await runSource('GDELT News API',fetchGDELTStories))}catch(ge){gdeltNote=' GDELT-Nachrichten nicht verfügbar ('+(ge.message||'Fehler')+').'}
    const baseHNCount=storyList.length;
    storyList=[...new Map([...storyList,...extraStories].map(s=>[String(s.id||s.url),s])).values()];
    // Keep previously seen sources as evidence, but do not let them suppress discovery.
@@ -476,7 +491,7 @@ async function run(){
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
    trendTerms=findTerms(storyList,githubRepos);
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
-   $('status').textContent=`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge, ${algoliaCount} ergänzende HN-Suchtreffer, ${gdeltCount} internationale Nachrichtenartikel und ${githubRepos.length} GitHub-Repositories (${newGitHubCount} neue Quellen) analysiert; ${trendTerms.length} Produkt-/Projektsignale gefunden.${githubNote}${algoliaNote}${gdeltNote}`;
+   $('status').textContent=`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge, ${algoliaCount} ergänzende HN-Suchtreffer, ${gdeltCount} internationale Nachrichtenartikel und ${githubRepos.length} GitHub-Repositories (${newGitHubCount} neue Quellen) analysiert; ${trendTerms.length} Produkt-/Projektsignale gefunden.${hnNote}${githubNote}${algoliaNote}${gdeltNote}`;
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
   $('status').textContent+='\nSchritt 2/3: neue Quellensignale priorisieren; bereits geprüfte Domains überspringen; Originalnamen zuerst, danach Varianten und Fantasienamen …';
@@ -512,6 +527,7 @@ async function run(){
  }catch(e){$('status').textContent+=(e.message==='Vom Nutzer gestoppt'?'\nAbgebrochen.':'\nFehler: '+(e.message||'unbekannter Fehler'))}
  finally{running=false;$('start').disabled=false;$('stop').disabled=true;draw()}
 }
+$('sourceCsv').addEventListener('click',exportSourceDiagnostics);
 $('start').addEventListener('click',run);
 $('stop').addEventListener('click',()=>{stopRequested=true;$('status').textContent+='\nStop angefordert…'});
 $('onlyAvailable').addEventListener('change',draw);
@@ -519,7 +535,7 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 59.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 60.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
