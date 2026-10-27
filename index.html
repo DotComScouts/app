@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 60: persistent source diagnostics and CSV export -->
+<!-- DotComScouts Version 62: GDELT JSONP fallback and persistent source diagnostics -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><title>DotComScouts v59 – Freie .com-Domains</title>
+<meta name="theme-color" content="#111827"><title>DotComScouts v61 – Freie .com-Domains</title>
 <style>
 :root{color-scheme:dark;--panel:#141c2e;--text:#eef3ff;--muted:#a8b4cc;--line:#2b3954;--accent:#7dd3fc;--good:#86efac;--warn:#fcd34d;--bad:#fca5a5}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
@@ -57,7 +57,7 @@
 </div>
 <div class="actions"><button class="primary" id="start">Trends prüfen → .coms finden</button><button id="stop" class="secondary" disabled>Stoppen</button></div>
 <div class="status" id="status">Bereit. Ein Knopfdruck startet Trendanalyse, Namensbildung und Live-Verfügbarkeitsprüfung.</div>
-<div class="source-diagnostics"><div class="row"><div><strong>Quellen-Diagnose</strong><div class="hint">Bleibt nach dem Durchlauf sichtbar, auch wenn Schritt 2 oder 3 weiterläuft.</div></div><button id="sourceCsv" class="secondary" disabled>Quellenfehler exportieren</button></div><div class="table-scroll"><table><thead><tr><th>Quelle</th><th>Status</th><th>Treffer</th><th>Dauer</th><th>Fehlerdetails</th></tr></thead><tbody id="sourceRows"><tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr></tbody></table></div></div>
+<div class="source-diagnostics"><div class="row"><div><strong>Datenquellen-Status</strong><div class="hint">Status und Abrufdetails der verwendeten Datenquellen.</div></div><button id="sourceCsv" class="secondary" disabled>Quellenfehler exportieren</button></div><div class="table-scroll"><table><thead><tr><th>Quelle</th><th>Status</th><th>Treffer</th><th>Dauer</th><th>Fehlerdetails</th></tr></thead><tbody id="sourceRows"><tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr></tbody></table></div></div>
 </section>
 
 <section class="panel">
@@ -230,13 +230,28 @@ async function fetchAlgoliaStories(){
  }
  return [...out.values()];
 }
+function getGDELTJsonp(url,timeoutMs=18000){
+ return new Promise((resolve,reject)=>{
+  const callback='__gdeltCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  const script=document.createElement('script');let settled=false;
+  const cleanup=()=>{if(script.parentNode)script.parentNode.removeChild(script);try{delete window[callback]}catch(e){window[callback]=undefined}clearTimeout(timer)};
+  const finish=(err,value)=>{if(settled)return;settled=true;cleanup();err?reject(err):resolve(value)};
+  const timer=setTimeout(()=>finish(new Error('GDELT JSONP Timeout nach '+Math.round(timeoutMs/1000)+' s')),timeoutMs);
+  window[callback]=data=>finish(null,data);
+  script.onerror=()=>finish(new Error('GDELT JSONP konnte nicht geladen werden (Netzwerk/Server)'));
+  script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(callback);
+  document.head.appendChild(script);
+ });
+}
 async function fetchGDELTStories(){
  const queries=['"AI tool" OR "AI startup" OR "new AI app"','"launches" OR "introduces" OR "open-source tool"'];
  const out=new Map();
  for(const q of queries){
-  const url='https://api.gdeltproject.org/api/v2/doc/doc?'+new URLSearchParams({query:q,mode:'artlist',format:'json',maxrecords:'50',timespan:'7d',sort:'datedesc'}).toString();
-  const j=await getJSON(url);
-  for(const a of (j.articles||[])){
+  const params=new URLSearchParams({query:q,mode:'artlist',format:'jsonp',maxrecords:'50',timespan:'7d',sort:'datedesc'});
+  const url='https://api.gdeltproject.org/api/v2/doc/doc?'+params.toString();
+  const j=await getGDELTJsonp(url);
+  if(!j||!Array.isArray(j.articles))throw new Error('GDELT lieferte keine gültige Artikelliste');
+  for(const a of j.articles){
    if(!a.title||!a.url)continue;
    const key=a.url;
    if(!out.has(key))out.set(key,{id:key,title:a.title,url:a.url,time:Date.parse(a.seendate||'')/1000||Date.now()/1000,score:0,descendants:0,_source:'GDELT News'});
