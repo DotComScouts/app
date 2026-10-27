@@ -45,9 +45,13 @@
 /* v63: keep the source-export action right-aligned in portrait and landscape */
 @media(max-width:640px){.source-diagnostics .row{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}.source-diagnostics .row>div{flex:1 1 auto;min-width:0}.source-diagnostics #sourceCsv{flex:0 0 auto;width:auto;max-width:48%;white-space:normal;text-align:center;margin:0}}
 
-/* v69: fixed-height status panel; long messages scroll inside without moving page layout */
-.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;}
+/* v70: cross-platform fixed-height status panel with touch, wheel and keyboard scrolling */
+.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:scroll;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;contain:layout paint;max-width:100%;}
 .status:focus{outline:2px solid #315a78;outline-offset:2px}
+.status{user-select:text;-webkit-user-select:text;cursor:default}
+.status::-webkit-scrollbar{width:7px}
+.status::-webkit-scrollbar-thumb{background:#45617d;border-radius:8px}
+.status::-webkit-scrollbar-track{background:#10192b;border-radius:8px}
 @media(max-width:620px) and (orientation:portrait){.status{height:8.5rem;max-height:8.5rem}}
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
@@ -92,7 +96,9 @@
 </main>
 <script>
 (()=> {
-const $=id=>document.getElementById(id), HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen' ;
+const $=id=>document.getElementById(id);
+// Cross-platform scroll handling is applied to the status panel below.
+const HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen' ;
 const statusBox=$('status');let statusWasNearBottom=true;statusBox.addEventListener('scroll',()=>{statusWasNearBottom=statusBox.scrollHeight-statusBox.scrollTop-statusBox.clientHeight<28;},{passive:true});new MutationObserver(()=>{if(statusWasNearBottom)statusBox.scrollTop=statusBox.scrollHeight;}).observe(statusBox,{childList:true,characterData:true,subtree:true});
 let running=false,stopRequested=false,results=[],trendTerms=[],storyList=[],sourceDiagnostics=[];
 const seen=new Set(loadSeen());
@@ -540,14 +546,18 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 69.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 70.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
 
-/* v69: fixed-height status panel; long messages scroll inside without moving page layout */
-.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;}
+/* v70: cross-platform fixed-height status panel with touch, wheel and keyboard scrolling */
+.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:scroll;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;contain:layout paint;max-width:100%;}
 .status:focus{outline:2px solid #315a78;outline-offset:2px}
+.status{user-select:text;-webkit-user-select:text;cursor:default}
+.status::-webkit-scrollbar{width:7px}
+.status::-webkit-scrollbar-thumb{background:#45617d;border-radius:8px}
+.status::-webkit-scrollbar-track{background:#10192b;border-radius:8px}
 @media(max-width:620px) and (orientation:portrait){.status{height:8.5rem;max-height:8.5rem}}
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
