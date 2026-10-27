@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 69: fixed scrollable status panel -->
+<!-- DotComScouts Version 72: corrected Algolia attribution, broader launch discovery and persistent status history -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts v69 – Freie .com-Domains</title>
@@ -45,8 +45,8 @@
 /* v63: keep the source-export action right-aligned in portrait and landscape */
 @media(max-width:640px){.source-diagnostics .row{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}.source-diagnostics .row>div{flex:1 1 auto;min-width:0}.source-diagnostics #sourceCsv{flex:0 0 auto;width:auto;max-width:48%;white-space:normal;text-align:center;margin:0}}
 
-/* v70: cross-platform fixed-height status panel with touch, wheel and keyboard scrolling */
-.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:scroll;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;contain:layout paint;max-width:100%;}
+/* v72: fixed-height scroll viewport with touch, wheel, keyboard and retained history */
+.status{display:block;box-sizing:border-box;flex:0 0 auto;height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;max-width:100%;}
 .status:focus{outline:2px solid #315a78;outline-offset:2px}
 .status{user-select:text;-webkit-user-select:text;cursor:default}
 .status::-webkit-scrollbar{width:7px}
@@ -69,7 +69,7 @@
 <div class="field"><label for="seenMode">Wiederholungen</label><select id="seenMode"><option value="skip" selected>Neue Funde bevorzugen</option><option value="allow">Alle Funde erneut berücksichtigen</option></select></div>
 </div>
 <div class="actions"><button class="primary" id="start">Trends prüfen → .coms finden</button><button id="stop" class="secondary" disabled>Stoppen</button></div>
-<div class="status" id="status" role="status" aria-live="polite" tabindex="0" aria-label="Status des Suchlaufs; längere Meldungen können innerhalb dieses Feldes gescrollt werden">Bereit. Ein Knopfdruck startet Trendanalyse, Namensbildung und Live-Verfügbarkeitsprüfung.</div>
+<div class="status" id="status" role="status" aria-live="polite" tabindex="0" aria-label="Status des Suchlaufs; Statusverlauf: mit Finger, Mausrad oder Tastatur innerhalb dieses Feldes scrollen">Bereit. Ein Knopfdruck startet Trendanalyse, Namensbildung und Live-Verfügbarkeitsprüfung.</div>
 <div class="source-diagnostics"><div class="row"><div><strong>Datenquellen-Status</strong><div class="hint">Status und Abrufdetails der verwendeten Datenquellen.</div></div><button id="sourceCsv" class="secondary" disabled>Quellenfehler exportieren</button></div><div class="table-scroll"><table><thead><tr><th>Quelle</th><th>Status</th><th>Treffer</th><th>Dauer</th><th>Fehlerdetails</th></tr></thead><tbody id="sourceRows"><tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr></tbody></table></div></div>
 </section>
 
@@ -97,9 +97,16 @@
 <script>
 (()=> {
 const $=id=>document.getElementById(id);
-// Cross-platform scroll handling is applied to the status panel below.
-const HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen' ;
-const statusBox=$('status');let statusWasNearBottom=true;statusBox.addEventListener('scroll',()=>{statusWasNearBottom=statusBox.scrollHeight-statusBox.scrollTop-statusBox.clientHeight<28;},{passive:true});new MutationObserver(()=>{if(statusWasNearBottom)statusBox.scrollTop=statusBox.scrollHeight;}).observe(statusBox,{childList:true,characterData:true,subtree:true});
+// v72: the status element itself is the fixed-height scroll viewport. Keep a bounded
+// history instead of replacing it with the final message (which made scrolling pointless).
+const HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen';
+const statusBox=$('status');let statusWasNearBottom=true;const STATUS_LIMIT=180;
+Object.assign(statusBox.style,{display:'block',boxSizing:'border-box',minHeight:'0',height:'var(--status-height, 8.5rem)',maxHeight:'var(--status-height, 8.5rem)',overflowY:'auto',overflowX:'hidden',webkitOverflowScrolling:'touch',touchAction:'pan-y',overscrollBehaviorY:'contain',whiteSpace:'pre-wrap',overflowWrap:'anywhere',scrollbarGutter:'stable'});
+statusBox.addEventListener('scroll',()=>{statusWasNearBottom=statusBox.scrollHeight-statusBox.scrollTop-statusBox.clientHeight<28;},{passive:true});
+statusBox.addEventListener('wheel',e=>{if(statusBox.scrollHeight>statusBox.clientHeight){const before=statusBox.scrollTop;statusBox.scrollTop+=e.deltaY;if(statusBox.scrollTop!==before)e.preventDefault();}},{passive:false});
+statusBox.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(e.key)){e.stopPropagation();if(e.key==='ArrowDown')statusBox.scrollTop+=36;else if(e.key==='ArrowUp')statusBox.scrollTop-=36;else if(e.key==='PageDown'||e.key===' ')statusBox.scrollTop+=statusBox.clientHeight*.85;else if(e.key==='PageUp')statusBox.scrollTop-=statusBox.clientHeight*.85;else if(e.key==='Home')statusBox.scrollTop=0;else if(e.key==='End')statusBox.scrollTop=statusBox.scrollHeight;e.preventDefault();}});
+function appendStatus(message){const lines=(statusBox.textContent||'').split('\n').filter(Boolean);lines.push(String(message));if(lines.length>STATUS_LIMIT)lines.splice(0,lines.length-STATUS_LIMIT);statusBox.textContent=lines.join('\n');if(statusWasNearBottom)requestAnimationFrame(()=>{statusBox.scrollTop=statusBox.scrollHeight;});}
+function setStatus(message){appendStatus(message);}
 let running=false,stopRequested=false,results=[],trendTerms=[],storyList=[],sourceDiagnostics=[];
 const seen=new Set(loadSeen());
 function loadSeen(){try{return [...new Set([...JSON.parse(localStorage.getItem('domainScoutV9Seen')||'[]'),...JSON.parse(localStorage.getItem('domainScoutV11Seen')||'[]'),...JSON.parse(localStorage.getItem(STORE)||'[]')])]}catch(e){return []}}
@@ -143,8 +150,11 @@ function candidatePhrases(story){
    let head=show[1].split(/\s+(?:—|–|\||for|and|built with|powered by)\s+/i)[0].trim();
    head=head.split(/:\s+/)[0].trim().replace(/\s+\([^)]*\)$/,'');
    const words=head.split(/\s+/).filter(Boolean);
-   if(/[a-z][A-Z]|\d|[-_]/.test(words[0])) push(words[0],'launch');
+   // Prefer a plausible coined/product token; also test short multiword names when they
+   // contain a distinctive CamelCase, digit, or hyphenated token.
+   if(words.length&&(/[a-z][A-Z]|\d|[-_]/.test(words[0]))) push(words[0],'launch');
    else if(words.length===1) push(words[0],'launch');
+   else if(words.length<=3&&words.some(w=>/[a-z][A-Z]|\d|[-_]/.test(w))) push(words.join(' '),'launch');
  }
  // Capture names only when a title has an explicit launch cue. Avoid mining arbitrary
  // CamelCase technology words from unrelated headlines (e.g. iPad or JavaScript).
@@ -221,30 +231,40 @@ async function fetchStories(){
 }
 async function fetchGitHubRepos(){
  const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
- const url='https://api.github.com/search/repositories?q=created:>='+since+'+stars:>=5&sort=stars&order=desc&per_page=100';
- const r=await fetch(url,{headers:{Accept:'application/vnd.github+json'}});
- if(!r.ok)throw Error(r.status===403||r.status===429?'GitHub-Rate-Limit erreicht':'GitHub HTTP '+r.status);
- const j=await r.json();return Array.isArray(j.items)?j.items:[];
+ const queries=[
+  'created:>='+since+' stars:>=5 sort:stars-desc',
+  'created:>='+since+' stars:>=5 sort:updated-desc'
+ ];
+ const pages=await Promise.all(queries.map(async q=>{
+  const url='https://api.github.com/search/repositories?q='+encodeURIComponent(q.replace(' sort:stars-desc','').replace(' sort:updated-desc',''))+'&sort='+(q.includes('sort:updated-desc')?'updated':'stars')+'&order=desc&per_page=100';
+  const r=await fetch(url,{headers:{Accept:'application/vnd.github+json'}});
+  if(!r.ok)throw Error(r.status===403||r.status===429?'GitHub-Rate-Limit erreicht':'GitHub HTTP '+r.status);
+  const j=await r.json();return Array.isArray(j.items)?j.items:[];
+ }));
+ const merged=new Map();for(const repo of pages.flat())if(repo&&repo.full_name&&!merged.has(repo.full_name))merged.set(repo.full_name,repo);
+ return [...merged.values()];
 }
 // Neue Quellen bewusst unterhalb der bestehenden Hacker-News- und GitHub-Quellen ergänzen.
 async function fetchAlgoliaStories(){
  const cutoff=Math.floor(Date.now()/1000-30*86400);
- const queries=[
-  'Show HN',
-  'launch AI tool',
-  'new open source product'
- ];
- const out=new Map();
+ // Algolia indexes the same HN corpus as the official API, so deduplication is expected.
+ // Queries deliberately cover different launch/product language; all results retain provenance.
+ const queries=['Show HN','I built','we built','open source','AI agent','developer tool'];
+ const out=new Map();let successfulQueries=0;const queryErrors=[];
  for(const q of queries){
-  const url='https://hn.algolia.com/api/v1/search_by_date?'+new URLSearchParams({query:q,tags:'story',numericFilters:'created_at_i>'+cutoff,hitsPerPage:'40'}).toString();
-  const j=await getJSON(url);
-  for(const h of (j.hits||[])){
-   if(!h.title||!h.objectID)continue;
-   const id=String(h.objectID);
-   if(!out.has(id))out.set(id,{id:Number(id),title:h.title,url:'https://news.ycombinator.com/item?id='+id,time:Number(h.created_at_i)||0,score:Number(h.points)||0,descendants:Number(h.num_comments)||0,_source:'Hacker News Search'});
-  }
+  try{
+   const url='https://hn.algolia.com/api/v1/search_by_date?'+new URLSearchParams({query:q,tags:'story',numericFilters:'created_at_i>'+cutoff,hitsPerPage:'50'}).toString();
+   const j=await getJSON(url);successfulQueries++;
+   for(const h of (j.hits||[])){
+    if(!h.title||!h.objectID)continue;
+    const id=String(h.objectID),prior=out.get(id);
+    if(!prior)out.set(id,{id:Number(id),title:h.title,url:'https://news.ycombinator.com/item?id='+id,time:Number(h.created_at_i)||0,score:Number(h.points)||0,descendants:Number(h.num_comments)||0,_source:'Hacker News Search',_algoliaQueries:[q]});
+    else {prior._algoliaQueries.push(q);if((Number(h.points)||0)>prior.score){prior.score=Number(h.points)||0;prior.descendants=Number(h.num_comments)||0;}}
+   }
+  }catch(e){queryErrors.push(q+': '+(e?.message||String(e)));}
  }
- return [...out.values()];
+ if(!successfulQueries)throw Error('Alle Algolia-Abfragen fehlgeschlagen'+(queryErrors.length?': '+queryErrors.join('; '):''));
+ const result=[...out.values()];result._meta={successfulQueries,totalQueries:queries.length,queryErrors};return result;
 }
 function getLengthRange(){const v=$('length').value;return [3,v==='max5'?5:v==='max10'?10:8]}
 function fits(n){const [a,b]=getLengthRange();return n.length>=a&&n.length<=b}
@@ -469,23 +489,25 @@ async function checkAvail(n){
 }
 function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein Status geliefert|Antwortformat unbekannt|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
 async function run(){
- if(running)return;running=true;stopRequested=false;results=[];sourceDiagnostics=[];drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
+ if(running)return;running=true;stopRequested=false;statusBox.textContent='';statusWasNearBottom=true;results=[];sourceDiagnostics=[];drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
  const sourceUrlsToMark=[];let runHadAvailabilityErrors=false;
  try{
   const mode=$('mode').value;
   if(mode!=='brand'){
-   $('status').textContent='Schritt 1/3: Hacker News, GitHub und Algolia abfragen …';
+   setStatus('Schritt 1/3: Hacker News, GitHub und Algolia abfragen …');
    let hnNote='',githubRepos=[],githubNote='',extraStories=[],algoliaNote='';
    try{storyList=await runSource('Hacker News API',fetchStories)}catch(hne){storyList=[];hnNote=' Hacker News nicht verfügbar ('+(hne.message||'Fehler')+').'}
    try{githubRepos=await runSource('GitHub Search API',fetchGitHubRepos)}catch(ghe){githubNote=' GitHub nicht verfügbar ('+(ghe.message||'Fehler')+').'}
-   try{extraStories=extraStories.concat(await runSource('Algolia Hacker News Search',fetchAlgoliaStories))}catch(ae){algoliaNote=' Algolia-Suche nicht verfügbar ('+(ae.message||'Fehler')+').'}
+   try{extraStories=await runSource('Algolia Hacker News Search',fetchAlgoliaStories)}catch(ae){algoliaNote=' Algolia-Suche nicht verfügbar ('+(ae.message||'Fehler')+').'}
    const baseHNCount=storyList.length;
-   // Merge duplicate stories by ID while retaining every source that surfaced them.
+   const algoliaUniqueCount=extraStories.length;
+   const algoliaMeta=extraStories._meta||{successfulQueries:0,totalQueries:0,queryErrors:[]};
+   // Merge by HN item ID while preserving all source labels and Algolia query provenance.
    const mergedStories=new Map();
    for(const s of [...storyList,...extraStories]){
-    const key=String(s.id||s.url||s.title);const prior=mergedStories.get(key);
-    if(!prior){mergedStories.set(key,{...s,_sources:[s._source||'Hacker News']});}
-    else {prior._sources=[...new Set([...(prior._sources||[prior._source||'Hacker News']),s._source||'Hacker News'])];if((Number(s.score)||0)>(Number(prior.score)||0)){prior.score=s.score;prior.descendants=s.descendants;}}
+    const key=String(s.id||s.url||s.title);const prior=mergedStories.get(key);const source=s._source||'Hacker News';
+    if(!prior){mergedStories.set(key,{...s,_sources:[source],_algoliaQueries:[...(s._algoliaQueries||[])]});}
+    else {prior._sources=[...new Set([...(prior._sources||[prior._source||'Hacker News']),source])];prior._algoliaQueries=[...new Set([...(prior._algoliaQueries||[]),...(s._algoliaQueries||[])])];if((Number(s.score)||0)>(Number(prior.score)||0)){prior.score=s.score;prior.descendants=s.descendants;}}
    }
    storyList=[...mergedStories.values()];
    // Keep previously seen sources as evidence, but do not let them suppress discovery.
@@ -495,19 +517,20 @@ async function run(){
     for(const r of githubRepos){if(r.html_url&&!sourceUrlsToMark.includes(r.html_url))sourceUrlsToMark.push(r.html_url)}
    }
    const newHNCount=storyList.filter(s=>(s._source||'Hacker News').startsWith('Hacker News')&&!seenSources.has(s.url||('https://news.ycombinator.com/item?id='+s.id))).length;
-   const algoliaCount=storyList.filter(s=>s._source==='Hacker News Search').length;
+   const algoliaCount=algoliaUniqueCount;
+   const algoliaOverlap=storyList.filter(s=>(s._sources||[]).includes('Hacker News Search')&&(s._sources||[]).includes('Hacker News')).length;
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
    const githubEligibleCount=githubRepos.filter(r=>looksLikeName(String(r.name||'').replace(/[-_]+/g,' ').trim())&&Number(r.stargazers_count||0)>=8).length;
    trendTerms=findTerms(storyList,githubRepos);
    const githubSignals=trendTerms.filter(t=>t.githubMentions>0).length;
    const algoliaSignals=trendTerms.filter(t=>t.sources.has('Hacker News Search')).length;
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
-   $('status').textContent=`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge; ${algoliaCount} ergänzende Algolia-Treffer (${algoliaSignals} Signale); ${githubRepos.length} GitHub-Repositories geladen, ${githubEligibleCount} namens-/sternestarke Repositories und ${githubSignals} daraus erkannte Signale; insgesamt ${trendTerms.length} Produkt-/Projektsignale.${hnNote}${githubNote}${algoliaNote}`;
+   setStatus(`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge; Algolia ${algoliaCount} eindeutige Treffer aus ${algoliaMeta.successfulQueries}/${algoliaMeta.totalQueries} Suchabfragen, davon ${algoliaOverlap} Überschneidungen mit der HN-API; ${algoliaSignals} Signale mit Algolia-Bezug. GitHub: ${githubRepos.length} Repositories, ${githubEligibleCount} namens-/sternestarke und ${githubSignals} erkannte Signale. Insgesamt ${trendTerms.length} Produkt-/Projektsignale.${algoliaMeta.queryErrors?.length?' Algolia-Teilfehler: '+algoliaMeta.queryErrors.join(' | '):''}${hnNote}${githubNote}${algoliaNote}`);
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
-  $('status').textContent+='\nSchritt 2/3: neue Quellensignale priorisieren; bereits geprüfte Domains überspringen; Originalnamen zuerst, danach Varianten und Fantasienamen …';
+  appendStatus('Schritt 2/3: neue Quellensignale priorisieren; bereits geprüfte Domains überspringen; Originalnamen zuerst, danach Varianten und Fantasienamen …');
   candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
-  $('status').textContent+=` ${candidates.length} neue Kandidaten.`;
+  appendStatus(`${candidates.length} neue Kandidaten.`);
   let avail=0,delay=Number($('delay').value);const resolvedTrendKeys=new Set();let checked=0;
   for(let i=0;i<candidates.length;i++){
    if(stopRequested)break;const c=candidates[i];
@@ -519,40 +542,40 @@ async function run(){
      error=checkError.message||'Abfrage fehlgeschlagen';
      if(attempt>=3||stopRequested||!retryableAvailabilityError(checkError))break;
      const pause=attempt===1?1000:1800;
-     $('status').textContent=`Schritt 3/3: ${c.name}.com lieferte keinen verlässlichen Status (${error}). Neuer Versuch ${attempt+1}/3 …`;
+     appendStatus(`Schritt 3/3: ${c.name}.com lieferte keinen verlässlichen Status (${error}). Neuer Versuch ${attempt+1}/3 …`);
      await wait(pause);
     }
    }
    results.push({...c,status,error,checkedAt:new Date().toISOString()});
    if(status==='error'){seen.delete(c.name);saveSeen();runHadAvailabilityErrors=true}else{seen.add(c.name);saveSeen()}
    draw();checked++;if(status==='available')avail++;if(c.trendKey&&status==='available')resolvedTrendKeys.add(c.trendKey);
-   $('status').textContent=`Schritt 3/3: ${checked} geprüft — ${c.name}.com: ${status==='available'?'frei gemeldet':status==='taken'?'belegt':'Fehler '+error}\n${avail} frei gemeldet. Längere Varianten eines bereits verfügbaren Trends werden übersprungen.`;
+   appendStatus(`Schritt 3/3: ${checked} geprüft — ${c.name}.com: ${status==='available'?'frei gemeldet':status==='taken'?'belegt':'Fehler '+error}; ${avail} frei gemeldet.`);
    if(i<candidates.length-1&&!stopRequested)await wait(delay);
   }
   if(!stopRequested&&!runHadAvailabilityErrors&&$('seenMode').value==='skip'&&sourceUrlsToMark.length){
    sourceUrlsToMark.forEach(url=>seenSources.add(url));saveSeenSources();
   }
   const errorCount=results.filter(r=>r.status==='error').length;
-  $('status').textContent=stopRequested?'Durchlauf gestoppt.':runHadAvailabilityErrors?`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, ${errorCount} technische Fehler. Fehlerhafte Domains werden beim nächsten Suchlauf erneut geprüft.`:`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet. Keine technischen Verfügbarkeitsfehler.`;
+  appendStatus(stopRequested?'Durchlauf gestoppt.':runHadAvailabilityErrors?`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, ${errorCount} technische Fehler. Fehlerhafte Domains werden beim nächsten Suchlauf erneut geprüft.`:`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet. Keine technischen Verfügbarkeitsfehler.`);
 
- }catch(e){$('status').textContent+=(e.message==='Vom Nutzer gestoppt'?'\nAbgebrochen.':'\nFehler: '+(e.message||'unbekannter Fehler'))}
+ }catch(e){appendStatus(e.message==='Vom Nutzer gestoppt'?'Abgebrochen.':'Fehler: '+(e.message||'unbekannter Fehler'))}
  finally{running=false;$('start').disabled=false;$('stop').disabled=true;draw()}
 }
 $('sourceCsv').addEventListener('click',exportSourceDiagnostics);
 $('start').addEventListener('click',run);
-$('stop').addEventListener('click',()=>{stopRequested=true;$('status').textContent+='\nStop angefordert…'});
+$('stop').addEventListener('click',()=>{stopRequested=true;appendStatus('Stop angefordert…')});
 $('onlyAvailable').addEventListener('change',draw);
 $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 70.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 72.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
 
-/* v70: cross-platform fixed-height status panel with touch, wheel and keyboard scrolling */
-.status{height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:scroll;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;contain:layout paint;max-width:100%;}
+/* v72: fixed-height scroll viewport with touch, wheel, keyboard and retained history */
+.status{display:block;box-sizing:border-box;flex:0 0 auto;height:7.4rem;min-height:0;max-height:7.4rem;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-gutter:stable;max-width:100%;}
 .status:focus{outline:2px solid #315a78;outline-offset:2px}
 .status{user-select:text;-webkit-user-select:text;cursor:default}
 .status::-webkit-scrollbar{width:7px}
