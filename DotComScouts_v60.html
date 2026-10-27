@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="de">
+<!-- DotComScouts Version 60: persistent source diagnostics and CSV export -->
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>DotComScouts v59 – Freie .com-Domains</title>
+<style>
+:root{color-scheme:dark;--panel:#141c2e;--text:#eef3ff;--muted:#a8b4cc;--line:#2b3954;--accent:#7dd3fc;--good:#86efac;--warn:#fcd34d;--bad:#fca5a5}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
+@media(max-width:620px){main{padding:14px 9px 30px}.panel{padding:11px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.actions{grid-template-columns:1fr}.kpi strong{font-size:18px}.row{align-items:flex-start;flex-direction:column}}
+
+.brandline{display:flex;align-items:center;gap:9px;color:#c7d8ef;font-size:11px;font-weight:800;letter-spacing:.14em;margin:4px 0 0}.brandmark{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;background:linear-gradient(145deg,#38bdf8,#2563eb);color:white;font-size:15px;letter-spacing:0;box-shadow:0 5px 18px #0284c733}.branddivider{width:1px;height:18px;background:var(--line);margin:0 2px}.brandcaption{font-weight:500;letter-spacing:0;color:var(--muted);font-size:12px}.brandtitle{font-size:clamp(26px,5vw,36px);letter-spacing:.02em}.brandclaim{margin:-1px 0 18px 37px;color:var(--accent);font-weight:750;font-size:clamp(15px,2.4vw,19px);letter-spacing:-.015em}.brandclaim .arrow{color:#38bdf8;padding:0 3px}.sub{font-size:12px;max-width:760px;line-height:1.55}.panel{padding:18px;margin:14px 0;box-shadow:0 10px 30px #02061724}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.sectionhead h2{margin:2px 0 0}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.15em;color:#7dd3fc}.sectionnote{font-size:11px;color:var(--muted)}.signal-panel{background:linear-gradient(145deg,rgba(20,31,51,.98),rgba(17,26,44,.98))}.signal-panel summary::-webkit-details-marker{display:none}.signal-panel details>summary::after{content:"＋";margin-left:auto;color:var(--accent);font-size:18px}.signal-panel details[open]>summary::after{content:"−"}.signal-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.signal-card{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);background:#0d1729;border-radius:11px;padding:11px;min-width:0}.signal-icon{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#142b42;color:#7dd3fc;font-weight:800}.signal-content{min-width:0;flex:1}.signal-title{font-weight:750;font-size:13px;overflow-wrap:anywhere}.signal-meta{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.45}.signal-tag{display:inline-block;border:1px solid #35516c;border-radius:999px;padding:2px 6px;font-size:10px;color:#c2e6ff;white-space:nowrap}.empty-signal{display:flex;align-items:center;gap:9px;grid-column:1/-1;border:1px dashed #35435d;border-radius:10px;padding:14px;color:var(--muted);font-size:12px}.empty-dot{width:8px;height:8px;border-radius:50%;background:#53657d}.how-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0}.how-grid>div{display:flex;flex-direction:column;gap:5px}.stepno{color:#7dd3fc;font-size:11px;font-weight:800;letter-spacing:.1em}.how-grid strong{font-size:13px}.how-grid p{font-size:12px;line-height:1.55;margin:0}.how-panel .foot{font-size:12px!important;line-height:1.55;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}button{transition:filter .15s,transform .15s}button:hover:not(:disabled){filter:brightness(1.12)}button.primary{background:linear-gradient(110deg,#0369a1,#075985);box-shadow:0 5px 16px #0284c733}.status{line-height:1.6}.kpi{padding:12px}.kpi strong{font-size:22px}.tablewrap{border-radius:12px}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}.domain{letter-spacing:.01em}
+@media(max-width:620px){.brandcaption,.branddivider{display:none}.sectionhead{align-items:flex-start;flex-direction:column}.signal-list{grid-template-columns:1fr}.how-grid{grid-template-columns:1fr;gap:12px}.panel{padding:14px}}
+
+/* v48: clearer domain filter layout and blue checkbox */
+.results-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:14px;flex-wrap:nowrap;margin:0 0 8px}
+.results-toolbar>label{display:flex;align-items:center;gap:10px;align-self:flex-start;width:auto;margin:0;color:var(--text);font-size:15px;line-height:1.4;cursor:pointer}
+/* v49: custom checkbox so iOS does not render an unstyled black native box */
+.results-toolbar>label input[type="checkbox"]{appearance:none;-webkit-appearance:none;flex:0 0 20px;width:20px;height:20px;margin:0;padding:0;background:#1a2941;border:2px solid #38506e;border-radius:5px;display:inline-grid;place-content:center;cursor:pointer}
+.results-toolbar>label input[type="checkbox"]:checked{background:#38bdf8;border-color:#38bdf8}
+.results-toolbar>label input[type="checkbox"]:checked::before{content:"";width:9px;height:5px;border-left:2px solid #0b1020;border-bottom:2px solid #0b1020;transform:rotate(-45deg) translate(1px,-1px)}
+.results-toolbar>label input[type="checkbox"]:focus-visible{outline:2px solid #7dd3fc;outline-offset:3px}
+.results-toolbar .field{width:100%;min-width:0;margin:0;flex:none}
+.results-toolbar .field label{font-size:15px;line-height:1.4;color:var(--text);margin:0 0 7px}
+.results-toolbar .hint{flex:1 1 100%;margin:0}
+.table-scroll{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-scroll table{min-width:760px}
+#riskFilter{width:100%;max-width:100%;min-height:38px}
+.risk-help{font-size:11px;line-height:1.4;color:var(--muted);margin:0 0 7px}
+.risk-pill{white-space:normal;line-height:1.3}
+@media(max-width:640px){
+  .row:has(#csv){flex-direction:row;align-items:center;gap:10px}
+  .row:has(#csv)>div{min-width:0;flex:1}
+  .row:has(#csv) #csv{flex:0 0 auto;width:auto;white-space:nowrap;margin:0}
+  .results-toolbar{display:flex;gap:14px;margin-bottom:8px}
+  .results-toolbar>label{width:100%;font-size:15px}
+  .results-toolbar .field{width:100%;margin:0;flex:none;min-height:0}
+  .results-toolbar .hint{display:block;font-size:11px;line-height:1.35;flex:none}
+  .table-scroll{margin-top:6px}
+  .table-scroll table{min-width:720px}
+  .risk-pill{max-width:210px}
+}
+
+.source-diagnostics{margin-top:14px;padding-top:12px;border-top:1px solid #2b3954}.source-diagnostics .row{align-items:center;margin-bottom:8px}.source-diagnostics table{min-width:640px}.source-diagnostics td:last-child{max-width:340px;overflow-wrap:anywhere;white-space:normal}.source-diagnostics .hint{font-size:12px;line-height:1.4}
+</style></head>
+<body><main>
+<header><div class="brandline"><span class="brandmark">D</span><span class="brandtitle">DotComScouts</span></div><div class="brandclaim">Discover trends <span class="arrow">→</span> Find your next .com</div><h1>Freie .com-Domains finden</h1><p class="sub">DotComScouts kombiniert frühe Marktsignale mit kreativen Namensideen, um freie .com-Domains mit Potenzial für starke Marken zu finden. Alle Sprachrisiko-Kategorien werden zunächst angezeigt; du kannst sie bei Bedarf filtern.</p></header>
+<section class="panel">
+<div class="sectionhead"><div><div class="eyebrow">DEINE SUCHE</div><h2>Suchprofil</h2></div><span class="sectionnote">Frühsignale einordnen · Namen prüfen · Verfügbarkeit sehen</span></div>
+<div class="grid">
+<div class="field"><label for="mode">Namensquelle</label><select id="mode"><option value="both" selected>Trends + Fantasienamen</option><option value="trend">Nur Trend-inspirierte Namen</option><option value="brand">Nur Fantasienamen</option></select></div>
+<div class="field"><label for="length">Max. Länge (ohne .com)</label><select id="length"><option value="max5">Bis 5 Zeichen · kurz zuerst</option><option value="max8" selected>Bis 8 Zeichen · kurz zuerst</option><option value="max10">Bis 10 Zeichen · kurz zuerst</option></select></div>
+<div class="field"><label for="count">Domains live prüfen</label><select id="count"><option>20</option><option selected>40</option><option>60</option><option>100</option></select></div>
+<div class="field"><label for="scope">Trendquellen</label><select id="scope"><option value="new">Aktuelle Meldungen + neue Softwareprojekte</option><option value="mixed" selected>Breite Suche: aktuelle und beliebte Meldungen, Produktvorstellungen + Softwareprojekte</option></select></div>
+<div class="field"><label for="delay">Pause pro Check</label><select id="delay"><option value="1800" selected>1,8 Sek.</option><option value="2400">2,4 Sek.</option><option value="3200">3,2 Sek.</option></select></div>
+<div class="field"><label for="seenMode">Wiederholungen</label><select id="seenMode"><option value="skip" selected>Neue Funde bevorzugen</option><option value="allow">Alle Funde erneut berücksichtigen</option></select></div>
+</div>
+<div class="actions"><button class="primary" id="start">Trends prüfen → .coms finden</button><button id="stop" class="secondary" disabled>Stoppen</button></div>
+<div class="status" id="status">Bereit. Ein Knopfdruck startet Trendanalyse, Namensbildung und Live-Verfügbarkeitsprüfung.</div>
+<div class="source-diagnostics"><div class="row"><div><strong>Quellen-Diagnose</strong><div class="hint">Bleibt nach dem Durchlauf sichtbar, auch wenn Schritt 2 oder 3 weiterläuft.</div></div><button id="sourceCsv" class="secondary" disabled>Quellenfehler exportieren</button></div><div class="table-scroll"><table><thead><tr><th>Quelle</th><th>Status</th><th>Treffer</th><th>Dauer</th><th>Fehlerdetails</th></tr></thead><tbody id="sourceRows"><tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr></tbody></table></div></div>
+</section>
+
+<section class="panel">
+<div class="row"><div><div class="eyebrow">DOMAIN-CHECK</div><h2>Deine Ergebnisse</h2></div><button id="csv" class="secondary" disabled>CSV exportieren</button></div>
+<div class="kpis"><div class="kpi"><strong id="checkedN">0</strong><span>geprüft</span></div><div class="kpi"><strong id="availN">0</strong><span>frei gemeldet</span></div><div class="kpi"><strong id="trendN">0</strong><span>Signale erkannt</span></div></div>
+<div class="results-toolbar">
+<label><input type="checkbox" id="onlyAvailable"> Nur frei gemeldete Domains zeigen</label>
+<div class="field"><label for="riskFilter">Sprachliches Risiko</label><p class="risk-help">Automatische Vorprüfung auf mögliche problematische Bedeutungen, unerwünschte Assoziationen oder missverständliche Begriffe in mehreren Sprachen.</p><select id="riskFilter" aria-label="Sprachliches Risiko">
+<option value="safe">🟢 Kein sprachliches Risiko</option>
+<option value="yellow">🟡 Sprachliches Risiko prüfen</option>
+<option value="red">🔴 Hohes sprachliches Risiko</option>
+<option value="all" selected>⚪ Alle anzeigen</option>
+</select></div>
+<span class="hint">Frei gemeldet = laut Live-Abfrage verfügbar. Verfügbarkeit vor der Registrierung erneut prüfen.</span></div>
+<div class="table-scroll tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Typ</th><th>Länge</th><th>Inspiriert von</th><th>Sprachliches Risiko</th><th>Quelle</th></tr></thead><tbody id="results"><tr><td colspan="7" class="hint">Noch keine Ergebnisse.</td></tr></tbody></table>
+</div></div>
+</section>
+<section class="panel signal-panel"><details id="signalsDetails"><summary class="sectionhead" style="cursor:pointer;list-style:none;align-items:flex-start;flex-direction:column;gap:4px"><div><div class="eyebrow">HINTERGRUND</div><h2>Trendsignale & Quellen</h2><span class="hint" style="display:block;margin-top:5px">Produktnamen, Signalstärke und Fundstellen anzeigen.</span></div></summary>
+<p class="sub">Frühsignale sind Hinweise auf neue Produkte, aber noch kein Beleg für einen wachsenden globalen Trend. Ein Mehrfachsignal ist belastbarer, bleibt aber prüfbedürftig.</p>
+<div id="trendCandidates" class="signal-list"><div class="empty-signal"><span class="empty-dot"></span>Noch keine Trendkandidaten analysiert.</div></div>
+</details></section>
+<section class="panel how-panel"><div class="eyebrow">TRANSPARENT & NACHVOLLZIEHBAR</div><h2>So arbeitet die Suche</h2><div class="how-grid"><div><span class="stepno">01</span><strong>Neue Signale finden</strong><p>Je nach Suchmodus werden Hacker-News-Beiträge, zusätzliche Suchtreffer, internationale Tech-Nachrichten und neue GitHub-Softwareprojekte ausgewertet.</p></div><div><span class="stepno">02</span><strong>Namen bewerten</strong><p>Aktualität, Resonanz und Signale aus mehreren Quellen werden stärker gewichtet als ein einzelner Fund. Eine automatisierte Vorprüfung markiert mögliche sprachliche Risiken in Deutsch, Englisch, Französisch und Spanisch – sie ersetzt keine gründliche Sprach- oder Markenprüfung.</p></div><div><span class="stepno">03</span><strong>.com prüfen</strong><p>Die .com-Verfügbarkeit wird live abgefragt und kann sich jederzeit ändern. Vor einer Registrierung erneut prüfen und Marken- sowie Namensrechte separat recherchieren. Ein freier Name ist weder eine Nachfrageprognose noch eine Garantie für Wiederverkaufswert.</p></div></div><p class="foot">Die Suche deckt nicht das gesamte Internet ab. Trendwerte sind interne Orientierungshilfen, keine objektiven Marktprognosen. Originalnamen ohne ausreichende Bestätigung werden nicht als Kaufkandidaten priorisiert. Verfügbarkeit, Nachfrage und rechtliche Nutzbarkeit müssen vor einer Registrierung eigenständig geprüft werden. Öffentliche Quellen: <a href="https://github.com/HackerNews/API" target="_blank" rel="noopener">Hacker News API</a> · <a href="https://docs.github.com/en/rest/search/search" target="_blank" rel="noopener">GitHub Search API</a> · <a href="https://hn.algolia.com/api" target="_blank" rel="noopener">Algolia Hacker News Search</a> · <a href="https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/" target="_blank" rel="noopener">GDELT News API</a>.</p></section>
+</main>
+<script>
+(()=> {
+const $=id=>document.getElementById(id), HN='https://hacker-news.firebaseio.com/v0/', AVAIL='https://api.domainee.dev/v1/tools/domain-availability-checker?name=', STORE='domainScoutSeen' ;
+let running=false,stopRequested=false,results=[],trendTerms=[],storyList=[],sourceDiagnostics=[];
+const seen=new Set(loadSeen());
+function loadSeen(){try{return [...new Set([...JSON.parse(localStorage.getItem('domainScoutV9Seen')||'[]'),...JSON.parse(localStorage.getItem('domainScoutV11Seen')||'[]'),...JSON.parse(localStorage.getItem(STORE)||'[]')])]}catch(e){return []}}
+function saveSeen(){try{localStorage.setItem(STORE,JSON.stringify([...seen].slice(-20000)))}catch(e){}}
+function loadSeenSources(){try{return JSON.parse(localStorage.getItem('dotComScoutSeenSources')||'[]')}catch(e){return []}}
+function saveSeenSources(){try{localStorage.setItem('dotComScoutSeenSources',JSON.stringify([...seenSources].slice(-10000)))}catch(e){}}
+const seenSources=new Set(loadSeenSources());
+const wait=ms=>new Promise(r=>setTimeout(r,ms)), pick=a=>a[Math.floor(Math.random()*a.length)];
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function drawSourceDiagnostics(){
+ const body=$('sourceRows');
+ if(!sourceDiagnostics.length){body.innerHTML='<tr><td colspan="5" class="hint">Noch kein Durchlauf gestartet.</td></tr>';$('sourceCsv').disabled=true;return}
+ body.innerHTML=sourceDiagnostics.map(d=>`<tr><td>${esc(d.source)}</td><td><span class="pill ${d.status==='OK'?'available':'error'}">${esc(d.status)}</span></td><td>${d.count==null?'—':d.count}</td><td>${d.ms==null?'—':(d.ms/1000).toFixed(1)+' s'}</td><td>${esc(d.error||'—')}</td></tr>`).join('');
+ $('sourceCsv').disabled=false;
+}
+async function runSource(source,fn,countOf=x=>Array.isArray(x)?x.length:null){
+ const d={source,status:'Läuft',count:null,ms:null,error:'',startedAt:new Date().toISOString()};sourceDiagnostics.push(d);drawSourceDiagnostics();const t=Date.now();
+ try{const value=await fn();d.status='OK';d.count=countOf(value);d.ms=Date.now()-t;d.finishedAt=new Date().toISOString();drawSourceDiagnostics();return value}
+ catch(e){d.status='FEHLER';d.ms=Date.now()-t;d.error=e?.message||String(e)||'Unbekannter Fehler';d.finishedAt=new Date().toISOString();drawSourceDiagnostics();throw e}
+}
+function exportSourceDiagnostics(){const cols=['source','status','count','duration_ms','error','startedAt','finishedAt'];const rows=[cols.join(';'),...sourceDiagnostics.map(d=>[d.source,d.status,d.count,d.ms,d.error,d.startedAt,d.finishedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';'))];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-quellendiagnose.csv';a.click();URL.revokeObjectURL(url)}
+
+const stopWords=new Set('about above after again against all also among another any are around article articles based because been before being below between both build builds built business businesses can could data day days developer developers does doing down each early even every first from future get getting give gives going good great hacker hackers has have here how into just keep last latest like link links live made make many market may more most much must new news next not now number only open other our over people per post posts product products project projects read real really recent release releases report research right same say says security should show since some something start starts story stories such tech technology than that their them then there these they thing things this those through time today top trend trends two under up use used using very via want was way well were what when where which while who why will with work working world would year years you your'.split(/\s+/));
+const generic=new Set('ai api app apps browser browsers model models open source opensource software tool tools platform platforms system systems agent agents workflow workflows code coding developer developers data cloud server servers startup startups game games gaming voice search engine automation automate digital online web mobile computer computers network networks security privacy identity battery batteries energy solar finance fintech crypto token tokens bitcoin blockchain payment payments pay sales sale lead leads team teams care health legal law learn learning education write writing image video media content creator creators plugin plugins extension extensions build building run running test testing guide how make use best fast free small super efficient native self hosted selfhosted local llm llms assistant assistants company companies launch launches launched release releases released update updates announcement announces introducing introduction official funding raised raises raising million billion series seed venture capital founder founders benchmark benchmarks performance results review reviews comparison vs versus why what when where how who all most some many every first latest today future world years year day days work jobs job market labor labour replacement replacing intelligence intelligent artificial'.split(/\s+/));
+const knownBrands=new Set('claude openai chatgpt anthropic google microsoft apple nvidia meta amazon tesla xai github gitlab docker kubernetes aws azure gemini perplexity llama mistral deepseek cursor replit vercel netlify stripe figma notion slack discord reddit tiktok instagram youtube blender jellyfin plex huggingface macos linux windows android ios wasm rust llvm nsa nasa usa ipad iphone ipod javascript typescript python java golang golanglang nodejs node react vue angular svelte nextjs npm pypi sql html css swift kotlin php ruby perl scala elixir haskell linux kernel android studio visualstudio vscode vscodecode firefox chrome safari edge cloudflare postgres postgresql mysql sqlite redis mongodb supabase firebase tailwind tensorflow pytorch ollama langchain langgraph llamaindex' .split(/\s+/));
+const badWords=new Set('fraud scam hack drug kill porn casino betting weapon sex phishing malware spyware'.split(/\s+/));
+const commonWords=new Set('back power context human ambitious printable cards shows employees grid switzerland accountant nobody hired plan become america capital generate mesh laser scanned terrain bugs turned trading official files net loss sent fake offer championship rings test unveiling block scale quantum native design english silicon zero paper calendar maker ipad javascript typescript python java react vue angular swift kotlin linux windows android rainbow say case cite agent trust key city deep infer proc cli'.split(/\s+/));
+const genericAction=new Set('generate make build create turn convert use using used from how what why when where unveil unveiling official files bugs tools turned sent become becoming plan plans show introducing meet announcing launch launched launching built made create'.split(/\s+/));
+const stopTitles=new Set('awesome list starter template boilerplate dotfiles configs config examples example tutorials tutorial docs documentation cheatsheet cheat sheet'.split(/\s+/));
+function cleanCandidate(raw){return String(raw||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/[^A-Za-z0-9 -]/g,' ').replace(/\s+/g,' ').trim()}
+function normalizeTerm(raw){return cleanCandidate(raw).toLowerCase().replace(/[^a-z0-9]+/g,'').trim()}
+function isGenericTerm(raw){const words=String(raw||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);if(!words.length)return true;const n=normalizeTerm(raw);return words.some(w=>stopWords.has(w)||generic.has(w)||commonWords.has(w)||knownBrands.has(w)||badWords.has(w)||stopTitles.has(w))||generic.has(n)||commonWords.has(n)||knownBrands.has(n)||badWords.has(n)}
+function looksLikeName(raw){const t=String(raw||'').trim();const n=normalizeTerm(t);if(n.length<4||n.length>24||isGenericTerm(t))return false;const camel=/[a-z][A-Z]/.test(t);const digit=/\d/.test(t);const separated=/[-_ ]/.test(t)&&t.split(/[-_ ]+/).filter(Boolean).length<=3;const coined=/[qxzv]{2}|[aeiou]{3}|[bcdfghjklmnpqrstvwxyz]{4}/i.test(n);return camel||digit||(separated&&t.split(/[-_ ]+/).every(w=>w.length>=3)&&!t.split(/[-_ ]+/).some(w=>generic.has(w.toLowerCase())||stopWords.has(w.toLowerCase())))||coined}
+function candidatePhrases(story){
+ const title=String(story.title||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim(), out=[];
+ const push=(raw,kind)=>{const term=String(raw||'').trim().replace(/^['"“”]+|['"“”]+$/g,'');if(term&&looksLikeName(term))out.push({term,kind});};
+ // Show HN is the strongest public launch signal. Keep hyphens inside product names,
+ // but cut off descriptive subtitles such as "for React" or "— an open source ...".
+ const show=title.match(/^Show HN:\s*(.+)$/i);
+ if(show){
+   let head=show[1].split(/\s+(?:—|–|\||for|and|built with|powered by)\s+/i)[0].trim();
+   head=head.split(/:\s+/)[0].trim().replace(/\s+\([^)]*\)$/,'');
+   const words=head.split(/\s+/).filter(Boolean);
+   if(/[a-z][A-Z]|\d|[-_]/.test(words[0])) push(words[0],'launch');
+   else if(words.length===1) push(words[0],'launch');
+ }
+ // Capture names only when a title has an explicit launch cue. Avoid mining arbitrary
+ // CamelCase technology words from unrelated headlines (e.g. iPad or JavaScript).
+ const cue=title.match(/\b(?:Introducing|Meet|Announcing|Launch(?:es|ed|ing)?|New product:?|I built|We built|I made|We made)\s+([A-Z][A-Za-z0-9]*(?:[- ][A-Z][A-Za-z0-9]*){0,2})/);
+ if(cue)push(cue[1],'launch');
+ return out;
+}
+function addEvidence(map,raw,source,score,comments,url,title,time,kind){
+ const evidenceSource=source==='Hacker News Search'?'Hacker News':source;
+ const term=normalizeTerm(raw);if(!term||term.length<4||term.length>24||isGenericTerm(raw))return;
+ if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
+ const x=map.get(term);x.mentions++;x.sources.add(evidenceSource);x.kinds.add(kind||'named');if(url&&!seenSources.has(url))x.newSourceMentions=(x.newSourceMentions||0)+1;
+ if(evidenceSource==='Hacker News'){x.hnMentions++;x.score+=Math.max(0,Number(score)||0);x.comments+=Math.max(0,Number(comments)||0);x.bestScore=Math.max(x.bestScore,Number(score)||0);x.bestComments=Math.max(x.bestComments,Number(comments)||0)}
+ if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
+ if(evidenceSource==='GDELT News'){x.newsMentions=(x.newsMentions||0)+1}
+ x.latest=Math.max(x.latest,Number(time)||0);
+ if(x.stories.length<5)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
+}
+function findTerms(stories,githubRepos=[]){
+ const map=new Map();
+ for(const s of stories){
+  const local=new Set();
+  for(const c of candidatePhrases(s)){
+   const n=normalizeTerm(c.term);if(!n||local.has(n))continue;local.add(n);
+   addEvidence(map,c.term,s._source||'Hacker News',s.score||0,s.descendants||0,s.url||('https://news.ycombinator.com/item?id='+s.id),s.title,s.time,c.kind);
+  }
+ }
+ for(const r of githubRepos){
+  const raw=String(r.name||'').replace(/[-_]+/g,' ').trim();
+  if(!looksLikeName(raw))continue;
+  // A recent repository with meaningful early adoption is a product lead even if its name
+  // has not yet appeared verbatim in Hacker News. It is labeled as an early signal below.
+  if(Number(r.stargazers_count||0)<8)continue;
+  addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
+ }
+ const now=Date.now()/1000;
+ return [...map.values()].filter(x=>{
+   const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
+   const crossSource=x.sources.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.newsMentions>=1)||(x.githubMentions>=1&&x.stars>=8));
+   const strongLaunch=(x.hnMentions===1||x.newsMentions>=1)&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8||x.newsMentions>=2);
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=15;
+   x.signalType=(hnConfirmed||crossSource)?'Mehrfachsignal':'Frühsignal';
+   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
+   return (hnConfirmed||crossSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
+ }).map(x=>{
+   const ageDays=Math.max(0,(now-x.latest)/86400);
+   // Bounded 0–100 score: engagement helps, but recency cannot overwhelm all other evidence.
+   const sourcePoints=x.sources.size>=2?32:0;
+   const repetitionPoints=Math.min(24,Math.max(0,x.hnMentions-1)*12);
+   const hnPoints=Math.min(18,Math.log1p(x.bestScore)*5);
+   const commentPoints=Math.min(14,Math.log1p(x.bestComments)*4);
+   const starPoints=Math.min(16,Math.log1p(x.stars)*3.7);
+   const recencyPoints=16*Math.exp(-ageDays/5);
+   const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
+   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.stars<25)?12:0;
+   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
+   x.term=String(x.term).replace(/[^a-zA-Z0-9]/g,'');
+   x.sourceLabel=[...x.sources].join(' + ');
+   x.confirmation=x.signalReason;
+   x.bestStory=x.stories.slice().sort((a,b)=>(b.score+b.comments)-(a.score+a.comments))[0]||null;
+   return x;
+ }).sort((a,b)=>{
+   const tier=x=>x.sources.size>=2?3:(x.hnMentions>=2?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=25?1:0));
+   return tier(b)-tier(a)||b.trendScore-a.trendScore||b.sources.size-a.sources.size||b.mentions-a.mentions||(Number(b.newSourceMentions)||0)-(Number(a.newSourceMentions)||0);
+ }).slice(0,60);
+}
+async function getJSON(url){const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+async function story(id){try{return await getJSON(HN+'item/'+id+'.json')}catch(e){return null}}
+async function fetchStories(){
+ const kinds=$('scope').value==='new'?['newstories']:['newstories','topstories','showstories'];
+ const lists=await Promise.all(kinds.map(k=>getJSON(HN+k+'.json'))), ids=[...new Set(lists.flatMap(x=>x.slice(0,100)))], out=[];
+ for(let i=0;i<ids.length;i+=20){const b=await Promise.all(ids.slice(i,i+20).map(story));b.forEach(s=>{if(s&&s.type==='story'&&!s.dead&&s.title)out.push(s)})}
+ return out;
+}
+async function fetchGitHubRepos(){
+ const since=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+ const url='https://api.github.com/search/repositories?q=created:>='+since+'+stars:>=5&sort=stars&order=desc&per_page=100';
+ const r=await fetch(url,{headers:{Accept:'application/vnd.github+json'}});
+ if(!r.ok)throw Error(r.status===403||r.status===429?'GitHub-Rate-Limit erreicht':'GitHub HTTP '+r.status);
+ const j=await r.json();return Array.isArray(j.items)?j.items:[];
+}
+// Neue Quellen bewusst unterhalb der bestehenden Hacker-News- und GitHub-Quellen ergänzen.
+async function fetchAlgoliaStories(){
+ const cutoff=Math.floor(Date.now()/1000-30*86400);
+ const queries=[
+  'Show HN',
+  'launch AI tool',
+  'new open source product'
+ ];
+ const out=new Map();
+ for(const q of queries){
+  const url='https://hn.algolia.com/api/v1/search_by_date?'+new URLSearchParams({query:q,tags:'story',numericFilters:'created_at_i>'+cutoff,hitsPerPage:'40'}).toString();
+  const j=await getJSON(url);
+  for(const h of (j.hits||[])){
+   if(!h.title||!h.objectID)continue;
+   const id=String(h.objectID);
+   if(!out.has(id))out.set(id,{id:Number(id),title:h.title,url:'https://news.ycombinator.com/item?id='+id,time:Number(h.created_at_i)||0,score:Number(h.points)||0,descendants:Number(h.num_comments)||0,_source:'Hacker News Search'});
+  }
+ }
+ return [...out.values()];
+}
+async function fetchGDELTStories(){
+ const queries=['"AI tool" OR "AI startup" OR "new AI app"','"launches" OR "introduces" OR "open-source tool"'];
+ const out=new Map();
+ for(const q of queries){
+  const url='https://api.gdeltproject.org/api/v2/doc/doc?'+new URLSearchParams({query:q,mode:'artlist',format:'json',maxrecords:'50',timespan:'7d',sort:'datedesc'}).toString();
+  const j=await getJSON(url);
+  for(const a of (j.articles||[])){
+   if(!a.title||!a.url)continue;
+   const key=a.url;
+   if(!out.has(key))out.set(key,{id:key,title:a.title,url:a.url,time:Date.parse(a.seendate||'')/1000||Date.now()/1000,score:0,descendants:0,_source:'GDELT News'});
+  }
+ }
+ return [...out.values()];
+}
+function getLengthRange(){const v=$('length').value;return [3,v==='max5'?5:v==='max10'?10:8]}
+function fits(n){const [a,b]=getLengthRange();return n.length>=a&&n.length<=b}
+function fitsOriginal(n){const [,max]=getLengthRange();return n.length>=1&&n.length<=max}
+// Brandable names are assembled from curated, pronounceable sound units rather than arbitrary syllable chains.
+const brandStarts=['ab','ac','ad','ae','af','ag','ak','al','am','an','ap','ar','as','at','av','ax','ba','be','bi','bo','bu','ca','ce','ci','co','cu','da','de','di','do','du','evo','fa','fe','fi','fo','fu','ga','ge','gi','go','gu','ha','he','hi','ho','hu','ka','ke','ki','ko','ku','la','le','li','lo','lu','ma','me','mi','mo','mu','na','ne','ni','no','nu','pa','pe','pi','po','pu','ra','re','ri','ro','ru','sa','se','si','so','su','ta','te','ti','to','tu','va','ve','vi','vo','vu','wa','we','wi','wo','ya','ye','yo','za','ze','zi','zo'];
+const brandMiddles=['a','e','i','o','u','ai','ea','oi','au'];
+const brandEnds=['a','e','i','o','u','an','en','in','on','un','ar','er','ir','or','ur','as','es','is','os','us','ax','ex','ix','ox','ux','al','el','il','ol','ul','ant','ent','int','ont','art','ert','irt','ort','urn','ane','ene','ine','one','une','ara','ere','iri','oro','uru','avi','evi','ovi','ami','emi','umi','aro','ero','iro','ora','ore','uri','avo','evo','ivo','ova','eve','iva'];
+function syllableBrand(){
+ const [,max]=getLengthRange();
+ for(let attempt=0;attempt<500;attempt++){
+  const start=pick(brandStarts), end=pick(brandEnds), bridge=pick(brandMiddles);
+  const pattern=pick(['start-end','start-bridge-end','start-consonant-end','start-bridge-consonant-vowel']);
+  let n='';
+  if(pattern==='start-end')n=start+end;
+  else if(pattern==='start-bridge-end')n=start+bridge+end;
+  else if(pattern==='start-consonant-end')n=start+pick(['b','d','f','g','l','m','n','r','s','t','v'])+end;
+  else n=start+bridge+pick(['b','d','f','g','l','m','n','r','s','t','v'])+pick(['a','e','i','o','u']);
+  n=n.toLowerCase();
+  if(n.length<3||n.length>max||!goodNameShape(n)||isGenericTerm(n)||knownBrands.has(n)||badWords.has(n))continue;
+  if(/(.)\1|(.{2})\2/.test(n)||/(?:dada|fisi|dudo|raco|tradi|refra|kofe|tupu)/.test(n))continue;
+  if(nameQuality(n)<5)continue;
+  return n;
+ }
+ return '';
+}
+function goodNameShape(raw){
+ const n=String(raw||'').toLowerCase();if(!/^[a-z]+$/.test(n)||n.length<3)return false;
+ if(!/[aeiou]/.test(n)||/(.)\1\1/.test(n)||/[bcdfghjklmnpqrstvwxyz]{4}/.test(n)||/[aeiou]{3}/.test(n))return false;
+ const vowels=(n.match(/[aeiou]/g)||[]).length, ratio=vowels/n.length;
+ if(ratio<.28||ratio>.68||/^[qx]/.test(n)||/j{2}|q{2}|x{2}/.test(n))return false;
+ if(/(?:dada|fisi|dudo|raco|tradi|refra|kofe|tupu)/.test(n))return false;
+ return true;
+}
+function randomBrand(){for(let i=0;i<120;i++){const n=syllableBrand();if(n)return n}return ''}
+function splitProductName(raw){
+ const cleaned=String(raw||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2').replace(/[^a-zA-Z0-9]+/g,' ').trim();
+ const parts=cleaned.split(/\s+/).filter(Boolean).map(x=>x.toLowerCase());
+ return {parts:[...new Set(parts)],full:parts.join('')};
+}
+function trendVariants(term){
+ const {parts,full}=splitProductName(term), [min,max]=getLengthRange(), candidates=[];
+ const seenNames=new Set();
+ // Version 19: always prioritize the exact, normalized trend/product name first.
+ // It is intentionally not passed through the brand/word-quality filters: this is a
+ // direct availability check, not an endorsement or a trademark clearance.
+ const original=normalizeTerm(term);
+ if(/^[a-z0-9]+$/.test(original)&&fitsOriginal(original)){
+  seenNames.add(original);candidates.push({name:original,score:1000});
+ }
+ const add=(raw,relation,root='')=>{
+  const n=String(raw||'').toLowerCase().replace(/[^a-z]/g,'');
+  if(!n||seenNames.has(n)||n.length<min||n.length>max||n===normalizeTerm(term))return;
+  if(!goodNameShape(n)||isGenericTerm(n)||knownBrands.has(n)||badWords.has(n))return;
+  // Prefer names that sound like an intentional compound, not a chopped stem plus filler.
+  let score=relation+nameQuality(n)*0.15;
+  if(root&&n.startsWith(root))score+=3;
+  if(/(lab|flow|forge|works|kit|studio|stack|scout|point|space|cloud|hub|nest|base|ops|mate)$/.test(n))score+=2;
+  seenNames.add(n);candidates.push({name:n,score});
+ };
+ // Short-domain fallback: when the selected maximum is 5 characters, normal root+suffix
+ // compounds (each suffix is at least 3 characters) cannot fit. Offer only source-derived
+ // components and compact blends, never arbitrary truncations.
+ if(max<=5){
+  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  for(const part of meaningful){
+   if(part.length>=min&&part.length<=max)add(part,90);
+  }
+  if(meaningful.length>=2){
+   const a=meaningful[0], b=meaningful[1];
+   const compact=[
+    a.slice(0,Math.min(2,a.length))+b.slice(0,Math.max(0,max-Math.min(2,a.length))),
+    a.slice(0,Math.min(3,a.length))+b.slice(0,Math.max(0,max-Math.min(3,a.length))),
+    a[0]+b.slice(0,max-1),
+    a.slice(0,2)+b.slice(-Math.max(1,max-2))
+   ];
+   for(const candidate of compact){
+    if(candidate.length>=min&&candidate.length<=max)add(candidate,76,a.slice(0,2));
+   }
+  }
+ }
+ // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
+ // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
+ const suffixes=['lab','flow','forge','works','kit','studio','stack','scout','point','space','cloud','hub','nest','base','ops','mate'];
+ const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ for(const root of roots){
+  for(const [i,suffix] of suffixes.entries()){
+   // Longer suffixes remain available when the user selects a longer name range.
+   add(root+suffix,100-i*0.25,root);
+  }
+ }
+ // A few natural compounds can reverse the order when the source has a clear second word.
+ // This avoids blindly attaching the same suffix to every product name.
+ if(parts.length>=2){
+  const meaningful=parts.filter(p=>p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p));
+  if(meaningful.length>=2){
+   add(meaningful[meaningful.length-1]+meaningful[0],72,meaningful[meaningful.length-1]);
+   for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
+  }
+ }
+ return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|mate)$/.test(n)?2:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
+}
+function nameQuality(n){
+ n=String(n||'').toLowerCase();let score=0;
+ if(goodNameShape(n))score+=4;
+ if(/^[bcdfghjklmnpqrstvwxyz]?[aeiou][bcdfghjklmnpqrstvwxyz]?[aeiou]/.test(n))score+=2;
+ if(!/[qxz]{2}|[bcdfghjklmnpqrstvwxyz]{3}/.test(n))score+=2;
+ if(n.length>=5&&n.length<=7)score+=1;
+ if(/(ia|io|ora|iva|aro|era|ova|ena|ilo|ivo|ela|ino|ari)$/.test(n))score+=1;
+ if(/(.)\1|(.{2})\2/.test(n))score-=3;
+ if(/(?:dada|fisi|dudo|raco|tradi|refra|kofe|tupu)/.test(n))score-=4;
+ return score;
+}
+
+// Conservative language-risk screening in German, English, French and Spanish.
+// Exact/high-confidence terms are red; ambiguous substrings are yellow.
+// This is a screening aid, not a complete linguistic or legal assessment.
+const HIGH_RISK_TERMS = [
+ {lang:'Englisch', re:/\b(n[i1!|]g{1,2}[e3]r|f[a@]gg?[o0]t|k[i1!|]k[e3]|sp[i1!|]c|ch[i1!|]nk)\b/i, label:'Möglicherweise diskriminierende Bezeichnung'},
+ {lang:'Deutsch', re:/\b(n[e3]g[e3]r|kanak[e3]|zigeun[e3]r)\b/i, label:'Möglicherweise diskriminierende Bezeichnung'},
+ {lang:'Französisch', re:/\b(n[e3]gr[e3]|bougnoul[e3]?|youpin[e3]?)\b/i, label:'Möglicherweise diskriminierende Bezeichnung'},
+ {lang:'Spanisch', re:/\b(n[e3]gr[oa]s?|sudaca|maric[oó]n[e3]s?)\b/i, label:'Möglicherweise diskriminierende Bezeichnung'}
+];
+const AMBIGUOUS_RISK_TERMS = [
+ {lang:'Englisch', re:/nig|retard|wh[i1]t[e3]y/i, label:'Mehrdeutige englische Teilfolge'},
+ {lang:'Deutsch', re:/as[i1]|schwucht|mohr/i, label:'Mehrdeutige deutsche Teilfolge'},
+ {lang:'Französisch', re:/n[e3]gr|bicot/i, label:'Mehrdeutige französische Teilfolge'},
+ {lang:'Spanisch', re:/negr|ind[i1]o/i, label:'Mehrdeutige spanische Teilfolge'}
+];
+function languageRisk(raw){
+ const original=String(raw||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const compact=original.replace(/[^a-z0-9]/g,'');
+ for(const rule of HIGH_RISK_TERMS){
+   if(rule.re.test(original)) return {status:'red',label:'Hohes sprachliches Risiko',reason:rule.label+' ('+rule.lang+')'};
+ }
+ for(const rule of AMBIGUOUS_RISK_TERMS){
+   if(rule.re.test(original) || rule.re.test(compact)) return {status:'yellow',label:'Sprachliches Risiko prüfen',reason:rule.label+' ('+rule.lang+')'};
+ }
+ return {status:'green',label:'Kein sprachliches Risiko',reason:'Kein Treffer in den hinterlegten Prüflisten.'};
+}
+function riskBadge(r){
+ const risk=r.languageRisk||languageRisk(r.name);
+ const cls=risk.status==='red'?'risk-red':risk.status==='yellow'?'risk-yellow':'risk-green';
+ return `<span class="risk-pill ${cls}"><span class="risk-dot"></span>${esc(risk.label)}</span>${risk.status!=='green'?`<span class="risk-note">${esc(risk.reason)}</span>`:''}`;
+}
+
+function buildCandidates(){
+ const mode=$('mode').value, count=Number($('count').value), pool=[], local=new Set();
+ const trendLimit=mode==='both'?Math.max(1,Math.floor(count*0.4)):count;
+ if(mode!=='brand'&&trendTerms.length){
+  const variants=trendTerms.slice().sort((a,b)=>{
+   const strength=x=>(x.sources?.size>=2?40:0)+(x.hnMentions>=2?25:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?10:0)+(Number(x.trendScore)||0);
+   return strength(b)-strength(a);
+  }).map(t=>({term:t,names:trendVariants(t.term),used:0}));
+  // For each signal, queue the exact name first, then short derived options in ascending length.
+  // During checking, longer alternatives are skipped once a shorter option for that same signal is available.
+  for(const entry of variants){
+   if(pool.filter(x=>x.type.startsWith('Trend')).length>=trendLimit)break;
+   const original=normalizeTerm(entry.term.term);
+   const crossValidated=(entry.term.sources?.size||0)>=2||entry.term.hnMentions>=2;
+   // Original project/product names are only retained when the signal is independently corroborated.
+   // Uncorroborated originals can carry brand/trademark risk and usually make weak resale candidates.
+   const choices=entry.names.filter(candidate=>{
+    if(candidate===original&&!crossValidated)return false;
+    return (candidate===original?fitsOriginal(candidate):fits(candidate))&&(candidate===original||goodNameShape(candidate))&&!local.has(candidate)&&!($('seenMode').value==='skip'&&seen.has(candidate));
+   }).slice(0,4);
+   if(!choices.length)continue;
+   const best=entry.term.bestStory||entry.term.stories[0]||{};
+   for(const n of choices){
+    if(pool.filter(x=>x.type.startsWith('Trend')).length>=trendLimit)break;
+    local.add(n);
+    pool.push({name:n,type:n===original?'Trendname (mehrfach bestätigt)':'Trend-inspiriert',trend:entry.term.term,trendScore:entry.term.trendScore,mentions:entry.term.mentions,source:best.title||entry.term.term,sourceUrl:best.url||'',sourceLabel:entry.term.sourceLabel,confirmation:entry.term.confirmation,signalType:entry.term.signalType});
+   }
+  }
+ }
+ if(mode!=='trend'){
+  const fantasyPool=[];let tries=0;const target=Math.max(30,count*12);
+  while(fantasyPool.length<target&&tries<count*1800){
+   tries++;let n=randomBrand();
+   if(!n||!fits(n)||!goodNameShape(n)||local.has(n)||(seen.has(n)&&$('seenMode').value==='skip')||knownBrands.has(n)||generic.has(n)||badWords.has(n))continue;
+   local.add(n);fantasyPool.push({name:n,type:'Fantasiename',trend:'',trendScore:0,source:'',sourceUrl:'',mentions:0});
+  }
+  // Prefer pronounceable 5–7 character candidates; keep the generator random enough to discover variety.
+  fantasyPool.sort((a,b)=>nameQuality(b.name)-nameQuality(a.name)||Math.abs(a.name.length-6)-Math.abs(b.name.length-6));
+  pool.push(...fantasyPool.slice(0,Math.max(0,count-pool.length)));
+ }
+ return pool.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
+}
+function drawTrendCandidates(){
+ const el=$('trendCandidates');if(!el)return;
+ if(!trendTerms.length){el.innerHTML='<div class="empty-signal"><span class="empty-dot"></span>Noch keine belastbaren Produkt- oder Projektnamen erkannt. Du kannst trotzdem Fantasienamen prüfen.</div>';return}
+ el.innerHTML=trendTerms.slice(0,10).map(t=>{const best=t.bestStory||t.stories[0]||{};const label=t.signalType==='Mehrfachsignal'?'Mehrfachsignal':'Frühsignal';const url=best.url||'';return `<article class="signal-card"><div class="signal-icon">↗</div><div class="signal-content"><div class="row" style="align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:6px"><span class="signal-title">${esc(t.term)}</span><span class="signal-tag">${esc(label)}</span></div><div class="signal-meta">${esc(t.signalReason||t.confirmation||'Quellensignal')} · ${esc(t.sourceLabel||'Quelle unbekannt')} · Signalwert ${Number(t.trendScore)||0}</div><div class="signal-meta">${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(best.title||'Quelle öffnen')}</a>`:esc(best.title||'Quelleneintrag')}</div></div></article>`}).join('');
+}
+function draw(){
+ drawTrendCandidates();
+ let arr=results.slice();
+ if($('onlyAvailable').checked) arr=arr.filter(r=>r.status==='available');
+ const rf=$('riskFilter')?.value||'safe';
+ arr=arr.filter(r=>{
+   const risk=r.languageRisk||languageRisk(r.name);
+   if(rf==='all') return true;
+   if(rf==='yellow') return risk.status==='yellow';
+   if(rf==='red') return risk.status==='red';
+   return risk.status!=='red';
+ });
+ $('results').innerHTML=arr.length?arr.slice().sort((a,b)=>(a.status==='available'?0:1)-(b.status==='available'?0:1)||(a.type.startsWith('Trend')?0:1)-(b.type.startsWith('Trend')?0:1)||(Number(b.trendScore)||0)-(Number(a.trendScore)||0)).map(r=>`<tr><td class="domain">${esc(r.name)}.com</td><td><span class="pill ${r.status==='available'?'available':r.status==='taken'?'taken':'error'}">${r.status==='available'?'Frei gemeldet':r.status==='taken'?'Belegt':'Fehler'}</span></td><td>${esc(r.type)}</td><td>${r.name.length}</td><td>${esc(r.trend||'—')}</td><td>${riskBadge(r)}</td><td>${r.sourceUrl?`<a target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">${esc(r.source||'Hacker News')}</a>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="hint">Keine Ergebnisse für diesen Filter.</td></tr>';
+ $('checkedN').textContent=results.length;$('availN').textContent=results.filter(x=>x.status==='available').length;$('trendN').textContent=trendTerms.length;$('csv').disabled=!results.length;
+}
+async function checkAvail(n){
+ const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
+ try{
+  let r;
+  try{r=await fetch(AVAIL+encodeURIComponent(n)+'&tlds=com',{signal:ctl.signal})}
+  catch(e){if(e?.name==='AbortError')throw Error('Zeitüberschreitung (15 s)');throw e}
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const j=await r.json(),a=j?.data?.results;
+  if(!j?.ok||!Array.isArray(a))throw Error('Antwortformat unbekannt');
+  const row=a.find(x=>(x.tld||'').replace(/^\./,'').toLowerCase()==='com')||a[0];
+  if(!row||typeof row.available!=='boolean')throw Error('Kein Status geliefert');
+  return row.available?'available':'taken';
+ }finally{clearTimeout(timer)}
+}
+function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein Status geliefert|Antwortformat unbekannt|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
+async function run(){
+ if(running)return;running=true;stopRequested=false;results=[];sourceDiagnostics=[];drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
+ const sourceUrlsToMark=[];let runHadAvailabilityErrors=false;
+ try{
+  const mode=$('mode').value;
+  if(mode!=='brand'){
+   $('status').textContent='Schritt 1/3: Hacker News, GitHub, Algolia und GDELT abfragen …';
+   let hnNote='',githubRepos=[],githubNote='',extraStories=[],algoliaNote='',gdeltNote='';
+   try{storyList=await runSource('Hacker News API',fetchStories)}catch(hne){storyList=[];hnNote=' Hacker News nicht verfügbar ('+(hne.message||'Fehler')+').'}
+   try{githubRepos=await runSource('GitHub Search API',fetchGitHubRepos)}catch(ghe){githubNote=' GitHub nicht verfügbar ('+(ghe.message||'Fehler')+').'}
+   try{extraStories=extraStories.concat(await runSource('Algolia Hacker News Search',fetchAlgoliaStories))}catch(ae){algoliaNote=' Algolia-Suche nicht verfügbar ('+(ae.message||'Fehler')+').'}
+   try{extraStories=extraStories.concat(await runSource('GDELT News API',fetchGDELTStories))}catch(ge){gdeltNote=' GDELT-Nachrichten nicht verfügbar ('+(ge.message||'Fehler')+').'}
+   const baseHNCount=storyList.length;
+   storyList=[...new Map([...storyList,...extraStories].map(s=>[String(s.id||s.url),s])).values()];
+   // Keep previously seen sources as evidence, but do not let them suppress discovery.
+   // New source URLs receive priority in findTerms; checked domains are still deduplicated separately.
+   if($('seenMode').value==='skip'){
+    for(const s of storyList){const u=s.url||('https://news.ycombinator.com/item?id='+s.id);if(!sourceUrlsToMark.includes(u))sourceUrlsToMark.push(u)}
+    for(const r of githubRepos){if(r.html_url&&!sourceUrlsToMark.includes(r.html_url))sourceUrlsToMark.push(r.html_url)}
+   }
+   const newHNCount=storyList.filter(s=>(s._source||'Hacker News').startsWith('Hacker News')&&!seenSources.has(s.url||('https://news.ycombinator.com/item?id='+s.id))).length;
+   const gdeltCount=storyList.filter(s=>s._source==='GDELT News').length;const algoliaCount=storyList.filter(s=>s._source==='Hacker News Search').length;
+   const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
+   trendTerms=findTerms(storyList,githubRepos);
+   $('trendN').textContent=trendTerms.length;drawTrendCandidates();
+   $('status').textContent=`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge, ${algoliaCount} ergänzende HN-Suchtreffer, ${gdeltCount} internationale Nachrichtenartikel und ${githubRepos.length} GitHub-Repositories (${newGitHubCount} neue Quellen) analysiert; ${trendTerms.length} Produkt-/Projektsignale gefunden.${hnNote}${githubNote}${algoliaNote}${gdeltNote}`;
+  } else {trendTerms=[];$('trendN').textContent='0'}
+  if(stopRequested)throw Error('Vom Nutzer gestoppt');
+  $('status').textContent+='\nSchritt 2/3: neue Quellensignale priorisieren; bereits geprüfte Domains überspringen; Originalnamen zuerst, danach Varianten und Fantasienamen …';
+  candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
+  $('status').textContent+=` ${candidates.length} neue Kandidaten.`;
+  let avail=0,delay=Number($('delay').value);const resolvedTrendKeys=new Set();let checked=0;
+  for(let i=0;i<candidates.length;i++){
+   if(stopRequested)break;const c=candidates[i];
+   if(c.trendKey&&resolvedTrendKeys.has(c.trendKey))continue;
+   let status='error',error='';
+   for(let attempt=1;attempt<=3;attempt++){
+    try{status=await checkAvail(c.name);error='';break}
+    catch(checkError){
+     error=checkError.message||'Abfrage fehlgeschlagen';
+     if(attempt>=3||stopRequested||!retryableAvailabilityError(checkError))break;
+     const pause=attempt===1?1000:1800;
+     $('status').textContent=`Schritt 3/3: ${c.name}.com lieferte keinen verlässlichen Status (${error}). Neuer Versuch ${attempt+1}/3 …`;
+     await wait(pause);
+    }
+   }
+   results.push({...c,status,error,checkedAt:new Date().toISOString()});
+   if(status==='error'){seen.delete(c.name);saveSeen();runHadAvailabilityErrors=true}else{seen.add(c.name);saveSeen()}
+   draw();checked++;if(status==='available')avail++;if(c.trendKey&&status==='available')resolvedTrendKeys.add(c.trendKey);
+   $('status').textContent=`Schritt 3/3: ${checked} geprüft — ${c.name}.com: ${status==='available'?'frei gemeldet':status==='taken'?'belegt':'Fehler '+error}\n${avail} frei gemeldet. Längere Varianten eines bereits verfügbaren Trends werden übersprungen.`;
+   if(i<candidates.length-1&&!stopRequested)await wait(delay);
+  }
+  if(!stopRequested&&!runHadAvailabilityErrors&&$('seenMode').value==='skip'&&sourceUrlsToMark.length){
+   sourceUrlsToMark.forEach(url=>seenSources.add(url));saveSeenSources();
+  }
+  const errorCount=results.filter(r=>r.status==='error').length;
+  $('status').textContent=stopRequested?'Durchlauf gestoppt.':runHadAvailabilityErrors?`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, ${errorCount} technische Fehler. Fehlerhafte Domains werden nicht als frei oder belegt gewertet und beim nächsten Suchlauf erneut berücksichtigt. Die freien Treffer findest du in der Ergebnisliste.`:`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, keine technischen Verfügbarkeitsfehler. Die freien Treffer findest du in der Ergebnisliste.`;
+
+ }catch(e){$('status').textContent+=(e.message==='Vom Nutzer gestoppt'?'\nAbgebrochen.':'\nFehler: '+(e.message||'unbekannter Fehler'))}
+ finally{running=false;$('start').disabled=false;$('stop').disabled=true;draw()}
+}
+$('sourceCsv').addEventListener('click',exportSourceDiagnostics);
+$('start').addEventListener('click',run);
+$('stop').addEventListener('click',()=>{stopRequested=true;$('status').textContent+='\nStop angefordert…'});
+$('onlyAvailable').addEventListener('change',draw);
+$('riskFilter').addEventListener('change',draw);
+$('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
+})();
+</script>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 60.0</div></footer>
+<style>
+.version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
+.version-label a{color:inherit;text-decoration:underline}
+</style>
+</body></html>
