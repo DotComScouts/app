@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 72: corrected Algolia attribution, broader launch discovery and persistent status history -->
+<!-- DotComScouts Version 73: corrected Algolia attribution, broader launch discovery and persistent status history -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts v69 – Freie .com-Domains</title>
@@ -322,7 +322,8 @@ function trendVariants(term){
   // Prefer names that sound like an intentional compound, not a chopped stem plus filler.
   let score=relation+nameQuality(n)*0.15;
   if(root&&n.startsWith(root))score+=3;
-  if(/(lab|flow|forge|works|kit|studio|stack|scout|point|space|cloud|hub|nest|base|ops|mate)$/.test(n))score+=2;
+  if(/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n))score-=2;
+  if(/(forge|works|studio|scout|signal|craft|pilot|atlas|spark|shift|logic|foundry|field|orbit|wise|path)$/.test(n))score+=1;
   seenNames.add(n);candidates.push({name:n,score});
  };
  // Short-domain fallback: when the selected maximum is 5 characters, normal root+suffix
@@ -346,9 +347,20 @@ function trendVariants(term){
    }
   }
  }
+ // Prefer source-derived blends before generic root+suffix patterns. These keep a
+ // recognizable link to the product/topic while creating more distinctive candidates.
+ if(parts.length>=2){
+  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
+   if(i===j)continue;
+   const a=meaningful[i],b=meaningful[j];
+   const blends=[a.slice(0,Math.min(4,a.length))+b.slice(Math.min(2,b.length)),a.slice(0,Math.min(3,a.length))+b.slice(-Math.min(3,b.length)),a.slice(0,Math.min(2,a.length))+b];
+   for(const blend of blends)add(blend,88,a.slice(0,2));
+  }
+ }
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
- const suffixes=['lab','flow','forge','works','kit','studio','stack','scout','point','space','cloud','hub','nest','base','ops','mate'];
+ const suffixes=['forge','works','studio','scout','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit','wise','path'];
  const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
@@ -365,7 +377,7 @@ function trendVariants(term){
    for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
   }
  }
- return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|mate)$/.test(n)?2:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
+ return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n)?3:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
 }
 function nameQuality(n){
  n=String(n||'').toLowerCase();let score=0;
@@ -569,7 +581,7 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 72.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 73.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
