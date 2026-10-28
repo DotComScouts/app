@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 73: corrected Algolia attribution, broader launch discovery and persistent status history -->
+<!-- DotComScouts Version 74: corrected Algolia attribution, broader launch discovery and persistent status history -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts v69 – Freie .com-Domains</title>
@@ -430,36 +430,29 @@ function buildCandidates(){
   const variants=trendTerms.slice().sort((a,b)=>{
    const strength=x=>(x.sources?.size>=2?40:0)+(x.hnMentions>=2?25:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?10:0)+(Number(x.trendScore)||0);
    return strength(b)-strength(a);
-  }).map(t=>({term:t,names:trendVariants(t.term),used:0}));
-  // For each signal, queue the exact name first, then short derived options in ascending length.
-  // During checking, longer alternatives are skipped once a shorter option for that same signal is available.
-  for(const entry of variants){
-   if(pool.filter(x=>x.type.startsWith('Trend')).length>=trendLimit)break;
-   const original=normalizeTerm(entry.term.term);
-   const crossValidated=(entry.term.sources?.size||0)>=2||entry.term.hnMentions>=2;
-   // Original project/product names are only retained when the signal is independently corroborated.
-   // Uncorroborated originals can carry brand/trademark risk and usually make weak resale candidates.
-   const choices=entry.names.filter(candidate=>{
-    if(candidate===original&&!crossValidated)return false;
-    return (candidate===original?fitsOriginal(candidate):fits(candidate))&&(candidate===original||goodNameShape(candidate))&&!local.has(candidate)&&!($('seenMode').value==='skip'&&seen.has(candidate));
-   }).slice(0,4);
-   if(!choices.length)continue;
-   const best=entry.term.bestStory||entry.term.stories[0]||{};
-   for(const n of choices){
-    if(pool.filter(x=>x.type.startsWith('Trend')).length>=trendLimit)break;
-    local.add(n);
-    pool.push({name:n,type:n===original?'Trendname (mehrfach bestätigt)':'Trend-inspiriert',trend:entry.term.term,trendScore:entry.term.trendScore,mentions:entry.term.mentions,source:best.title||entry.term.term,sourceUrl:best.url||'',sourceLabel:entry.term.sourceLabel,confirmation:entry.term.confirmation,signalType:entry.term.signalType});
-   }
+  });
+  const originals=[], alternatives=[];
+  for(const term of variants){
+   const original=normalizeTerm(term.term);
+   if(!original||!fitsOriginal(original)||!/^[a-z0-9]+$/.test(original)||local.has(original)||($('seenMode').value==='skip'&&seen.has(original)))continue;
+   const best=term.bestStory||term.stories[0]||{};
+   const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
+   local.add(original);
+   originals.push({name:original,type:'Originaltrend',...meta,trendKey:original});
+   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,3);
+   for(const n of choices){local.add(n);alternatives.push({name:n,type:'Trendvariante',...meta,trendKey:original});}
   }
+  // Critical ordering: check every exact normalized trend name before checking any derived name.
+  pool.push(...originals.slice(0,trendLimit));
+  if(pool.length<trendLimit)pool.push(...alternatives.slice(0,trendLimit-pool.length));
  }
- if(mode!=='trend'){
+ if(mode!=='trend'&&pool.length<count){
   const fantasyPool=[];let tries=0;const target=Math.max(30,count*12);
   while(fantasyPool.length<target&&tries<count*1800){
    tries++;let n=randomBrand();
    if(!n||!fits(n)||!goodNameShape(n)||local.has(n)||(seen.has(n)&&$('seenMode').value==='skip')||knownBrands.has(n)||generic.has(n)||badWords.has(n))continue;
    local.add(n);fantasyPool.push({name:n,type:'Fantasiename',trend:'',trendScore:0,source:'',sourceUrl:'',mentions:0});
   }
-  // Prefer pronounceable 5–7 character candidates; keep the generator random enough to discover variety.
   fantasyPool.sort((a,b)=>nameQuality(b.name)-nameQuality(a.name)||Math.abs(a.name.length-6)-Math.abs(b.name.length-6));
   pool.push(...fantasyPool.slice(0,Math.max(0,count-pool.length)));
  }
@@ -540,7 +533,7 @@ async function run(){
    setStatus(`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge; Algolia ${algoliaCount} eindeutige Treffer aus ${algoliaMeta.successfulQueries}/${algoliaMeta.totalQueries} Suchabfragen, davon ${algoliaOverlap} Überschneidungen mit der HN-API; ${algoliaSignals} Signale mit Algolia-Bezug. GitHub: ${githubRepos.length} Repositories, ${githubEligibleCount} namens-/sternestarke und ${githubSignals} erkannte Signale. Insgesamt ${trendTerms.length} Produkt-/Projektsignale.${algoliaMeta.queryErrors?.length?' Algolia-Teilfehler: '+algoliaMeta.queryErrors.join(' | '):''}${hnNote}${githubNote}${algoliaNote}`);
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
-  appendStatus('Schritt 2/3: neue Quellensignale priorisieren; bereits geprüfte Domains überspringen; Originalnamen zuerst, danach Varianten und Fantasienamen …');
+  appendStatus('Schritt 2/3: zuerst die exakten, normalisierten Originaltrend-Domains prüfen; danach Trendvarianten und Fantasienamen …');
   candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
   appendStatus(`${candidates.length} neue Kandidaten.`);
   let avail=0,delay=Number($('delay').value);const resolvedTrendKeys=new Set();let checked=0;
@@ -581,7 +574,7 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 73.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 74.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
