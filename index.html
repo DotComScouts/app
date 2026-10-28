@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 74: corrected Algolia attribution, broader launch discovery and persistent status history -->
+<!-- DotComScouts Version 76: expanded trend-inspired candidate generation and checks all candidates per trend -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><title>DotComScouts v69 – Freie .com-Domains</title>
+<meta name="theme-color" content="#111827"><title>DotComScouts v76 – Freie .com-Domains</title>
 <style>
 :root{color-scheme:dark;--panel:#141c2e;--text:#eef3ff;--muted:#a8b4cc;--line:#2b3954;--accent:#7dd3fc;--good:#86efac;--warn:#fcd34d;--bad:#fca5a5}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
@@ -326,6 +326,29 @@ function trendVariants(term){
   if(/(forge|works|studio|scout|signal|craft|pilot|atlas|spark|shift|logic|foundry|field|orbit|wise|path)$/.test(n))score+=1;
   seenNames.add(n);candidates.push({name:n,score});
  };
+ // Compact source-derived variants are especially important for short or coined trend names
+ // (e.g. LYNX): ordinary long suffixes often produce no candidates within the selected length.
+ // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
+ const compactRoots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ const compactEndings=['io','ai','ora','era','iva','ova','ena','aro','ivo','ify','ly','app','lab','go','one'];
+ for(const root of compactRoots){
+  for(const ending of compactEndings){
+   const n=root+ending;
+   if(n.length>=min&&n.length<=max)add(n,84,root.slice(0,Math.min(3,root.length)));
+  }
+ }
+ // For multi-part names, reverse compact blends can retain more of the original idea
+ // while still fitting short .com names.
+ if(parts.length>=2){
+  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=2&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
+   if(i===j)continue;
+   const a=meaningful[i],b=meaningful[j];
+   for(const n of [a+b.slice(0,3),a.slice(0,Math.min(4,a.length))+b.slice(-Math.min(3,b.length)),b+a.slice(0,Math.min(3,a.length))]){
+    if(n.length>=min&&n.length<=max)add(n,82,a.slice(0,Math.min(3,a.length)));
+   }
+  }
+ }
  // Short-domain fallback: when the selected maximum is 5 characters, normal root+suffix
  // compounds (each suffix is at least 3 characters) cannot fit. Offer only source-derived
  // components and compact blends, never arbitrary truncations.
@@ -442,7 +465,7 @@ function buildCandidates(){
    local.add(original);
    originals.push({name:original,type:'Originaltrend',...meta,trendKey:original});
    // Generate variants only after recording the exact original .com candidate.
-   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,5);
+   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,12);
    for(const n of choices){local.add(n);alternatives.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
   }
  }
@@ -453,17 +476,18 @@ function buildCandidates(){
   return pool.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
  }
  if(mode==='both'){
-  // Preserve the priority order: exact original domains first, then inspired variants.
-  pool.push(...originals.slice(0,originalTarget));
-  // If fewer originals than the target exist, still check every available original
-  // before moving on to trend-inspired names.
-  if(pool.length<originalTarget)pool.push(...originals.slice(pool.length));
-  const originalCount=pool.length;
-  const takeInspired=Math.min(alternatives.length,inspiredTarget);
+  // Strict ordering: every eligible exact original domain is queued first, even when
+  // that exceeds the 25% target. The percentages are targets, never a reason to omit originals.
+  pool.push(...originals.slice(0,count));
+  // Aim for 50% trend-inspired candidates, but use only unique, valid variants actually found.
+  const takeInspired=Math.min(alternatives.length,Math.max(0,inspiredTarget),Math.max(0,count-pool.length));
   pool.push(...alternatives.slice(0,takeInspired));
-  // Fill any remaining capacity with unused trend candidates before fantasy names.
-  const trendExtras=[...originals.slice(originalCount),...alternatives.slice(takeInspired)];
-  for(const x of trendExtras){if(pool.length>=count)break;if(!pool.some(y=>y.name===x.name))pool.push(x);}
+  // If there are too few variants to reach the target, use any remaining trend candidates
+  // before resorting to invented brand names.
+  for(const x of alternatives.slice(takeInspired)){
+   if(pool.length>=count)break;
+   if(!pool.some(y=>y.name===x.name))pool.push(x);
+  }
  }
  if(mode!=='trend'&&pool.length<count){
   let tries=0;const target=Math.max(30,count*12);
@@ -555,10 +579,9 @@ async function run(){
   appendStatus('Schritt 2/3: zuerst die exakten Originaltrend-Domains, danach Trend-inspirierte Namen und Fantasienamen prüfen …');
   candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
   appendStatus(`${candidates.length} neue Kandidaten.`);
-  let avail=0,delay=Number($('delay').value);const resolvedTrendKeys=new Set();let checked=0;
+  let avail=0,delay=Number($('delay').value);let checked=0;
   for(let i=0;i<candidates.length;i++){
    if(stopRequested)break;const c=candidates[i];
-   if(c.trendKey&&resolvedTrendKeys.has(c.trendKey))continue;
    let status='error',error='';
    for(let attempt=1;attempt<=3;attempt++){
     try{status=await checkAvail(c.name);error='';break}
@@ -572,7 +595,7 @@ async function run(){
    }
    results.push({...c,status,error,checkedAt:new Date().toISOString()});
    if(status==='error'){seen.delete(c.name);saveSeen();runHadAvailabilityErrors=true}else{seen.add(c.name);saveSeen()}
-   draw();checked++;if(status==='available')avail++;if(c.trendKey&&status==='available')resolvedTrendKeys.add(c.trendKey);
+   draw();checked++;if(status==='available')avail++;
    appendStatus(`Schritt 3/3: ${checked} geprüft — ${c.name}.com: ${status==='available'?'frei gemeldet':status==='taken'?'belegt':'Fehler '+error}; ${avail} frei gemeldet.`);
    if(i<candidates.length-1&&!stopRequested)await wait(delay);
   }
@@ -593,7 +616,7 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 75.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 76.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
