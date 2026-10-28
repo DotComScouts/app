@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 90: complete dynamic UI translations DE/EN/ES/FR -->
+<!-- DotComScouts Version 91: complete dynamic UI translations DE/EN/ES/FR -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -176,13 +176,13 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function drawSourceDiagnostics(){
  const body=$('sourceRows');
  if(!sourceDiagnostics.length){body.innerHTML=`<tr><td colspan="5" class="hint">${esc(tr('notStarted'))}</td></tr>`;$('sourceCsv').disabled=true;return}
- body.innerHTML=sourceDiagnostics.map(d=>`<tr><td>${esc(d.source)}</td><td><span class="pill ${d.status===st('ok')?'available':'error'}">${esc(d.status)}</span></td><td>${d.count==null?'—':d.count}</td><td>${d.ms==null?'—':(d.ms/1000).toFixed(1)+' s'}</td><td>${esc(d.error||'—')}</td></tr>`).join('');
+ body.innerHTML=sourceDiagnostics.map(d=>`<tr><td>${esc(d.source)}</td><td><span class="pill ${d.statusKey==='ok'?'available':d.statusKey==='running'?'error':'error'}">${esc(d.status)}</span></td><td>${d.count==null?'—':d.count}</td><td>${d.ms==null?'—':(d.ms/1000).toFixed(1)+' s'}</td><td>${esc(d.error||'—')}</td></tr>`).join('');
  $('sourceCsv').disabled=false;
 }
 async function runSource(source,fn,countOf=x=>Array.isArray(x)?x.length:null){
- const d={source,status:st('running'),count:null,ms:null,error:'',startedAt:new Date().toISOString()};sourceDiagnostics.push(d);drawSourceDiagnostics();const t=Date.now();
- try{const value=await fn();d.status=st('ok');d.count=countOf(value);d.ms=Date.now()-t;d.finishedAt=new Date().toISOString();drawSourceDiagnostics();return value}
- catch(e){d.status=st('failedSource');d.ms=Date.now()-t;d.error=e?.message||String(e)||st('unknownError');d.finishedAt=new Date().toISOString();drawSourceDiagnostics();throw e}
+ const d={source,statusKey:'running',status:st('running'),count:null,ms:null,error:'',startedAt:new Date().toISOString()};sourceDiagnostics.push(d);drawSourceDiagnostics();const t=Date.now();
+ try{const value=await fn();d.statusKey='ok';d.status=st('ok');d.count=countOf(value);d.ms=Date.now()-t;d.finishedAt=new Date().toISOString();drawSourceDiagnostics();return value}
+ catch(e){d.statusKey='failedSource';d.status=st('failedSource');d.ms=Date.now()-t;d.error=e?.message||String(e)||st('unknownError');d.finishedAt=new Date().toISOString();drawSourceDiagnostics();throw e}
 }
 function exportSourceDiagnostics(){const cols=['source','status','count','duration_ms','error','startedAt','finishedAt'];const rows=[cols.join(';'),...sourceDiagnostics.map(d=>[d.source,d.status,d.count,d.ms,d.error,d.startedAt,d.finishedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';'))];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-quellendiagnose.csv';a.click();URL.revokeObjectURL(url)}
 
@@ -690,7 +690,7 @@ applyLanguage(currentLang);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 90.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 91.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
