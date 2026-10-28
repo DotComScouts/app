@@ -63,7 +63,7 @@
 <div class="grid">
 <div class="field"><label for="mode">Namensquelle</label><select id="mode"><option value="both" selected>Trends + Fantasienamen</option><option value="trend">Nur Trend-inspirierte Namen</option><option value="brand">Nur Fantasienamen</option></select></div>
 <div class="field"><label for="length">Max. Länge (ohne .com)</label><select id="length"><option value="max5">Bis 5 Zeichen · kurz zuerst</option><option value="max8" selected>Bis 8 Zeichen · kurz zuerst</option><option value="max10">Bis 10 Zeichen · kurz zuerst</option></select></div>
-<div class="field"><label for="count">Domains live prüfen</label><select id="count"><option>20</option><option selected>40</option><option>60</option><option>100</option></select></div>
+<div class="field"><label for="count">Domains live prüfen</label><select id="count"><option selected>40</option><option>60</option><option>80</option><option>100</option></select></div>
 <div class="field"><label for="scope">Trendquellen</label><select id="scope"><option value="new">Aktuelle Meldungen + neue Softwareprojekte</option><option value="mixed" selected>Breite Suche: aktuelle und beliebte Meldungen, Produktvorstellungen + Softwareprojekte</option></select></div>
 <div class="field"><label for="delay">Pause pro Check</label><select id="delay"><option value="1800" selected>1,8 Sek.</option><option value="2400">2,4 Sek.</option><option value="3200">3,2 Sek.</option></select></div>
 <div class="field"><label for="seenMode">Wiederholungen</label><select id="seenMode"><option value="skip" selected>Neue Funde bevorzugen</option><option value="allow">Alle Funde erneut berücksichtigen</option></select></div>
@@ -425,13 +425,15 @@ function riskBadge(r){
 
 function buildCandidates(){
  const mode=$('mode').value, count=Number($('count').value), pool=[], local=new Set();
- const trendLimit=mode==='both'?Math.max(1,Math.floor(count*0.4)):count;
+ // Zielverteilung für den kombinierten Suchmodus: 25 % Originaltrend,
+ // 50 % Trend-inspiriert, 25 % Fantasiename. Das sind Ziele, keine künstlichen Quoten.
+ const originalTarget=Math.floor(count*0.25), inspiredTarget=Math.floor(count*0.50), fantasyTarget=count-originalTarget-inspiredTarget;
+ const originals=[], alternatives=[], fantasyPool=[];
  if(mode!=='brand'&&trendTerms.length){
   const variants=trendTerms.slice().sort((a,b)=>{
    const strength=x=>(x.sources?.size>=2?40:0)+(x.hnMentions>=2?25:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?10:0)+(Number(x.trendScore)||0);
    return strength(b)-strength(a);
   });
-  const originals=[], alternatives=[];
   for(const term of variants){
    const original=normalizeTerm(term.term);
    if(!original||!fitsOriginal(original)||!/^[a-z0-9]+$/.test(original)||local.has(original)||($('seenMode').value==='skip'&&seen.has(original)))continue;
@@ -439,15 +441,32 @@ function buildCandidates(){
    const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
    local.add(original);
    originals.push({name:original,type:'Originaltrend',...meta,trendKey:original});
-   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,3);
-   for(const n of choices){local.add(n);alternatives.push({name:n,type:'Trendvariante',...meta,trendKey:original});}
+   // Generate variants only after recording the exact original .com candidate.
+   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,5);
+   for(const n of choices){local.add(n);alternatives.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
   }
-  // Critical ordering: check every exact normalized trend name before checking any derived name.
-  pool.push(...originals.slice(0,trendLimit));
-  if(pool.length<trendLimit)pool.push(...alternatives.slice(0,trendLimit-pool.length));
+ }
+ if(mode==='trend'){
+  // Trend-only mode includes originals first, then source-derived variants.
+  pool.push(...originals.slice(0,count));
+  if(pool.length<count)pool.push(...alternatives.slice(0,count-pool.length));
+  return pool.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
+ }
+ if(mode==='both'){
+  // Preserve the priority order: exact original domains first, then inspired variants.
+  pool.push(...originals.slice(0,originalTarget));
+  // If fewer originals than the target exist, still check every available original
+  // before moving on to trend-inspired names.
+  if(pool.length<originalTarget)pool.push(...originals.slice(pool.length));
+  const originalCount=pool.length;
+  const takeInspired=Math.min(alternatives.length,inspiredTarget);
+  pool.push(...alternatives.slice(0,takeInspired));
+  // Fill any remaining capacity with unused trend candidates before fantasy names.
+  const trendExtras=[...originals.slice(originalCount),...alternatives.slice(takeInspired)];
+  for(const x of trendExtras){if(pool.length>=count)break;if(!pool.some(y=>y.name===x.name))pool.push(x);}
  }
  if(mode!=='trend'&&pool.length<count){
-  const fantasyPool=[];let tries=0;const target=Math.max(30,count*12);
+  let tries=0;const target=Math.max(30,count*12);
   while(fantasyPool.length<target&&tries<count*1800){
    tries++;let n=randomBrand();
    if(!n||!fits(n)||!goodNameShape(n)||local.has(n)||(seen.has(n)&&$('seenMode').value==='skip')||knownBrands.has(n)||generic.has(n)||badWords.has(n))continue;
@@ -533,7 +552,7 @@ async function run(){
    setStatus(`Schritt 1/3 abgeschlossen: ${baseHNCount} HN-Beiträge; Algolia ${algoliaCount} eindeutige Treffer aus ${algoliaMeta.successfulQueries}/${algoliaMeta.totalQueries} Suchabfragen, davon ${algoliaOverlap} Überschneidungen mit der HN-API; ${algoliaSignals} Signale mit Algolia-Bezug. GitHub: ${githubRepos.length} Repositories, ${githubEligibleCount} namens-/sternestarke und ${githubSignals} erkannte Signale. Insgesamt ${trendTerms.length} Produkt-/Projektsignale.${algoliaMeta.queryErrors?.length?' Algolia-Teilfehler: '+algoliaMeta.queryErrors.join(' | '):''}${hnNote}${githubNote}${algoliaNote}`);
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
-  appendStatus('Schritt 2/3: zuerst die exakten, normalisierten Originaltrend-Domains prüfen; danach Trendvarianten und Fantasienamen …');
+  appendStatus('Schritt 2/3: zuerst die exakten Originaltrend-Domains, danach Trend-inspirierte Namen und Fantasienamen prüfen …');
   candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
   appendStatus(`${candidates.length} neue Kandidaten.`);
   let avail=0,delay=Number($('delay').value);const resolvedTrendKeys=new Set();let checked=0;
@@ -574,7 +593,7 @@ $('riskFilter').addEventListener('change',draw);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 74.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 75.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
