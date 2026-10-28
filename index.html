@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 89: multilingual initialization fix DE/EN/ES/FR -->
+<!-- DotComScouts Version 90: complete dynamic UI translations DE/EN/ES/FR -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -148,7 +148,8 @@ function applyLanguage(lang){currentLang=LANGS[lang]?lang:'de';document.document
  const progLabel=document.querySelector('#domainProgress');if(progLabel)progLabel.setAttribute('aria-label',currentLang==='de'?'Fortschritt des Domain-Checks':currentLang==='en'?'Domain check progress':currentLang==='es'?'Progreso de comprobación de dominios':'Progression de la vérification des domaines');
  const stat=$('status');if(stat&&!running&&results.length===0)stat.textContent=tr('ready');
  if(!results.length){const r=$('results');if(r)r.innerHTML=`<tr><td colspan="7" class="hint">${tr('noResults')}</td></tr>`;const sr=$('sourceRows');if(sr&&!sourceDiagnostics.length)sr.innerHTML=`<tr><td colspan="5" class="hint">${tr('notStarted')}</td></tr>`;}
- draw();drawSourceDiagnostics();drawTrendCandidates();if(results.length)updateDomainProgress(results.filter(r=>r.status!=='error').length,Number($('count').value)||40,'running');
+ if(!running&&results.length===0){const pt=$('progressTitle'),pd=$('progressDetail');if(pt)pt.textContent=tr('progressReady');if(pd)pd.textContent=tr('progressNone');}
+ draw();drawSourceDiagnostics();drawTrendCandidates();
 }
 $('languageSelect').addEventListener('change',e=>{try{localStorage.setItem('dotComScoutsLanguage',e.target.value)}catch(_){}applyLanguage(e.target.value)});
 try{const saved=localStorage.getItem('dotComScoutsLanguage');if(saved&&LANGS[saved]){$('languageSelect').value=saved;currentLang=saved}}catch(_){}
@@ -574,7 +575,7 @@ function draw(){
    if(rf==='red') return risk.status==='red';
    return risk.status!=='red';
  });
- $('results').innerHTML=arr.length?arr.slice().sort((a,b)=>(a.status==='available'?0:1)-(b.status==='available'?0:1)||(a.type.startsWith('Trend')?0:1)-(b.type.startsWith('Trend')?0:1)||(Number(b.trendScore)||0)-(Number(a.trendScore)||0)).map(r=>`<tr><td class="domain">${esc(r.name)}.com</td><td><span class="pill ${r.status==='available'?'available':r.status==='taken'?'taken':'error'}">${r.status==='available'?tr('free'):r.status==='taken'?tr('taken'):tr('error')}</span></td><td>${esc(r.type==='Originaltrend'?tr('originalType'):r.type==='Trend-inspiriert'?tr('trendType'):r.type==='Fantasiename'?tr('fantasyType'):r.type)}</td><td>${r.name.length}</td><td>${esc(r.trend||'—')}</td><td>${riskBadge(r)}</td><td>${r.sourceUrl?`<a target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">${esc(r.source||'Hacker News')}</a>`:'—'}</td></tr>`).join(''):`<tr><td colspan="7" class="hint">${tr('noFilter')}</td></tr>`;
+ $('results').innerHTML=arr.length?arr.slice().sort((a,b)=>(a.status==='available'?0:1)-(b.status==='available'?0:1)||(a.type.startsWith('Trend')?0:1)-(b.type.startsWith('Trend')?0:1)||(Number(b.trendScore)||0)-(Number(a.trendScore)||0)).map(r=>`<tr><td class="domain">${esc(r.name)}.com</td><td><span class="pill ${r.status==='available'?'available':r.status==='taken'?'taken':'error'}">${r.status==='available'?tr('free'):r.status==='taken'?tr('taken'):tr('error')}</span></td><td>${esc(r.type==='Originaltrend'?tr('originalType'):r.type==='Trend-inspiriert'?tr('trendType'):r.type==='Fantasiename'?tr('fantasyType'):r.type)}</td><td>${r.name.length}</td><td>${esc(r.trend||'—')}</td><td>${riskBadge(r)}</td><td>${r.sourceUrl?`<a target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">${esc(r.source||'Hacker News')}</a>`:'—'}</td></tr>`).join(''):`<tr><td colspan="7" class="hint">${tr(results.length?'noFilter':'noResults')}</td></tr>`;
  const availableCount=results.filter(x=>x.status==='available').length;$('checkedN').textContent=results.filter(x=>x.status!=='error').length;$('availN').textContent=availableCount;$('availN').parentElement.classList.toggle('has-available',availableCount>0);$('trendN').textContent=trendTerms.length;$('csv').disabled=!results.length;
 }
 async function checkAvail(n){
@@ -689,7 +690,7 @@ applyLanguage(currentLang);
 $('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.label,risk.reason,r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 89.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 90.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
