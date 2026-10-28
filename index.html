@@ -1,12 +1,28 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 76: expanded trend-inspired candidate generation and checks all candidates per trend -->
+<!-- DotComScouts Version 77: completion indicator for domain check -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
 <style>
 :root{color-scheme:dark;--panel:#141c2e;--text:#eef3ff;--muted:#a8b4cc;--line:#2b3954;--accent:#7dd3fc;--good:#86efac;--warn:#fcd34d;--bad:#fca5a5}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
+
+.domain-progress{margin:8px 0 13px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#0e1729}
+.domain-progress .progress-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.domain-progress .progress-icon{display:inline-grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:50%;font-weight:900;background:#26344b;color:var(--muted)}
+.domain-progress .progress-title{font-weight:800;font-size:14px}
+.domain-progress .progress-detail{font-size:12px;color:var(--muted)}
+.domain-progress .progress-track{height:9px;background:#26344b;border-radius:999px;overflow:hidden}
+.domain-progress .progress-fill{height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .22s ease,background .22s ease}
+.domain-progress.done{border-color:#28734f;background:linear-gradient(120deg,#102b25,#0e1729)}
+.domain-progress.done .progress-icon{background:#14532d;color:#bbf7d0}
+.domain-progress.done .progress-title{color:var(--good)}
+.domain-progress.done .progress-fill{background:#22c55e}
+.domain-progress.partial{border-color:#8b6a27}
+.domain-progress.partial .progress-icon{background:#493b16;color:#fde68a}
+.domain-progress.partial .progress-fill{background:#fbbf24}
+
 @media(max-width:620px){main{padding:14px 9px 30px}.panel{padding:11px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.actions{grid-template-columns:1fr}.kpi strong{font-size:18px}.row{align-items:flex-start;flex-direction:column}}
 
 .brandline{display:flex;align-items:center;gap:9px;color:#c7d8ef;font-size:11px;font-weight:800;letter-spacing:.14em;margin:4px 0 0}.brandmark{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;background:linear-gradient(145deg,#38bdf8,#2563eb);color:white;font-size:15px;letter-spacing:0;box-shadow:0 5px 18px #0284c733}.branddivider{width:1px;height:18px;background:var(--line);margin:0 2px}.brandcaption{font-weight:500;letter-spacing:0;color:var(--muted);font-size:12px}.brandtitle{font-size:clamp(26px,5vw,36px);letter-spacing:.02em}.brandclaim{margin:-1px 0 18px 37px;color:var(--accent);font-weight:750;font-size:clamp(15px,2.4vw,19px);letter-spacing:-.015em}.brandclaim .arrow{color:#38bdf8;padding:0 3px}.sub{font-size:12px;max-width:760px;line-height:1.55}.panel{padding:18px;margin:14px 0;box-shadow:0 10px 30px #02061724}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.sectionhead h2{margin:2px 0 0}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.15em;color:#7dd3fc}.sectionnote{font-size:11px;color:var(--muted)}.signal-panel{background:linear-gradient(145deg,rgba(20,31,51,.98),rgba(17,26,44,.98))}.signal-panel summary::-webkit-details-marker{display:none}.signal-panel details>summary::after{content:"＋";margin-left:auto;color:var(--accent);font-size:18px}.signal-panel details[open]>summary::after{content:"−"}.signal-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.signal-card{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);background:#0d1729;border-radius:11px;padding:11px;min-width:0}.signal-icon{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#142b42;color:#7dd3fc;font-weight:800}.signal-content{min-width:0;flex:1}.signal-title{font-weight:750;font-size:13px;overflow-wrap:anywhere}.signal-meta{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.45}.signal-tag{display:inline-block;border:1px solid #35516c;border-radius:999px;padding:2px 6px;font-size:10px;color:#c2e6ff;white-space:nowrap}.empty-signal{display:flex;align-items:center;gap:9px;grid-column:1/-1;border:1px dashed #35435d;border-radius:10px;padding:14px;color:var(--muted);font-size:12px}.empty-dot{width:8px;height:8px;border-radius:50%;background:#53657d}.how-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0}.how-grid>div{display:flex;flex-direction:column;gap:5px}.stepno{color:#7dd3fc;font-size:11px;font-weight:800;letter-spacing:.1em}.how-grid strong{font-size:13px}.how-grid p{font-size:12px;line-height:1.55;margin:0}.how-panel .foot{font-size:12px!important;line-height:1.55;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}button{transition:filter .15s,transform .15s}button:hover:not(:disabled){filter:brightness(1.12)}button.primary{background:linear-gradient(110deg,#0369a1,#075985);box-shadow:0 5px 16px #0284c733}.status{line-height:1.6;min-height:5.2em;display:block;overflow-wrap:anywhere}.kpi{padding:12px}.kpi strong{font-size:22px}.tablewrap{border-radius:12px}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}.domain{letter-spacing:.01em}
@@ -76,6 +92,10 @@
 <section class="panel">
 <div class="row"><div><div class="eyebrow">DOMAIN-CHECK</div><h2>Deine Ergebnisse</h2></div><button id="csv" class="secondary" disabled>CSV exportieren</button></div>
 <div class="kpis"><div class="kpi"><strong id="checkedN">0</strong><span>geprüft</span></div><div class="kpi"><strong id="availN">0</strong><span>frei gemeldet</span></div><div class="kpi"><strong id="trendN">0</strong><span>Signale erkannt</span></div></div>
+<div id="domainProgress" class="domain-progress" role="status" aria-live="polite" aria-label="Fortschritt des Domain-Checks">
+ <div class="progress-head"><span id="progressIcon" class="progress-icon" aria-hidden="true">…</span><div><div id="progressTitle" class="progress-title">Bereit für den Domain-Check</div><div id="progressDetail" class="progress-detail">Noch keine Domains geprüft.</div></div></div>
+ <div class="progress-track" role="progressbar" aria-label="Domain-Check-Fortschritt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack"><div id="progressFill" class="progress-fill"></div></div>
+</div>
 <div class="results-toolbar">
 <label><input type="checkbox" id="onlyAvailable"> Nur frei gemeldete Domains zeigen</label>
 <div class="field"><label for="riskFilter">Sprachliches Risiko</label><p class="risk-help">Automatische Vorprüfung auf mögliche problematische Bedeutungen, unerwünschte Assoziationen oder missverständliche Begriffe in mehreren Sprachen.</p><select id="riskFilter" aria-label="Sprachliches Risiko">
@@ -536,8 +556,18 @@ async function checkAvail(n){
  }finally{clearTimeout(timer)}
 }
 function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein Status geliefert|Antwortformat unbekannt|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
+function updateDomainProgress(checked,total,state='running',detail=''){
+ const wrap=$('domainProgress'),fill=$('progressFill'),title=$('progressTitle'),sub=$('progressDetail'),icon=$('progressIcon'),track=$('progressTrack');
+ const pct=total>0?Math.min(100,Math.round(checked/total*100)):0;
+ fill.style.width=pct+'%';track.setAttribute('aria-valuenow',String(pct));
+ wrap.classList.remove('done','partial');
+ if(state==='done'){wrap.classList.add('done');icon.textContent='✓';title.textContent='Prüfung abgeschlossen';sub.textContent=`${checked} von ${total} Domains geprüft${detail?` · ${detail}`:''}`;}
+ else if(state==='partial'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Prüfung nicht vollständig';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
+ else if(state==='error'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Domain-Check mit Fehler beendet';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
+ else {icon.textContent='…';title.textContent='Domain-Check läuft';sub.textContent=`${checked} von ${total} Domains geprüft${detail?` · ${detail}`:''}`;}
+}
 async function run(){
- if(running)return;running=true;stopRequested=false;statusBox.textContent='';statusWasNearBottom=true;results=[];sourceDiagnostics=[];drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
+ if(running)return;running=true;stopRequested=false;statusBox.textContent='';statusWasNearBottom=true;results=[];sourceDiagnostics=[];updateDomainProgress(0,Number($('count').value)||40,'running');drawSourceDiagnostics();draw();$('start').disabled=true;$('stop').disabled=false;
  const sourceUrlsToMark=[];let runHadAvailabilityErrors=false;
  try{
   const mode=$('mode').value;
@@ -578,7 +608,7 @@ async function run(){
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
   appendStatus('Schritt 2/3: zuerst die exakten Originaltrend-Domains, danach Trend-inspirierte Namen und Fantasienamen prüfen …');
   candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?'Keine neuen, bislang unbekannten Trendsignale gefunden. Wähle „Alle Funde erneut berücksichtigen“ oder starte später erneut.':'Keine neuen Kandidaten erzeugt. Wähle „Alle Funde erneut berücksichtigen“ oder eine andere Länge.');
-  appendStatus(`${candidates.length} neue Kandidaten.`);
+  appendStatus(`${candidates.length} neue Kandidaten.`);updateDomainProgress(0,candidates.length,'running');
   let avail=0,delay=Number($('delay').value);let checked=0;
   for(let i=0;i<candidates.length;i++){
    if(stopRequested)break;const c=candidates[i];
@@ -595,7 +625,7 @@ async function run(){
    }
    results.push({...c,status,error,checkedAt:new Date().toISOString()});
    if(status==='error'){seen.delete(c.name);saveSeen();runHadAvailabilityErrors=true}else{seen.add(c.name);saveSeen()}
-   draw();checked++;if(status==='available')avail++;
+   draw();checked++;if(status==='available')avail++;updateDomainProgress(checked,candidates.length,'running',`${avail} frei gemeldet`);
    appendStatus(`Schritt 3/3: ${checked} geprüft — ${c.name}.com: ${status==='available'?'frei gemeldet':status==='taken'?'belegt':'Fehler '+error}; ${avail} frei gemeldet.`);
    if(i<candidates.length-1&&!stopRequested)await wait(delay);
   }
@@ -603,9 +633,12 @@ async function run(){
    sourceUrlsToMark.forEach(url=>seenSources.add(url));saveSeenSources();
   }
   const errorCount=results.filter(r=>r.status==='error').length;
+  if(stopRequested)updateDomainProgress(checked,candidates.length,'partial','Durchlauf gestoppt; nicht alle Domains wurden geprüft.');
+  else if(runHadAvailabilityErrors)updateDomainProgress(checked,candidates.length,'error',`${errorCount} technische Fehler; fehlerhafte Domains werden erneut geprüft.`);
+  else updateDomainProgress(checked,candidates.length,'done',`${avail} frei gemeldet`);
   appendStatus(stopRequested?'Durchlauf gestoppt.':runHadAvailabilityErrors?`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, ${errorCount} technische Fehler. Fehlerhafte Domains werden beim nächsten Suchlauf erneut geprüft.`:`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet. Keine technischen Verfügbarkeitsfehler.`);
 
- }catch(e){appendStatus(e.message==='Vom Nutzer gestoppt'?'Abgebrochen.':'Fehler: '+(e.message||'unbekannter Fehler'))}
+ }catch(e){const msg=e.message==='Vom Nutzer gestoppt'?'Abgebrochen.':'Fehler: '+(e.message||'unbekannter Fehler');updateDomainProgress(results.length,Math.max(results.length,Number($('count').value)||40),'partial',msg);appendStatus(msg)}
  finally{running=false;$('start').disabled=false;$('stop').disabled=true;draw()}
 }
 $('sourceCsv').addEventListener('click',exportSourceDiagnostics);
