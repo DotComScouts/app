@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 77: completion indicator for domain check -->
+<!-- DotComScouts Version 79: category balancing and clearer domain-check completion -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
 <style>
 :root{color-scheme:dark;--panel:#141c2e;--text:#eef3ff;--muted:#a8b4cc;--line:#2b3954;--accent:#7dd3fc;--good:#86efac;--warn:#fcd34d;--bad:#fca5a5}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1020,#101a30);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1050px;margin:auto;padding:18px 12px 40px}h1{font-size:clamp(26px,5vw,36px);line-height:1.1;margin:4px 0 7px}h2{font-size:17px;margin:0 0 10px}p{color:var(--muted);margin:5px 0 10px}.sub{font-size:13px;max-width:850px}.panel{background:rgba(20,28,46,.95);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}input,select,button{font:inherit;border-radius:9px;border:1px solid var(--line);padding:10px;background:#0e1729;color:var(--text);width:100%}button{cursor:pointer;font-weight:700;background:#1c3850;border-color:#315a78}button.primary{background:#075985;border-color:#0284c7}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:10px}.status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.kpi{background:#0e1729;border:1px solid var(--line);padding:8px 10px;border-radius:10px}.kpi strong{font-size:20px;display:block}.kpi.available-kpi strong{color:var(--text)}.kpi.available-kpi.has-available strong{color:var(--good)}.kpi span,.hint{font-size:12px;color:var(--muted)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:760px;background:#10192b}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#1a2941;color:#cbd8ee}tr:last-child td{border-bottom:0}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.domain{font-weight:750;font-size:14px}.risk-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750;white-space:nowrap}.risk-green{background:#123d30;color:#86efac}.risk-yellow{background:#493b16;color:#fde047}.risk-red{background:#48212a;color:#fca5a5}.risk-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor}.risk-note{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:4px}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:750}.available{background:#123d30;color:var(--good)}.taken{background:#3a2530;color:var(--bad)}.error{background:#42371a;color:var(--warn)}.secondary{width:auto;padding:8px 10px;font-size:12px}.foot{font-size:12px;color:var(--muted);line-height:1.6}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.row input{width:auto}
 
 .domain-progress{margin:8px 0 13px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#0e1729}
 .domain-progress .progress-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
@@ -91,7 +91,7 @@
 
 <section class="panel">
 <div class="row"><div><div class="eyebrow">DOMAIN-CHECK</div><h2>Deine Ergebnisse</h2></div><button id="csv" class="secondary" disabled>CSV exportieren</button></div>
-<div class="kpis"><div class="kpi"><strong id="checkedN">0</strong><span>geprüft</span></div><div class="kpi"><strong id="availN">0</strong><span>frei gemeldet</span></div><div class="kpi"><strong id="trendN">0</strong><span>Signale erkannt</span></div></div>
+<div class="kpis"><div class="kpi"><strong id="checkedN">0</strong><span>Geprüft</span></div><div class="kpi available-kpi"><strong id="availN">0</strong><span>Frei gemeldet</span></div><div class="kpi"><strong id="trendN">0</strong><span>Signale erkannt</span></div></div>
 <div id="domainProgress" class="domain-progress" role="status" aria-live="polite" aria-label="Fortschritt des Domain-Checks">
  <div class="progress-head"><span id="progressIcon" class="progress-icon" aria-hidden="true">…</span><div><div id="progressTitle" class="progress-title">Bereit für den Domain-Check</div><div id="progressDetail" class="progress-detail">Noch keine Domains geprüft.</div></div></div>
  <div class="progress-track" role="progressbar" aria-label="Domain-Check-Fortschritt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack"><div id="progressFill" class="progress-fill"></div></div>
@@ -468,8 +468,8 @@ function riskBadge(r){
 
 function buildCandidates(){
  const mode=$('mode').value, count=Number($('count').value), pool=[], local=new Set();
- // Zielverteilung für den kombinierten Suchmodus: 25 % Originaltrend,
- // 50 % Trend-inspiriert, 25 % Fantasiename. Das sind Ziele, keine künstlichen Quoten.
+ // Zielverteilung im kombinierten Suchmodus: 25 % Originaltrend,
+ // 50 % Trend-inspiriert, 25 % Fantasiename. Kategorien sollen sich nicht gegenseitig verdrängen.
  const originalTarget=Math.floor(count*0.25), inspiredTarget=Math.floor(count*0.50), fantasyTarget=count-originalTarget-inspiredTarget;
  const originals=[], alternatives=[], fantasyPool=[];
  if(mode!=='brand'&&trendTerms.length){
@@ -484,30 +484,20 @@ function buildCandidates(){
    const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
    local.add(original);
    originals.push({name:original,type:'Originaltrend',...meta,trendKey:original});
-   // Generate variants only after recording the exact original .com candidate.
+   // Original domain first in the trend pipeline; derived variants remain in their own category.
    const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name).filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,12);
    for(const n of choices){local.add(n);alternatives.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
   }
  }
  if(mode==='trend'){
-  // Trend-only mode includes originals first, then source-derived variants.
   pool.push(...originals.slice(0,count));
   if(pool.length<count)pool.push(...alternatives.slice(0,count-pool.length));
   return pool.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
  }
  if(mode==='both'){
-  // Strict ordering: every eligible exact original domain is queued first, even when
-  // that exceeds the 25% target. The percentages are targets, never a reason to omit originals.
-  pool.push(...originals.slice(0,count));
-  // Aim for 50% trend-inspired candidates, but use only unique, valid variants actually found.
-  const takeInspired=Math.min(alternatives.length,Math.max(0,inspiredTarget),Math.max(0,count-pool.length));
-  pool.push(...alternatives.slice(0,takeInspired));
-  // If there are too few variants to reach the target, use any remaining trend candidates
-  // before resorting to invented brand names.
-  for(const x of alternatives.slice(takeInspired)){
-   if(pool.length>=count)break;
-   if(!pool.some(y=>y.name===x.name))pool.push(x);
-  }
+  // Allocate by category first, rather than filling all slots with originals/variants.
+  pool.push(...originals.slice(0,originalTarget));
+  pool.push(...alternatives.slice(0,inspiredTarget));
  }
  if(mode!=='trend'&&pool.length<count){
   let tries=0;const target=Math.max(30,count*12);
@@ -517,7 +507,16 @@ function buildCandidates(){
    local.add(n);fantasyPool.push({name:n,type:'Fantasiename',trend:'',trendScore:0,source:'',sourceUrl:'',mentions:0});
   }
   fantasyPool.sort((a,b)=>nameQuality(b.name)-nameQuality(a.name)||Math.abs(a.name.length-6)-Math.abs(b.name.length-6));
-  pool.push(...fantasyPool.slice(0,Math.max(0,count-pool.length)));
+  if(mode==='both')pool.push(...fantasyPool.slice(0,fantasyTarget));
+  else pool.push(...fantasyPool.slice(0,count));
+ }
+ // If a category cannot fill its target, backfill from remaining candidates without duplicates.
+ if(mode==='both'&&pool.length<count){
+  const selected=new Set(pool.map(x=>x.name));
+  for(const list of [alternatives,originals,fantasyPool]){
+   for(const x of list){if(pool.length>=count)break;if(!selected.has(x.name)){pool.push(x);selected.add(x.name);}}
+   if(pool.length>=count)break;
+  }
  }
  return pool.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
 }
@@ -539,7 +538,7 @@ function draw(){
    return risk.status!=='red';
  });
  $('results').innerHTML=arr.length?arr.slice().sort((a,b)=>(a.status==='available'?0:1)-(b.status==='available'?0:1)||(a.type.startsWith('Trend')?0:1)-(b.type.startsWith('Trend')?0:1)||(Number(b.trendScore)||0)-(Number(a.trendScore)||0)).map(r=>`<tr><td class="domain">${esc(r.name)}.com</td><td><span class="pill ${r.status==='available'?'available':r.status==='taken'?'taken':'error'}">${r.status==='available'?'Frei gemeldet':r.status==='taken'?'Belegt':'Fehler'}</span></td><td>${esc(r.type)}</td><td>${r.name.length}</td><td>${esc(r.trend||'—')}</td><td>${riskBadge(r)}</td><td>${r.sourceUrl?`<a target="_blank" rel="noopener" href="${esc(r.sourceUrl)}">${esc(r.source||'Hacker News')}</a>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="hint">Keine Ergebnisse für diesen Filter.</td></tr>';
- $('checkedN').textContent=results.length;$('availN').textContent=results.filter(x=>x.status==='available').length;$('trendN').textContent=trendTerms.length;$('csv').disabled=!results.length;
+ const availableCount=results.filter(x=>x.status==='available').length;$('checkedN').textContent=results.filter(x=>x.status!=='error').length;$('availN').textContent=availableCount;$('availN').parentElement.classList.toggle('has-available',availableCount>0);$('trendN').textContent=trendTerms.length;$('csv').disabled=!results.length;
 }
 async function checkAvail(n){
  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
@@ -561,9 +560,10 @@ function updateDomainProgress(checked,total,state='running',detail=''){
  const pct=total>0?Math.min(100,Math.round(checked/total*100)):0;
  fill.style.width=pct+'%';track.setAttribute('aria-valuenow',String(pct));
  wrap.classList.remove('done','partial');
- if(state==='done'){wrap.classList.add('done');icon.textContent='✓';title.textContent='Prüfung abgeschlossen';sub.textContent=`${checked} von ${total} Domains geprüft${detail?` · ${detail}`:''}`;}
- else if(state==='partial'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Prüfung nicht vollständig';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
- else if(state==='error'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Domain-Check mit Fehler beendet';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
+ if(state==='done'){wrap.classList.add('done');icon.textContent='✓';title.textContent='Prüfung abgeschlossen';sub.textContent='Alle Domains wurden erfolgreich geprüft.';}
+ else if(state==='partial'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Prüfung teilweise abgeschlossen';sub.textContent=detail||`${checked} von ${total} Domains geprüft`; }
+ else if(state==='aborted'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Prüfung abgebrochen';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
+ else if(state==='error'){wrap.classList.add('partial');icon.textContent='!';title.textContent='Prüfung teilweise abgeschlossen';sub.textContent=detail||`${checked} von ${total} Domains geprüft`;}
  else {icon.textContent='…';title.textContent='Domain-Check läuft';sub.textContent=`${checked} von ${total} Domains geprüft${detail?` · ${detail}`:''}`;}
 }
 async function run(){
@@ -633,8 +633,8 @@ async function run(){
    sourceUrlsToMark.forEach(url=>seenSources.add(url));saveSeenSources();
   }
   const errorCount=results.filter(r=>r.status==='error').length;
-  if(stopRequested)updateDomainProgress(checked,candidates.length,'partial','Durchlauf gestoppt; nicht alle Domains wurden geprüft.');
-  else if(runHadAvailabilityErrors)updateDomainProgress(checked,candidates.length,'error',`${errorCount} technische Fehler; fehlerhafte Domains werden erneut geprüft.`);
+  if(stopRequested)updateDomainProgress(results.filter(r=>r.status!=='error').length,candidates.length,'aborted','Der Durchlauf wurde gestoppt. Nicht alle Domains wurden geprüft.');
+  else if(runHadAvailabilityErrors)updateDomainProgress(results.filter(r=>r.status!=='error').length,candidates.length,'error',`${results.filter(r=>r.status!=='error').length} von ${candidates.length} Domains erfolgreich geprüft. ${errorCount} Domains konnten wegen technischer Fehler nicht geprüft werden und werden beim nächsten Suchlauf erneut berücksichtigt.`);
   else updateDomainProgress(checked,candidates.length,'done',`${avail} frei gemeldet`);
   appendStatus(stopRequested?'Durchlauf gestoppt.':runHadAvailabilityErrors?`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet, ${errorCount} technische Fehler. Fehlerhafte Domains werden beim nächsten Suchlauf erneut geprüft.`:`Durchlauf abgeschlossen: ${results.length} Domains geprüft, ${avail} frei gemeldet. Keine technischen Verfügbarkeitsfehler.`);
 
