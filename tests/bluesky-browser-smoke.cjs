@@ -28,20 +28,23 @@ async function runSource(page, source) {
 async function main() {
   const htmlPath = path.join(__dirname, '..', 'index.html');
   const html = fs.readFileSync(htmlPath, 'utf8');
-  const server = http.createServer((req, res) => {
-    if (req.url === '/' || req.url.startsWith('/index.html')) {
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
-      res.end(html);
-      return;
-    }
-    res.writeHead(404);
-    res.end('Not found');
-  });
-
-  await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', resolve);
-  });
+  const targetUrl = process.env.DOTCOMSCOUTS_TEST_URL;
+  let server = null;
+  if (!targetUrl) {
+    server = http.createServer((req, res) => {
+      if (req.url === '/' || req.url.startsWith('/index.html')) {
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+        res.end(html);
+        return;
+      }
+      res.writeHead(404);
+      res.end('Not found');
+    });
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+  }
 
   let browser;
   const pageErrors = [];
@@ -49,10 +52,11 @@ async function main() {
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     page.on('pageerror', error => pageErrors.push(error.message));
-    const address = server.address();
-    await page.goto(`http://127.0.0.1:${address.port}/`, {
+    const address = server ? server.address() : null;
+    const pageUrl = targetUrl || `http://127.0.0.1:${address.port}/`;
+    await page.goto(pageUrl, {
       waitUntil: 'domcontentloaded',
-      timeout: 20000
+      timeout: 45000
     });
 
     const coreStateBefore = {
@@ -125,7 +129,7 @@ async function main() {
     console.log('Browser smoke test passed: all five experimental source panels fetched live data in Chromium and core domain/trend state remained unchanged.');
   } finally {
     if (browser) await browser.close();
-    await new Promise(resolve => server.close(resolve));
+    if (server) await new Promise(resolve => server.close(resolve));
   }
 }
 
