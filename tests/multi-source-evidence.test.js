@@ -136,3 +136,13 @@ test('13 resonance metrics remain separate from evidence labels', () => {
   assert.equal(result.records[0].evidence.demandIntent, false);
   assert.deepEqual(result.records[0].metrics, { likes: 10000 });
 });
+
+test('14 a failed source record cannot suppress a later validated record for the same URL', () => {
+  const sharedUrl = 'https://example.com/problem';
+  const result = aggregateEvidence([
+    record({ sourceRecordId: 'failed', sourceUrl: sharedUrl, sourceStatus: 'failed', authorKey: 'alice', problemClusterKey: 'api-timeout', text: 'Looking for a tool to diagnose API timeout failures.' }),
+    record({ source: 'devto', sourceRecordId: 'valid', sourceUrl: sharedUrl, sourceStatus: 'validated', authorKey: 'bob', problemClusterKey: 'api-timeout', text: 'Looking for a tool to diagnose API timeout failures.' })
+  ]);
+  assert.equal(result.uniqueRecordCount, 1);
+  assert.equal(result.clusters['api-timeout'].independentAuthorCount, 1);
+});
