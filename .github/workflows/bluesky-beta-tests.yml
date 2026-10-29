@@ -1,0 +1,34 @@
+name: Bluesky Beta regression tests
+
+on:
+  push:
+    branches:
+      - 'beta-*'
+    paths:
+      - 'index.html'
+      - 'tests/**'
+      - '.github/workflows/bluesky-beta-tests.yml'
+  pull_request:
+    branches:
+      - 'beta-*'
+    paths:
+      - 'index.html'
+      - 'tests/**'
+      - '.github/workflows/bluesky-beta-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bluesky-beta-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out beta branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run Bluesky Beta regression suite
+        run: node --test tests/bluesky-beta.test.js
