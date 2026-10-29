@@ -59,6 +59,11 @@ async function main() {
       timeout: 45000
     });
 
+    assert.ok((await page.locator('.version-label').innerText()).includes('Beta 98.28'),
+      'deployed test site should serve Beta 98.28');
+    assert.ok((await page.locator('.version-label').innerText()).includes('Shadow-Integration 98.28'),
+      'deployed test site should advertise the normal-flow shadow integration');
+
     const coreStateBefore = {
       results: await page.locator('#results').innerText(),
       trendCandidates: await page.locator('#trendCandidates').innerText(),
@@ -123,6 +128,29 @@ async function main() {
       'experimental sources must not alter the core trend candidates');
     assert.equal(await page.locator('#domainProgress').innerText(), coreStateBefore.domainProgress,
       'experimental sources must not change core domain-availability progress');
+
+    // Exercise the ordinary search button against the deployed origin. Stop as soon as the five
+    // shadow adapters finish so this smoke test does not run the full domain-availability loop.
+    await page.locator('#count').selectOption({ label: '40' });
+    await page.locator('#start').click();
+    await page.waitForFunction(() => {
+      const expected = ['Shadow · Hugging Face', 'Shadow · npm Registry', 'Shadow · Stack Exchange',
+        'Shadow · DEV Community', 'Shadow · Bluesky'];
+      const rows = [...document.querySelectorAll('#sourceRows tr')];
+      return expected.every(name => {
+        const row = rows.find(r => (r.querySelector('td')?.textContent || '').includes(name));
+        if (!row) return false;
+        const status = row.querySelector('td:nth-child(2)')?.textContent?.trim() || '';
+        return status !== 'Läuft' && status !== 'Running';
+      });
+    }, { timeout: 90000 });
+    await page.locator('#stop').click();
+    const shadowRows = await page.locator('#sourceRows').innerText();
+    for (const name of ['Shadow · Hugging Face', 'Shadow · npm Registry', 'Shadow · Stack Exchange',
+      'Shadow · DEV Community', 'Shadow · Bluesky']) {
+      assert.ok(shadowRows.includes(name), 'normal trend run should invoke ' + name);
+    }
+    console.log('PASS normal trend flow: all five shadow source adapters were invoked and isolated.');
 
     assert.equal(pageErrors.length, 0,
       `uncaught browser errors: ${pageErrors.join('; ')}`);
