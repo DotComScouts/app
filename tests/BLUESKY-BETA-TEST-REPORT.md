@@ -66,7 +66,7 @@ These tests prove that the public endpoints were reachable and their response sh
 
 ## Remaining verification
 
-1. Repeat browser testing against the actual deployed GitHub Pages origin, including rate limiting and retry behavior. The live page was updated to Beta 98.27 at https://dotcomscouts.github.io/app/ in commit https://github.com/DotComScouts/app/commit/10d6d821e8fc17abaf3422a3c916538337324529; the live-origin browser run is being executed separately.
+1. Repeat browser testing against the actual deployed GitHub Pages origin, including rate limiting and retry behavior. The live page was updated to Beta 98.27 at https://dotcomscouts.github.io/app/ in commit https://github.com/DotComScouts/app/commit/10d6d821e8fc17abaf3422a3c916538337324529; the live-origin browser run passed in GitHub Actions run https://github.com/DotComScouts/app/actions/runs/40973112666. The deployed page fetched all five panels successfully and left the core domain results, trend candidates, and domain-check progress unchanged.
 2. Check source isolation and existing domain-check, CSV-export, language, and risk-review flows for regressions.
 3. Build controlled cross-source fixtures to distinguish problem evidence, independent demand evidence, product evidence, and resonance. Keep source evidence separate and do not let Bluesky alter domain availability checks.
 4. Only after these pass, design a controlled multi-source integration test.
