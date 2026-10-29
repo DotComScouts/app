@@ -200,7 +200,7 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.16: Dublettenprüfung ergänzt URL-Abgleich um sprachübergreifende Account-/Produktmuster. Signaltypen priorisieren Probleme und Anleitungen vor allgemeinen Produktbegriffen. API-Zugriff muss im Browser getestet werden.</div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.17: Signaltypen und Marktsignal trennen konkrete Fehler, Sicherheitsbefunde, Anleitungen, Produktstarts und technische Diskussionen präziser. API-Zugriff muss im Browser getestet werden.</div>
  <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
@@ -1075,12 +1075,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   if(opinionPattern&&!technicalPattern) relevance-=10;
   relevance=Math.max(0,Math.min(30,relevance));
   // Separate market/problem evidence from community reaction and freshness.
-  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|without guessing|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|clear errors|install command|how did you handle auth|how do you handle auth|how to handle authentication)/i.test(rawText);
+  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:fix|debug|repair|resolve)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|crash(?:es|ing)?|not working|incorrectly|wrong results|data loss)/i.test(rawText);
   const productPattern=/(open[- ]source|github|repository|\brepo\b|built an? |built a |we built|new tool|new framework|new library|new plugin|new mcp server|server connects|sdk|cli|available on github|now available|released|release notes|launch(?:ed|ing)?|prototype|integration|production scheduling)/i.test(rawText);
   const securityPattern=/(security|vulnerability|prompt injection|authentication|authorization|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? the user|unintended access)/i.test(rawText);
   // Concrete problem evidence gets the strongest market score; product/build signals get a medium score.
   // Beta 98.14: market signal reflects the kind of evidence, not just a keyword match.
-  const marketSignal=problemPattern?18:(securityPattern?14:(productPattern?9:(marketPattern?7:(technicalPattern?3:0))));
+  const strongSecurityPattern=/(prompt injection|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? (?:the )?(?:user )?query|unintended access|unauthorized access|authentication bypass)/i.test(rawText);
+  const marketSignal=strongSecurityPattern?18:(problemPattern?18:(securityPattern?12:(productPattern?9:(marketPattern?7:(technicalPattern?3:0)))));
   // Absolute Bluesky interactions are a small supporting signal, not a proxy for market size.
   const rawEngagement=Math.log1p(likes)*2+Math.log1p(reposts)*3+Math.log1p(replies)*2;
   const engagement=Math.min(15,Math.round(rawEngagement));
@@ -1118,9 +1119,10 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const raw=metrics.rawText||'';
   if(metrics.hardAdPattern||metrics.eventPromoPattern)return 'Werbung / Veranstaltung';
   if(metrics.securityPattern)return 'Sicherheitsproblem';
-  if(metrics.problemPattern||(/\b(how did you handle|how do you handle|how to fix|cannot connect|can't connect|does not work|doesn't work|not working|error|bug|fails when|missing tools)\b/i.test(raw)&&/\b(auth|authentication|authorization|mcp|server|client|token|header|endpoint|install|connect)\b/i.test(raw)))return 'Konkretes technisches Problem';
-  if(/\b(how to|quickstart|tutorial|guide|how do i|step[- ]by[- ]step|anleitung|einrichten|connect.{0,20}to|this article explains how to|design a production-grade)\b/i.test(raw))return 'Anleitung / Umsetzung';
-  if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new)\b/i.test(raw))return 'Produktankündigung / Tool';
+  if(metrics.problemPattern||(/\b(how to fix|cannot connect|can't connect|does not work|doesn't work|not working|error|bug|fails when|missing tools|crash|data loss|wrong results)\b/i.test(raw)&&/\b(auth|authentication|authorization|mcp|server|client|token|header|endpoint|install|connect)\b/i.test(raw)))return 'Konkretes technisches Problem';
+  if(/\b(how did you handle|how do you handle|what was the first check|what would you use|what do you think|compare[sd]?|versus|vs\.)\b/i.test(raw))return 'Technische Nachricht / Diskussion';
+  if(/\b(this article explains how to|design a production-grade|how to (?:connect|install|configure|build|deploy|use)|quickstart|tutorial|guide|step[- ]by[- ]step|anleitung|einrichten|setup guide|getting started)\b/i.test(raw))return 'Anleitung / Umsetzung';
+  if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new|open-source [\w-]+ (?:tracks|provides|offers|connects|lets)|there's an mcp server too|buildinpublic|second venture is|mcp server connects)\b/i.test(raw))return 'Produktankündigung / Tool';
   if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
   if(metrics.opinionPattern)return 'Meinung';
   if(metrics.technicalPattern||metrics.marketPattern)return 'Technische Nachricht / Diskussion';
@@ -1225,5 +1227,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.16</div>Bluesky-Scoring 98.16: sprachübergreifende Produkt-/Account-Dubletten und präzisere Signaltypen · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.17</div>Bluesky-Scoring 98.17: präzisere Problem-, Sicherheits-, Anleitung- und Produktklassifikation · Master V98 bleibt unverändert</div>
 </body></html>
