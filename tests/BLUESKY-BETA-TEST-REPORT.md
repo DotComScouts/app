@@ -48,7 +48,7 @@ The following real network smoke tests passed from a GitHub-hosted Node.js 22 ru
 
 The actual Chromium browser smoke test also passed: it loaded the isolated page, queried Bluesky from the browser, received 50 posts, and displayed 28 unique results. No uncaught browser errors were reported.
 
-Run with the deterministic suite, live Bluesky API, and the four other API smoke tests successful: https://github.com/DotComScouts/app/actions/runs/40971618131
+Run with the deterministic suite, live Bluesky API, and the four other API smoke tests successful: https://github.com/DotComScouts/app/actions/runs/40971938990
 
 ## Shadow evidence prototype
 
