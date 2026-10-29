@@ -127,7 +127,9 @@
  <div class="hf-beta-grid">
   <div class="field"><label for="hfBetaKind">Datentyp</label><select id="hfBetaKind"><option value="models">Modelle</option><option value="spaces">Spaces / Demos</option><option value="both" selected>Modelle + Spaces</option></select></div>
   <div class="field"><label for="hfBetaCount">Max. Treffer je Datentyp</label><select id="hfBetaCount"><option value="10">10</option><option value="20" selected>20</option><option value="40">40</option></select></div>
-  <div class="field"><label for="hfBetaSort">Sortierung</label><select id="hfBetaSort"><option value="recent" selected>Zuletzt aktualisiert</option><option value="downloads">Downloads (Modelle)</option><option value="likes">Likes</option></select></div>
+  <div class="field"><label for="hfBetaSort">Sortierung</label><select id="hfBetaSort"><option value="relevance" selected>Relevanz (Thema + Resonanz)</option><option value="recent">Zuletzt aktualisiert</option><option value="downloads">Downloads (Modelle)</option><option value="likes">Likes</option></select></div>
+  <div class="field"><label for="hfBetaTopics">Themenbegriffe (Komma-getrennt)</label><input id="hfBetaTopics" value="ai, artificial intelligence, agent, llm, mcp, rag, automation, workflow, inference, robotics, computer vision, voice, coding, vector, embedding, diffusion, multimodal" /></div>
+  <div class="field"><label for="hfBetaFilter">Ergebnisfilter</label><select id="hfBetaFilter"><option value="relevant" selected>Nur thematisch relevante</option><option value="all">Alle API-Treffer</option><option value="active">Nur mit Resonanz (Likes/Downloads)</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="hfBetaRun" type="button">Hugging Face abrufen</button><button class="secondary" id="hfBetaClear" type="button">Ergebnisse leeren</button></div>
  <div class="hf-beta-status" id="hfBetaStatus" role="status" aria-live="polite">Noch keine API-Abfrage ausgeführt. Internetverbindung und Browser-CORS-Verhalten können das Ergebnis beeinflussen.</div>
@@ -743,10 +745,23 @@ $('csv').addEventListener('click',()=>{
  downloadCsv(rows,'DotComScouts-results.csv');
 });
 
-// Beta 98.1: isolated Hugging Face API explorer. Does not feed the production domain pipeline.
+// Beta 98.1: Hugging Face API explorer with topic relevance and activity scoring.
+// This remains isolated from the production domain pipeline.
 const hfEsc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const hfEl = id => document.getElementById(id);
 const hfDate = value => { if(!value) return 'Datum unbekannt'; const d=new Date(value); return Number.isNaN(d.getTime()) ? 'Datum unbekannt' : d.toLocaleString(); };
+const hfTopics = () => hfEl('hfBetaTopics').value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+function hfScore(item){
+ const id=String(item.id||item.modelId||'').toLowerCase();
+ const tags=Array.isArray(item.tags)?item.tags.join(' ').toLowerCase():'';
+ const text=id.replace(/[\/_-]+/g,' ')+' '+tags.replace(/[\/_-]+/g,' ');
+ const topics=hfTopics();
+ const matches=topics.filter(t=>{ if(t.length<=3){const escaped=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return new RegExp('(^|[^a-z0-9])'+escaped+'([^a-z0-9]|$)','i').test(text);} return text.includes(t); });
+ const downloads=Number(item.downloads)||0, likes=Number(item.likes)||0;
+ const activity=Math.min(25,Math.log10(downloads+1)*5)+Math.min(20,likes*2);
+ const recency=item.lastModified?Math.max(0,15-(Date.now()-new Date(item.lastModified).getTime())/(86400000*2)):0;
+ return {score:matches.length*18+activity+recency,matches,downloads,likes};
+}
 async function hfFetch(kind, limit, sort){
  const endpoint = kind === 'models' ? 'models' : 'spaces';
  const params = new URLSearchParams({limit:String(limit), full:'true'});
@@ -761,27 +776,33 @@ async function hfFetch(kind, limit, sort){
 }
 function hfRender(items){
  const target=hfEl('hfBetaResults');
- if(!items.length){target.innerHTML='<p class="hint">Keine Treffer geliefert.</p>';return;}
+ if(!items.length){target.innerHTML='<p class="hint">Keine Treffer für diesen Filter. Erweitere die Themenbegriffe oder wähle „Alle API-Treffer“.</p>';return;}
  target.innerHTML=items.map(item=>{
   const id=item.id || item.modelId || 'Unbekanntes Projekt';
   const url='https://huggingface.co/'+encodeURIComponent(id).replace(/%2F/g,'/');
   const kind=item._hfKind==='models'?'Modell':'Space';
   const tags=Array.isArray(item.tags)?item.tags.slice(0,7).join(' · '):'';
-  const stats=item._hfKind==='models'?`Downloads: ${Number(item.downloads||0).toLocaleString()} · Likes: ${Number(item.likes||0).toLocaleString()}`:`Likes: ${Number(item.likes||0).toLocaleString()}`;
-  return `<article class="hf-beta-item"><h3><a href="${hfEsc(url)}" target="_blank" rel="noopener">${hfEsc(id)}</a></h3><div class="hf-beta-meta">${kind} · Aktualisiert: ${hfEsc(hfDate(item.lastModified))}</div><p>${hfEsc(stats)}</p>${tags?`<p class="hf-beta-meta">${hfEsc(tags)}</p>`:''}</article>`;
+  const score=item._hfScore||hfScore(item);
+  const stats=item._hfKind==='models'?`Downloads: ${score.downloads.toLocaleString()} · Likes: ${score.likes.toLocaleString()}`:`Likes: ${score.likes.toLocaleString()}`;
+  const matched=score.matches.length?` · Themen: ${score.matches.slice(0,4).join(', ')}`:'';
+  return `<article class="hf-beta-item"><h3><a href="${hfEsc(url)}" target="_blank" rel="noopener noreferrer">${hfEsc(id)}</a></h3><div class="hf-beta-meta">${kind} · Aktualisiert: ${hfEsc(hfDate(item.lastModified))} · Relevanzscore: ${Math.round(score.score)}${hfEsc(matched)}</div><p>${hfEsc(stats)}</p>${tags?`<p class="hf-beta-meta">${hfEsc(tags)}</p>`:''}</article>`;
  }).join('');
 }
 async function hfRun(){
  const run=hfEl('hfBetaRun'); run.disabled=true; hfEl('hfBetaStatus').textContent='Hugging Face API wird abgefragt …';
- const kind=hfEl('hfBetaKind').value, limit=Number(hfEl('hfBetaCount').value), sort=hfEl('hfBetaSort').value;
+ const kind=hfEl('hfBetaKind').value, limit=Number(hfEl('hfBetaCount').value), sort=hfEl('hfBetaSort').value, filter=hfEl('hfBetaFilter').value;
  try{
   const jobs=[];
-  if(kind==='models'||kind==='both') jobs.push(hfFetch('models',limit,sort));
-  if(kind==='spaces'||kind==='both') jobs.push(hfFetch('spaces',limit,sort));
-  const chunks=await Promise.all(jobs); const items=chunks.flat();
-  items.sort((a,b)=>{if(sort==='downloads')return (Number(b.downloads)||0)-(Number(a.downloads)||0);if(sort==='likes')return (Number(b.likes)||0)-(Number(a.likes)||0);return new Date(b.lastModified||0)-new Date(a.lastModified||0)});
+  if(kind==='models'||kind==='both') jobs.push(hfFetch('models',limit,sort==='relevance'?'recent':sort));
+  if(kind==='spaces'||kind==='both') jobs.push(hfFetch('spaces',limit,sort==='relevance'?'recent':sort));
+  const chunks=await Promise.all(jobs); let items=chunks.flat().map(item=>({...item,_hfScore:hfScore(item)}));
+  if(filter==='relevant') items=items.filter(item=>item._hfScore.matches.length>0);
+  if(filter==='active') items=items.filter(item=>item._hfScore.likes>0||item._hfScore.downloads>0);
+  items.sort((a,b)=>sort==='downloads'?(b._hfScore.downloads-a._hfScore.downloads):sort==='likes'?(b._hfScore.likes-a._hfScore.likes):sort==='recent'?new Date(b.lastModified||0)-new Date(a.lastModified||0):b._hfScore.score-a._hfScore.score);
   hfEl('hfBetaTotal').textContent=String(items.length);hfEl('hfBetaModels').textContent=String(items.filter(x=>x._hfKind==='models').length);hfEl('hfBetaSpaces').textContent=String(items.filter(x=>x._hfKind==='spaces').length);
-  hfRender(items); hfEl('hfBetaStatus').textContent=`Erfolgreich: ${items.length} Projekte geladen. Hinweis: Aktualität, Likes und Downloads sind nur Indikatoren; sie belegen keine Domainnachfrage.`;
+  hfRender(items);
+  const rawCount=chunks.reduce((n,chunk)=>n+chunk.length,0);
+  hfEl('hfBetaStatus').textContent=`API erfolgreich: ${rawCount} Projekte geladen, ${items.length} nach Filter angezeigt. Sortierung: ${sort==='relevance'?'Relevanzscore':sort==='recent'?'Aktualität':sort==='likes'?'Likes':'Downloads'}. Scores sind heuristische Indikatoren, kein Nachweis für Domainnachfrage.`;
  }catch(error){hfEl('hfBetaStatus').textContent=`Abruf fehlgeschlagen: ${error.message||error}. Prüfe Internetverbindung, Browserkonsole und möglichen CORS-/Rate-Limit-Fehler.`;hfEl('hfBetaResults').innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Der restliche DotComScouts-Workflow bleibt davon unberührt.</p>';}
  finally{run.disabled=false;}
 }
@@ -790,7 +811,7 @@ hfEl('hfBetaClear').addEventListener('click',()=>{hfEl('hfBetaTotal').textConten
 
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 98.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.1</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -806,5 +827,5 @@ hfEl('hfBetaClear').addEventListener('click',()=>{hfEl('hfBetaTotal').textConten
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.1</div>Experimentelle Hugging-Face-API · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.1</div>Hugging-Face-API mit Themenfilter und Relevanzscore · Master V98 bleibt unverändert</div>
 </body></html>
