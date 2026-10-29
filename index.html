@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.23: isolated signal explorers; based on Master V98, which remains unchanged -->
+<!-- DotComScouts Beta 98.24: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -1161,7 +1161,8 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    visit(p?.embed);visit(p?.record?.embed);
    return [...new Set(found.map(canonicalizeUrl).filter(Boolean))];
   };
-  const isSameUrl=(a,b)=>a===b||(a.split('/')[0]===b.split('/')[0]&&((a.length>=22&&b.startsWith(a))||(b.length>=22&&a.startsWith(b))));
+  // Exact canonical URL equality avoids merging distinct IDs that merely share a URL prefix.
+  const isSameUrl=(a,b)=>a===b;
   // Score first, then deduplicate strongest candidates first so API ordering cannot
   // decide which language variant survives.
   const rankedCandidates=posts.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
@@ -1187,7 +1188,10 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    if(brandTopic&&seenBrandTopics.has(brandTopic))continue;
    // Secondary guard for language variants posted by localized accounts of the same brand.
    const topicWords=normalized.split(/\s+/).filter(w=>w.length>3&&!/^(the|with|from|this|that|have|your|about|into|using|what|when|how|mcp|server|claude|connect|custom|jak|vlastni|pripojit|ke|pro|na|serveru)$/.test(w));
-   const authorTopic=brand&&topicWords.length?brand+'|'+topicWords.slice(0,5).sort().join('-'):'';
+   // Only use topic-word deduplication for explicitly localized variants of the same account.
+   // Ordinary posts from the same brand must not collapse just because their first few words overlap.
+   const localizedVariant=brand&&rawHandle!==brand;
+   const authorTopic=localizedVariant&&topicWords.length>=4?brand+'|'+topicWords.sort().join('-'):'';
    if(authorTopic&&seenAuthorTopic.has(authorTopic))continue;
    urls.forEach(u=>seenUrls.push(u));
    if(textKeyCompact.length>45)seenText.add(textKeyCompact);
@@ -1230,7 +1234,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.23</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.24</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1246,5 +1250,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.23</div>Bluesky-Scoring 98.23: generische Formulierungen wie „how do I“ und „hard to“ zählen nicht länger automatisch als Problembedarf · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.24</div>Bluesky-Scoring 98.24: URL-Dubletten nur bei identischen kanonischen Links; Themen-Deduplizierung nur für lokalisierte Accounts · Master V98 bleibt unverändert</div>
 </body></html>
