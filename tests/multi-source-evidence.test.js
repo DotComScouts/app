@@ -3,10 +3,11 @@ const assert = require('node:assert/strict');
 const { classifyEvidence, canonicalizeUrl, aggregateEvidence } = require('../lib/shadow-evidence');
 
 function record(overrides = {}) {
+  const sourceRecordId = overrides.sourceRecordId || 'post-1';
   return {
     source: 'bluesky',
-    sourceRecordId: 'post-1',
-    sourceUrl: 'https://bsky.app/profile/example/post/post-1',
+    sourceRecordId,
+    sourceUrl: `https://bsky.app/profile/example/post/${encodeURIComponent(sourceRecordId)}`,
     authorKey: 'author-a',
     authorOrPublisher: 'author-a',
     text: '',
