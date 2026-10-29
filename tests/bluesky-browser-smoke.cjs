@@ -55,6 +55,12 @@ async function main() {
       timeout: 20000
     });
 
+    const coreStateBefore = {
+      results: await page.locator('#results').innerText(),
+      trendCandidates: await page.locator('#trendCandidates').innerText(),
+      domainProgress: await page.locator('#domainProgress').innerText()
+    };
+
     const sources = [
       {
         name: 'Hugging Face',
@@ -107,12 +113,12 @@ async function main() {
     }
 
     // Experimental sources must not mutate core trend/domain state.
-    assert.match(await page.locator('#results').innerText(), /Noch keine Ergebnisse/,
-      'experimental sources must not populate the core domain results table');
-    assert.match(await page.locator('#trendCandidates').innerText(), /Noch keine Trendkandidaten/,
+    assert.equal(await page.locator('#results').innerText(), coreStateBefore.results,
+      'experimental sources must not mutate the core domain results table');
+    assert.equal(await page.locator('#trendCandidates').innerText(), coreStateBefore.trendCandidates,
       'experimental sources must not alter the core trend candidates');
-    assert.match(await page.locator('#domainProgress').innerText(), /Bereit für den Domain-Check/,
-      'experimental sources must not start the core domain-availability workflow');
+    assert.equal(await page.locator('#domainProgress').innerText(), coreStateBefore.domainProgress,
+      'experimental sources must not change core domain-availability progress');
 
     assert.equal(pageErrors.length, 0,
       `uncaught browser errors: ${pageErrors.join('; ')}`);
