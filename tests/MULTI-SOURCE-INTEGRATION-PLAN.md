@@ -4,7 +4,8 @@
 
 - The Bluesky explorer is an isolated panel and does not feed the production domain trend pipeline.
 - Deterministic Bluesky regression tests and live endpoint/browser smoke tests are available in GitHub Actions.
-- The public API smoke tests for Hacker News Algolia, GitHub Search, Hugging Face, and Stack Exchange have passed in the CI runner.
+- Public API smoke tests for Hacker News Algolia, GitHub Search, Hugging Face, Stack Exchange, npm Registry, and DEV Community have passed in the CI runner.
+- A non-production shadow prototype exists at `lib/shadow-evidence.js`; it is covered by deterministic tests and is not imported by `index.html`.
 - These checks validate endpoint reachability and response shape, not market quality or cross-source scoring.
 - Do not merge this branch without explicit approval.
 
@@ -53,7 +54,7 @@ A technical issue by itself is not proof of demand. A product launch is not proo
 }
 ```
 
-This is a design proposal, not a production data contract. It must be revised against real payloads before implementation.
+This is a design proposal, not a production data contract. The isolated prototype currently implements basic classification, URL deduplication, and independent-author/source counts, but it must be revised against real payloads and labelled examples before any production integration.
 
 ## Required regression fixtures before cross-source scoring
 
