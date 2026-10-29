@@ -46,3 +46,17 @@ jobs:
           node-version: 22
       - name: Query public Bluesky API
         run: node --test tests/bluesky-live-smoke.test.js
+
+  source-api-baseline-smoke:
+    # Diagnostic only: external service outages/rate limits must not mask deterministic regression results.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out beta branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Query existing trend-source APIs
+        run: node --test tests/source-api-smoke.test.js
