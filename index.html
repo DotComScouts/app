@@ -429,9 +429,15 @@ async function collectShadowMarketEvidence(terms){
  if(!candidates.length)return {count:0,sourceCounts:[],note:'Keine geeigneten Trendbegriffe für ergänzende Quellen.'};
  const query=candidates[0];
  const safeJson=async(url,headers={Accept:'application/json'})=>{
-  const response=await fetch(url,{headers});
-  if(!response.ok)throw new Error('HTTP '+response.status);
-  return response.json();
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+   const response=await fetch(url,{headers,signal:controller.signal});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   return await response.json();
+  }catch(error){
+   if(error?.name==='AbortError')throw new Error('Zeitüberschreitung nach 12 Sekunden');
+   throw error;
+  }finally{clearTimeout(timer);}
  };
  const jobs=[
   runSource('Shadow · Hugging Face',async()=>{
