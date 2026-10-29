@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.26: isolated signal explorers; based on Master V98, which remains unchanged -->
+<!-- DotComScouts Beta 98.27: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -1109,7 +1109,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const hasResonance=totalInteractions>0;
   const meaningfulResonance=totalInteractions>=3&&engagement>=6;
   const relevantContext=technicalPattern||marketPattern;
-  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,rawText,feedAccount,promoPattern,hardAdPattern,eventPromoPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,problemPattern,productPattern,securityPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
+  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,rawText,feedAccount,promoPattern,hardAdPattern,eventPromoPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,problemPattern,productPattern,securityPattern,strongSecurityPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
  }
  function classify(signal,metrics){
   if(signal<27||metrics.matched.length===0||!metrics.relevantContext||metrics.feedAccount||metrics.hardAdPattern||metrics.eventPromoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.technicalPattern)return 'Schwaches Signal';
@@ -1119,15 +1119,17 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
  function signalType(metrics){
   const raw=metrics.rawText||'';
   if(metrics.hardAdPattern||metrics.eventPromoPattern)return 'Werbung / Veranstaltung';
+  // Explicit incidents outrank launches, generic security mentions, and discussion wording.
+  if(metrics.strongSecurityPattern)return 'Sicherheitsproblem';
+  if(/\b(crash(?:es|ing)?|error message|error occurs|throws an error|returns an error|error when|error on|bug report|fails when|fails to|cannot connect|can't connect|does not work|doesn't work|not working|data loss|wrong results|authentication bypass|unauthorized access|unintended access|leaks? (?:the )?(?:user )?query)\b/i.test(raw))return 'Konkretes technisches Problem';
+  if(/\b(looking for|need a tool|we need|pain point|bottleneck|workaround|struggling with|production issue|missing feature|feature request|token cost|cost reduction|burns through|bill shock|double-book|miss due dates)\b/i.test(raw))return 'Marktbedarf / Problemhinweis';
   // Questions about implementation are discussions, not automatically evidence of a failure.
   if(/\b(how did you handle|how do you handle|how would you handle|what was the first check|what would you use|what do you think|compare[sd]?|versus|vs\.)\b/i.test(raw))return 'Technische Nachricht / Diskussion';
   if(/\b(this article explains how to|design a production-grade|how to (?:connect|install|configure|build|deploy|use)|quickstart|tutorial|guide|step[- ]by[- ]step|anleitung|einrichten|setup guide|getting started)\b/i.test(raw))return 'Anleitung / Umsetzung';
   if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new|open-source [\w-]+ (?:tracks|provides|offers|connects|lets)|there's an mcp server too|buildinpublic|second venture is|mcp server connects)\b/i.test(raw))return 'Produktankündigung / Tool';
-  if(metrics.securityPattern)return 'Sicherheitsproblem';
-  // Reserve the concrete-problem label for observable failures or explicit defect reports.
-  if(/\b(crash(?:es|ing)?|error message|error occurs|throws an error|returns an error|error when|error on|bug report|fails when|fails to|cannot connect|can't connect|does not work|doesn't work|not working|data loss|wrong results|authentication bypass|unauthorized access|unintended access|leaks? (?:the )?(?:user )?query)\b/i.test(raw))return 'Konkretes technisches Problem';
-  if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
   if(metrics.opinionPattern)return 'Meinung';
+  if(metrics.securityPattern)return 'Sicherheit / technisches Thema';
+  if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
   if(metrics.technicalPattern||metrics.marketPattern)return 'Technische Nachricht / Diskussion';
   return 'Allgemeine Erwähnung';
  }
@@ -1235,7 +1237,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.26</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.27</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1251,5 +1253,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.26</div>Bluesky-Scoring 98.26: Interaktionen sind gedeckelt und können konkrete Problembelege nicht mehr überstimmen · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.27</div>Bluesky-Scoring 98.27: echte Fehler und Marktbedarf werden vor allgemeinen Security-Begriffen und Produktmeldungen eingeordnet · Master V98 bleibt unverändert</div>
 </body></html>
