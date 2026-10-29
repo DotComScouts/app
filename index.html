@@ -191,7 +191,7 @@
 
 
 <section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
- <div class="eyebrow">BETA 98.9 · EXPERIMENTELLE QUELLE</div>
+ <div class="eyebrow">BETA 98.11 · EXPERIMENTELLE QUELLE</div>
  <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
  <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
@@ -1067,7 +1067,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const phrase=normalizeText(byId('blueskyBetaQuery').value);
   const phraseHit=phrase.length>2&&text.includes(phrase);
   // Themenbezug hilft beim Sortieren, darf aber allein keinen hohen Score erzeugen.
-  const relevance=terms.length?Math.round(18*(matched.length/terms.length)+(phraseHit?2:0)):0;
+  let relevance=terms.length?Math.round(18*(matched.length/terms.length)+(phraseHit?2:0)):0;
+  // Beta 98.11: konkrete technische oder produktbezogene Signale zählen stärker als bloße Meinungen.
+  const concretePattern=/(open[- ]source|github|repository|repo\b|api\b|sdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|tool|framework|library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|model|deployment|deploy|automation|developer|software|code|implementation|server|client|protocol|prototype|product|feature|platform|research|preprint|experiment|monitoring|self-hosted|reverse engineer|reverse engineering|\bCVE-\d{4}-\d+\b)/i.test(rawText);
+  const opinionPattern=/(hot take|my opinion|i think|i feel|i hate|i love|fuck ai|ai is ruining|ai-proof our lives|enshittification|what do you think|unpopular opinion|the problem with ai)/i.test(rawText);
+  if(concretePattern) relevance+=5;
+  if(opinionPattern&&!concretePattern) relevance-=7;
+  relevance=Math.max(0,Math.min(25,relevance));
   // Resonanz ist das stärkste Signal; logarithmisch, damit einzelne große Accounts nicht alles dominieren.
   const rawEngagement=Math.log1p(likes)*6+Math.log1p(reposts)*9+Math.log1p(replies)*4;
   const engagement=Math.min(50,Math.round(rawEngagement));
@@ -1079,22 +1085,24 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const substance=words.length>=18?3:words.length>=10?2:words.length>=6?1:0;
   const handle=String(post?.author?.handle||'').toLowerCase();
   const feedAccount=/(news|newsfeed|newsletter|daily|digest|bot|firehose|feed|press|updates|bulletin|toppnews|ai-firehose|marketing|promo)/.test(handle);
-  const promoPattern=/(subscribe|follow us|sign up|buy now|try it free|limited time|our product|we help businesses|book a demo|sponsored|use code|tickets|register now|free ai prompt|copy-paste it free|download now|start your free trial|limited offer)/i.test(rawText);
-  const newsletterPattern=/(newsletter|this week's roundup|weekly roundup|daily briefing|today's digest|our latest newsletter|sign up for our newsletter)/i.test(rawText);
-  const syndicated=/(original post:|source: @|view in timelines|read more at|continue reading|https?:\/\/ift\.tt\/|link in bio|cross-posted)/i.test(rawText);
+  const hardAdPattern=/(^|\s)#ad\b|\b(advertisement|paid promotion|sponsored post|sponsored content|paid partnership)\b|\$\d+(?:\.\d{2})?\s*(?:\/|per\s+month|monthly)|featured spot is|buy now|use code [A-Z0-9_-]+/i.test(rawText);
+  const promoPattern=hardAdPattern||/(subscribe|follow us|sign up|try it free|limited time|our product|we help businesses|book a demo|sponsored|use code|tickets|register now|free ai prompt|copy-paste it free|download now|start your free trial|limited offer|last chance to register|telegram|join our community)/i.test(rawText);
+  const newsletterPattern=/(newsletter|this week's roundup|weekly roundup|daily briefing|today's digest|our latest newsletter|sign up for our newsletter|weekly digest|news roundup|roundup of)/i.test(rawText);
+  const syndicated=/(original post:|source: @|view in timelines|read more at|continue reading|https?:\/\/ift\.tt\/|link in bio|cross-posted|automated update|status page|partial outage|service disruption|is reporting a .*outage|live timeline)/i.test(rawText);
+  const statusUpdate=/(partial outage|service disruption|status page|is reporting a .*outage|api (?:is )?(?:down|degraded)|service is down|incident update)/i.test(rawText);
   const hashtagMatches=(rawText.match(/#[\w-]+/g)||[]).length;
   const repeatedHashtags=hashtagMatches>=5;
   const lowSubstance=words.length<7;
   const linkOnly=lowSubstance?6:0;
-  const penalties=(feedAccount?18:0)+(promoPattern?20:0)+(newsletterPattern?18:0)+(syndicated?12:0)+(repeatedHashtags?5:0)+(lowSubstance?5:0);
+  const penalties=(feedAccount?18:0)+(promoPattern?24:0)+(newsletterPattern?18:0)+(syndicated?12:0)+(statusUpdate?10:0)+(repeatedHashtags?5:0)+(lowSubstance?5:0)+(opinionPattern&&!concretePattern?7:0);
   const score=Math.max(0,Math.min(100,relevance+engagement+freshness+substance-linkOnly-penalties));
   const totalInteractions=likes+reposts+replies;
   const hasResonance=totalInteractions>0;
   const meaningfulResonance=totalInteractions>=3&&engagement>=6;
-  return {score,relevance,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,newsletterPattern,syndicated,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
+  return {score,relevance,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,hardAdPattern,newsletterPattern,syndicated,statusUpdate,concretePattern,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
  }
  function classify(signal,metrics){
-  if(signal<25||metrics.matched.length===0||!metrics.meaningfulResonance||metrics.feedAccount||metrics.promoPattern||metrics.newsletterPattern||metrics.syndicated)return 'Schwaches Signal';
+  if(signal<25||metrics.matched.length===0||!metrics.meaningfulResonance||metrics.feedAccount||metrics.promoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.concretePattern)return 'Schwaches Signal';
   if(signal>=48&&metrics.engagement>=18)return 'Stärkeres Community-Signal';
   return 'Frühes Signal';
  }
@@ -1107,8 +1115,9 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const seen=new Set();
   const unique=posts.filter(p=>{const key=normalizeText(p?.record?.text||'');if(!key||seen.has(key))return false;seen.add(key);return true;});
   const ranked=unique.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
-  const relevant=ranked.filter(p=>p._metrics.matched.length>0&&p._metrics.score>=22&&p._metrics.hasResonance&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated);
-  const display=relevant.length?relevant:ranked.filter(p=>p._metrics.matched.length>0&&p._metrics.hasResonance&&p._metrics.score>=16&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated).slice(0,5);
+  const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=16&&p._metrics.hasResonance&&!p._metrics.hardAdPattern&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
+  const relevant=ranked.filter(p=>eligible(p)&&!p._metrics.statusUpdate);
+  const display=relevant.length?relevant:ranked.filter(p=>eligible(p)).slice(0,5);
   if(!display.length){results.innerHTML='<p class="hint">Die API lieferte Posts, aber keiner hatte ausreichend thematische Übereinstimmung. Formuliere die Suche präziser oder probiere einen Synonymbegriff.</p>';return;}
   results.innerHTML=display.map(p=>{
    const rec=p.record||{},author=p.author||{},date=Date.parse(p.indexedAt||rec.createdAt||''),dateText=Number.isFinite(date)?new Date(date).toLocaleString():'Datum unbekannt';
@@ -1127,7 +1136,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    const data=await response.json();
    if(!data||!Array.isArray(data.posts))throw new Error('Unerwartetes API-Antwortformat');
    render(data.posts);
-   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Doppelte Texte, erkennbare Werbe-/Newsletter-Beiträge und Feed-/Syndication-Posts werden gefiltert. Aktualität ist auf vier Punkte begrenzt; geringe Resonanz wird als schwaches Signal gekennzeichnet. Kein Wachstumsmaß und kein Nachweis für Domainnachfrage.`;
+   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Doppelte Texte, explizite Anzeigen, erkennbare Werbe-/Newsletter-Beiträge und Feed-/Syndication-Posts werden gefiltert. Technische und produktbezogene Inhalte werden gegenüber allgemeinen Meinungsbeiträgen bevorzugt; reine Statusmeldungen werden abgewertet. Aktualität ist auf vier Punkte begrenzt; geringe Resonanz wird als schwaches Signal gekennzeichnet. Kein Wachstumsmaß und kein Nachweis für Domainnachfrage.`;
   }catch(err){status.textContent='Bluesky-API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe Internetverbindung, Browser-CORS und mögliche API-Limits. Andere Funktionen bleiben davon unberührt.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Du kannst die Abfrage erneut versuchen.</p>';byId('blueskyBetaTotal').textContent='0';byId('blueskyBetaLikes').textContent='0';byId('blueskyBetaShares').textContent='0';}
   finally{button.disabled=false;}
  }
@@ -1136,7 +1145,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.10</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.11</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1152,5 +1161,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.10</div>Bluesky-Scoring 98.10: Resonanz vor Aktualität, strengere Werbe-/Newsletter-Filter · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.11</div>Bluesky-Scoring 98.11: technische Relevanz, harte Anzeigenfilter, Statusmeldungs-Abwertung · Master V98 bleibt unverändert</div>
 </body></html>
