@@ -89,8 +89,8 @@ test('09 genuine open-source product launch remains eligible', async () => {
 });
 test('10 concrete technical problem is classified and shown', async () => {
   const d = await run({ posts: [post('engineer.bsky.social', 'MCP server crashes when authentication expires. Bug report: production integration fails to connect and returns an error.', 'bug')] });
-  assert.ok(count(d) <= 1);
-  if (count(d)) assert.match(results(d), /Konkretes technisches Problem|Sicherheitsproblem/);
+  assert.equal(count(d), 1, 'a clearly relevant, concrete failure should be shown');
+  assert.match(results(d), /Konkretes technisches Problem|Sicherheitsproblem/);
 });
 test('11 general opinion without technical evidence is not promoted', async () => {
   const d = await run({ posts: [post('opinion.bsky.social', 'Hot take: I think AI is ruining everything. What do you think about this trend?', 'opinion')] });
@@ -138,16 +138,17 @@ test('17 source counters reflect only displayed unique posts', async () => {
   assert.equal(count(d), 1);
   assert.equal(d.getElementById('blueskyBetaLikes').textContent, '8');
 });
-test('18 no-resonance posts do not become stronger community signals', async () => {
+test('18 no-resonance posts remain visible only as an early signal, not a strong community signal', async () => {
   const d = await run({ posts: [post('builder.bsky.social', 'We built an open-source MCP server integration for Claude. Now available on GitHub with production workflow support.', 'low-resonance', 0, 0, 0)] });
-  if (count(d)) assert.doesNotMatch(results(d), /Stärkeres Community-Signal/);
+  assert.equal(count(d), 1, 'the product signal should remain visible even without engagement');
+  assert.match(results(d), /Frühes Signal/);
+  assert.doesNotMatch(results(d), /Stärkeres Community-Signal/);
 });
 test('19 result text is HTML-escaped', async () => {
-  const d = await run({ posts: [post('builder.bsky.social', 'We built an open-source MCP server integration for Claude. <img src=x onerror=alert(1)> now available on GitHub.', 'escaped')] });
-  if (count(d)) {
-    assert.doesNotMatch(results(d), /<img src=x onerror=alert\(1\)>/);
-    assert.match(results(d), /&lt;img/);
-  }
+  const d = await run({ posts: [post('builder.bsky.social', 'We built an open-source MCP server integration for Claude. <em>sample markup</em> now available on GitHub.', 'escaped')] });
+  assert.equal(count(d), 1, 'the post should be displayed so escaping can be verified');
+  assert.doesNotMatch(results(d), /<em>sample markup<\/em>/);
+  assert.match(results(d), /&lt;em&gt;sample markup&lt;\/em&gt;/);
 });
 test('20 status explains Bluesky is not proof of domain demand', async () => {
   const d = await run({ posts: [post('builder.bsky.social', 'We built an open-source MCP server integration for Claude. Now available on GitHub with production workflow support.', 'disclaimer')] });
