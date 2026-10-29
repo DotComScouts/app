@@ -45,13 +45,15 @@ The following real network smoke tests passed from a GitHub-hosted Node.js 22 ru
 - Hugging Face model search: response is an array.
 - Stack Exchange advanced search: response contains an items array.
 
-Run with all three jobs successful: https://github.com/DotComScouts/app/actions/runs/40971458132
+The actual Chromium browser smoke test also passed: it loaded the isolated page, queried Bluesky from the browser, received 50 posts, and displayed 28 unique results. No uncaught browser errors were reported.
 
-These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. They do not prove browser CORS behavior, semantic relevance of real results, or long-term availability. The external-source smoke job is diagnostic and does not block the deterministic suite.
+Run with the deterministic suite, live Bluesky API, and the four other API smoke tests successful: https://github.com/DotComScouts/app/actions/runs/40971618131
+
+These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that the Bluesky UI fetch worked from the CI browser origin. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
 
 ## Remaining verification
 
-1. Test the Bluesky explorer in a real browser environment, including browser CORS, rendering, rate limiting, and retry behavior.
+1. Repeat browser testing against the actual deployed preview/origin, including rate limiting and retry behavior.
 2. Check source isolation and existing domain-check, CSV-export, language, and risk-review flows for regressions.
 3. Build controlled cross-source fixtures to distinguish problem evidence, independent demand evidence, product evidence, and resonance. Keep source evidence separate and do not let Bluesky alter domain availability checks.
 4. Only after these pass, design a controlled multi-source integration test.
