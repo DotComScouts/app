@@ -1174,7 +1174,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    // Normalize localized account handles and collapse only known equivalent topics.
    const rawHandle=handle.replace(/\\.bsky\\.social$/,'');
    const brand=rawHandle.replace(/-(?:cesko|czech|cz|de|en|fr|es|it|pt|nl|pl|uk|us|eu|jp|kr|global|official)$/,'');
-   const normalized=normalizeText(raw+' '+handle);
+   const normalized=normalizeText(raw);
    let brandTopic='';
    if(/(?:^|[.-])tooldurus(?:[.-]|$)/i.test(rawHandle)&&/(?:mcp|claude|jak pripojit|how to connect|custom server|vlastni mcp)/i.test(normalized)){
     brandTopic='tooldurus|mcp-server-claude-connection';
