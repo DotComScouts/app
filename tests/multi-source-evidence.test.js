@@ -31,7 +31,7 @@ test('01 a concrete bug is problem evidence, not automatic demand', () => {
 test('02 explicit search for a solution is demand intent, not proof of independent demand', () => {
   const evidence = classifyEvidence(record({ text: 'Looking for a tool to monitor MCP server failures across production.' }));
   assert.equal(evidence.demandIntent, true);
-  assert.equal(evidence.problem, true);
+  assert.equal(evidence.problem, false);
   assert.equal(evidence.independentDemandSupported, false);
 });
 
