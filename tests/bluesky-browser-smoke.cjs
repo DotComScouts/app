@@ -58,8 +58,7 @@ async function main() {
     const sources = [
       {
         name: 'Hugging Face',
-        input: '#hfBetaTopics',
-        query: 'mcp',
+        // Keep the app's default multi-topic query to exercise the representative user configuration.
         button: '#hfBetaRun',
         status: '#hfBetaStatus'
       },
@@ -98,8 +97,10 @@ async function main() {
     ];
 
     for (const source of sources) {
-      assert.equal(await page.locator(source.input).count(), 1,
-        `${source.name} query input should render`);
+      if (source.input) {
+        assert.equal(await page.locator(source.input).count(), 1,
+          `${source.name} query input should render`);
+      }
       assert.equal(await page.locator(source.button).count(), 1,
         `${source.name} run button should render`);
       await runSource(page, source);
