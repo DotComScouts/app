@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.22: isolated signal explorers; based on Master V98, which remains unchanged -->
+<!-- DotComScouts Beta 98.23: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -1069,13 +1069,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   // Beta 98.13: query overlap is only a starting point, not sufficient proof of technical relevance.
   const overlap=terms.length?matched.length/terms.length:0;
   const technicalPattern=/(open[- ]source|github|repository|\brepo\b|\bapi\b|\bsdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|developer tool|framework|software library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|deployment|deploy|automation|code|implementation|protocol|prototype|self-hosted|reverse engineer|reverse engineering|\bcve-\d{4}-\d+\b|pull request|issue tracker|debugging|latency|observability|monitoring|authentication|authorization|database|endpoint|cli tool|command-line)/i.test(rawText);
-  const marketPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
+  const marketPattern=/(looking for|need a tool|we need|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
   const opinionPattern=/(hot take|my opinion|i think|i feel|i hate|i love|fuck ai|ai is ruining|ai-proof our lives|enshittification|what do you think|unpopular opinion|the problem with ai|thoughts\?)/i.test(rawText);
   let relevance=Math.round(overlap*20)+(phraseHit?5:0)+(technicalPattern?8:0);
   if(opinionPattern&&!technicalPattern) relevance-=10;
   relevance=Math.max(0,Math.min(30,relevance));
   // Separate market/problem evidence from community reaction and freshness.
-  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:fix|debug|repair|resolve)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|crash(?:es|ing)?|not working|incorrectly|wrong results|data loss)/i.test(rawText);
+  const problemPattern=/(looking for|need a tool|we need|how to (?:fix|debug|repair|resolve)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|crash(?:es|ing)?|not working|incorrectly|wrong results|data loss)/i.test(rawText);
   const productPattern=/(open[- ]source|github|repository|\brepo\b|built an? |built a |we built|new tool|new framework|new library|new plugin|new mcp server|server connects|sdk|cli|available on github|now available|released|release notes|launch(?:ed|ing)?|prototype|integration|production scheduling)/i.test(rawText);
   const securityPattern=/(security|vulnerability|prompt injection|authentication|authorization|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? the user|unintended access)/i.test(rawText);
   // Concrete problem evidence gets the strongest market score; product/build signals get a medium score.
@@ -1230,7 +1230,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.22</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.23</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1246,5 +1246,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.22</div>Bluesky-Scoring 98.22: präzisere Trennung von Diskussion, Anleitung, Produktankündigung und konkretem Fehler · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.23</div>Bluesky-Scoring 98.23: generische Formulierungen wie „how do I“ und „hard to“ zählen nicht länger automatisch als Problembedarf · Master V98 bleibt unverändert</div>
 </body></html>
