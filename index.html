@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 98: preserve zero values in dynamic status translations -->
+<!-- DotComScouts Beta 98.1: adds isolated Hugging Face API explorer; based on Master V98 -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -74,6 +74,9 @@
 
 .language-switch{display:flex;justify-content:flex-end;margin:0 0 4px;position:relative;z-index:20}.language-switch .language-trigger{display:flex;align-items:center;justify-content:center;gap:8px;width:auto;min-width:130px;padding:7px 10px;font-size:12px;font-weight:750;background:#0e1729;border-color:#31516f;white-space:nowrap}.language-switch .flag{display:inline-block;width:22px;height:15px;flex:0 0 22px;border-radius:2px;overflow:hidden;box-shadow:0 0 0 1px #ffffff35}.language-switch .chevron{font-size:10px;color:var(--muted);margin-left:2px}.language-menu{position:absolute;right:0;top:calc(100% + 5px);min-width:160px;padding:5px;background:#0e1729;border:1px solid #31516f;border-radius:10px;box-shadow:0 12px 30px #0008}.language-menu[hidden]{display:none}.language-menu button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;background:transparent;border:0;text-align:left;font-size:13px;font-weight:650}.language-menu button:hover,.language-menu button[aria-checked="true"]{background:#1c3850}.language-switch select{display:block;width:auto;min-width:150px;max-width:100%;padding:7px 10px;font-size:12px;font-weight:750;background:#0e1729;border-color:#31516f}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(min-width:621px){header{position:relative;padding-right:150px}.language-switch{position:absolute;right:0;top:4px}}
+
+/* Beta 98.1: isolated Hugging Face signal explorer */
+.hf-beta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.hf-beta-card{background:#0e1729;border:1px solid var(--line);border-radius:10px;padding:10px}.hf-beta-card strong{display:block;font-size:17px}.hf-beta-results{display:grid;gap:8px;margin-top:12px}.hf-beta-item{border:1px solid var(--line);background:#10192b;border-radius:10px;padding:10px}.hf-beta-item h3{font-size:14px;margin:0 0 4px;overflow-wrap:anywhere}.hf-beta-item p{font-size:12px;margin:4px 0}.hf-beta-meta{font-size:11px;color:var(--muted)}.hf-beta-item a{overflow-wrap:anywhere}.hf-beta-actions{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}.hf-beta-status{margin-top:9px;padding:9px 11px;background:#0e1729;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:13px;white-space:pre-wrap}@media(max-width:620px){.hf-beta-grid{grid-template-columns:1fr}.hf-beta-actions{grid-template-columns:1fr}}
 </style></head>
 <body><main>
 <header><div class="language-switch"><label for="languageSelect" class="sr-only">Sprache / Language / Idioma / Langue</label><select id="languageSelect" aria-label="Sprache auswählen"><option value="de">🇩🇪 Deutsch</option><option value="en">🇬🇧 English</option><option value="es">🇪🇸 Español</option><option value="fr">🇫🇷 Français</option></select></div><div class="brandline"><span class="brandmark">D</span><span class="brandtitle">DotComScouts</span></div><div class="brandclaim">Discover trends <span class="arrow">→</span> Find your next .com</div><h1>Freie .com-Domains finden</h1><p class="sub">DotComScouts verbindet frühe Marktsignale mit kreativen Namensideen. So entdeckst Du freie .com-Domains, die aktuelle Trends aufgreifen oder das Potenzial für eine starke Marke mitbringen.</p></header>
@@ -116,6 +119,23 @@
 <div id="trendCandidates" class="signal-list"><div class="empty-signal"><span class="empty-dot"></span>Noch keine Trendkandidaten analysiert.</div></div>
 </details></section>
 <section class="panel how-panel"><div class="eyebrow">TRANSPARENT & NACHVOLLZIEHBAR</div><h2>So arbeitet die Suche</h2><div class="how-grid"><div><span class="stepno">01</span><strong>Neue Signale finden</strong><p>Je nach Suchmodus werden Hacker-News-Beiträge, ergänzende Hacker-News-Suchtreffer und neue GitHub-Softwareprojekte ausgewertet.</p></div><div><span class="stepno">02</span><strong>Namen bewerten</strong><p>Aktualität, Resonanz und Signale aus mehreren Quellen werden stärker gewichtet als ein einzelner Fund. Eine automatisierte Vorprüfung markiert mögliche sprachliche Risiken in Deutsch, Englisch, Französisch und Spanisch – sie ersetzt keine gründliche Sprach- oder Markenprüfung.</p></div><div><span class="stepno">03</span><strong>.com prüfen</strong><p>Die .com-Verfügbarkeit wird live abgefragt und kann sich jederzeit ändern. Vor einer Registrierung erneut prüfen und Marken- sowie Namensrechte separat recherchieren. Ein freier Name ist weder eine Nachfrageprognose noch eine Garantie für Wiederverkaufswert.</p></div></div><p class="foot">Die Suche deckt nicht das gesamte Internet ab. Trendwerte sind interne Orientierungshilfen, keine objektiven Marktprognosen. Originalnamen ohne ausreichende Bestätigung werden nicht als Kaufkandidaten priorisiert. Verfügbarkeit, Nachfrage und rechtliche Nutzbarkeit müssen vor einer Registrierung eigenständig geprüft werden. Öffentliche Quellen: <a href="https://github.com/HackerNews/API" target="_blank" rel="noopener">Hacker News API</a> · <a href="https://docs.github.com/en/rest/search/search" target="_blank" rel="noopener">GitHub Search API</a> · <a href="https://hn.algolia.com/api" target="_blank" rel="noopener">Algolia Hacker News Search</a>.</p></section>
+
+<section class="panel" id="hfBetaPanel" aria-labelledby="hfBetaTitle">
+ <div class="eyebrow">BETA 98.1 · EXPERIMENTELLE QUELLE</div>
+ <h2 id="hfBetaTitle">Hugging Face – neue KI-Projekte</h2>
+ <p class="sub">Diese Zusatzsuche ruft öffentliche Hugging-Face-Modelle und Spaces ab. Sie arbeitet unabhängig vom bestehenden Domain-Workflow und verändert weder dessen Trendbewertung noch die Verfügbarkeitsprüfung.</p>
+ <div class="hf-beta-grid">
+  <div class="field"><label for="hfBetaKind">Datentyp</label><select id="hfBetaKind"><option value="models">Modelle</option><option value="spaces">Spaces / Demos</option><option value="both" selected>Modelle + Spaces</option></select></div>
+  <div class="field"><label for="hfBetaCount">Max. Treffer je Datentyp</label><select id="hfBetaCount"><option value="10">10</option><option value="20" selected>20</option><option value="40">40</option></select></div>
+  <div class="field"><label for="hfBetaSort">Sortierung</label><select id="hfBetaSort"><option value="recent" selected>Zuletzt aktualisiert</option><option value="downloads">Downloads (Modelle)</option><option value="likes">Likes</option></select></div>
+ </div>
+ <div class="hf-beta-actions"><button class="primary" id="hfBetaRun" type="button">Hugging Face abrufen</button><button class="secondary" id="hfBetaClear" type="button">Ergebnisse leeren</button></div>
+ <div class="hf-beta-status" id="hfBetaStatus" role="status" aria-live="polite">Noch keine API-Abfrage ausgeführt. Internetverbindung und Browser-CORS-Verhalten können das Ergebnis beeinflussen.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="hfBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Modelle</span><strong id="hfBetaModels">0</strong></div><div class="hf-beta-card"><span class="hint">Spaces</span><strong id="hfBetaSpaces">0</strong></div></div>
+ <div id="hfBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die abgerufenen Projekte.</p></div>
+ <p class="foot">Quelle: <a href="https://huggingface.co/docs/hub/en/api" target="_blank" rel="noopener">Hugging Face Hub API-Dokumentation</a>. Die API-Ergebnisse sind Trendsignale, keine Nachfrage- oder Domainverfügbarkeitsnachweise. Öffentliche Endpunkte können Limits anwenden. Diese Beta hat keinen API-Schlüssel und sendet keine Daten an einen eigenen Server.</p>
+</section>
+
 </main>
 <script>
 (()=> {
@@ -722,6 +742,52 @@ $('csv').addEventListener('click',()=>{
  const rows=[labels.map(csvCell).join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',localStatus(r),localType(r),r.name.length,r.trend,r.trendScore,r.mentions,risk.status==='green'?tr('safe'):risk.status==='red'?tr('highRisk'):tr('riskCheck'),riskReason(risk.kind||'safe',risk.lang),r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(csvCell).join(';')})];
  downloadCsv(rows,'DotComScouts-results.csv');
 });
+
+// Beta 98.1: isolated Hugging Face API explorer. Does not feed the production domain pipeline.
+const hfEsc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const hfEl = id => document.getElementById(id);
+const hfDate = value => { if(!value) return 'Datum unbekannt'; const d=new Date(value); return Number.isNaN(d.getTime()) ? 'Datum unbekannt' : d.toLocaleString(); };
+async function hfFetch(kind, limit, sort){
+ const endpoint = kind === 'models' ? 'models' : 'spaces';
+ const params = new URLSearchParams({limit:String(limit), full:'true'});
+ if(sort === 'downloads' && endpoint === 'models') params.set('sort','downloads');
+ else if(sort === 'likes') params.set('sort','likes');
+ else {params.set('sort','lastModified'); params.set('direction','-1');}
+ const response = await fetch(`https://huggingface.co/api/${endpoint}?${params.toString()}`, {headers:{'Accept':'application/json'}});
+ if(!response.ok) throw new Error(`${endpoint}: HTTP ${response.status}`);
+ const data = await response.json();
+ if(!Array.isArray(data)) throw new Error(`${endpoint}: unerwartetes Antwortformat`);
+ return data.map(item=>({...item,_hfKind:endpoint}));
+}
+function hfRender(items){
+ const target=hfEl('hfBetaResults');
+ if(!items.length){target.innerHTML='<p class="hint">Keine Treffer geliefert.</p>';return;}
+ target.innerHTML=items.map(item=>{
+  const id=item.id || item.modelId || 'Unbekanntes Projekt';
+  const url='https://huggingface.co/'+encodeURIComponent(id).replace(/%2F/g,'/');
+  const kind=item._hfKind==='models'?'Modell':'Space';
+  const tags=Array.isArray(item.tags)?item.tags.slice(0,7).join(' · '):'';
+  const stats=item._hfKind==='models'?`Downloads: ${Number(item.downloads||0).toLocaleString()} · Likes: ${Number(item.likes||0).toLocaleString()}`:`Likes: ${Number(item.likes||0).toLocaleString()}`;
+  return `<article class="hf-beta-item"><h3><a href="${hfEsc(url)}" target="_blank" rel="noopener">${hfEsc(id)}</a></h3><div class="hf-beta-meta">${kind} · Aktualisiert: ${hfEsc(hfDate(item.lastModified))}</div><p>${hfEsc(stats)}</p>${tags?`<p class="hf-beta-meta">${hfEsc(tags)}</p>`:''}</article>`;
+ }).join('');
+}
+async function hfRun(){
+ const run=hfEl('hfBetaRun'); run.disabled=true; hfEl('hfBetaStatus').textContent='Hugging Face API wird abgefragt …';
+ const kind=hfEl('hfBetaKind').value, limit=Number(hfEl('hfBetaCount').value), sort=hfEl('hfBetaSort').value;
+ try{
+  const jobs=[];
+  if(kind==='models'||kind==='both') jobs.push(hfFetch('models',limit,sort));
+  if(kind==='spaces'||kind==='both') jobs.push(hfFetch('spaces',limit,sort));
+  const chunks=await Promise.all(jobs); const items=chunks.flat();
+  items.sort((a,b)=>{if(sort==='downloads')return (Number(b.downloads)||0)-(Number(a.downloads)||0);if(sort==='likes')return (Number(b.likes)||0)-(Number(a.likes)||0);return new Date(b.lastModified||0)-new Date(a.lastModified||0)});
+  hfEl('hfBetaTotal').textContent=String(items.length);hfEl('hfBetaModels').textContent=String(items.filter(x=>x._hfKind==='models').length);hfEl('hfBetaSpaces').textContent=String(items.filter(x=>x._hfKind==='spaces').length);
+  hfRender(items); hfEl('hfBetaStatus').textContent=`Erfolgreich: ${items.length} Projekte geladen. Hinweis: Aktualität, Likes und Downloads sind nur Indikatoren; sie belegen keine Domainnachfrage.`;
+ }catch(error){hfEl('hfBetaStatus').textContent=`Abruf fehlgeschlagen: ${error.message||error}. Prüfe Internetverbindung, Browserkonsole und möglichen CORS-/Rate-Limit-Fehler.`;hfEl('hfBetaResults').innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Der restliche DotComScouts-Workflow bleibt davon unberührt.</p>';}
+ finally{run.disabled=false;}
+}
+hfEl('hfBetaRun').addEventListener('click',hfRun);
+hfEl('hfBetaClear').addEventListener('click',()=>{hfEl('hfBetaTotal').textContent='0';hfEl('hfBetaModels').textContent='0';hfEl('hfBetaSpaces').textContent='0';hfEl('hfBetaResults').innerHTML='<p class="hint">Hier erscheinen die abgerufenen Projekte.</p>';hfEl('hfBetaStatus').textContent='Ergebnisse geleert.';});
+
 })();
 </script>
 <footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 98.0</div></footer>
@@ -740,4 +806,5 @@ $('csv').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.1</div>Experimentelle Hugging-Face-API · Master V98 bleibt unverändert</div>
 </body></html>
