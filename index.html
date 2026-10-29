@@ -1150,8 +1150,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
     let path=decodeURIComponent(u.pathname).replace(/\/{2,}/g,'/').replace(/\/$/,'');
     path=path.replace(/^\/(?:en|de|fr|es|it|pt|nl|ja|zh|cs|pl|sv|da|no|fi)(?=\/)/i,'');
     path=path.replace(/\.(?:html?)$/i,'').toLowerCase();
-    // Remove common tracking/session parameters; retain meaningful query parameters only when there is no article path.
-    if(!path && u.searchParams.size){const keep=[...u.searchParams.entries()].filter(([k])=>!/^utm_|^(ref|source|campaign|fbclid|gclid|mc_cid|mc_eid)$/i.test(k)).sort(([a],[b])=>a.localeCompare(b));if(keep.length)path='?'+new URLSearchParams(keep).toString();}
+    // Drop tracking/session parameters on article URLs as well; query-only URLs retain meaningful parameters.
+    if(u.searchParams.size){
+     const keep=[...u.searchParams.entries()]
+      .filter(([k])=>!/^utm_/i.test(k)&&!/^(ref|source|campaign|fbclid|gclid|mc_cid|mc_eid)$/i.test(k))
+      .sort(([a],[b])=>a.localeCompare(b));
+     if(!path&&keep.length)path='?'+new URLSearchParams(keep).toString();
+    }
     return host+path;
    }catch{return String(value||'').replace(/^https?:\/\/(www\.|m\.)?/,'').replace(/[?#].*$/,'').replace(/\/$/,'').toLowerCase();}
   };
