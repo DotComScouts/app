@@ -8,7 +8,7 @@
 
 ## Executed in the available test harness
 
-The committed deterministic Node.js suite has **35 tests; 35 passed, 0 failed** in GitHub Actions. It covers the Bluesky explorer, JavaScript syntax, source isolation, and a separate shadow-evidence prototype. All four inline JavaScript blocks were parsed with `new Function`.
+The committed deterministic Node.js suite has **46 tests; 46 passed, 0 failed** in GitHub Actions. This includes an 18-case labelled English/German/Spanish classification corpus and 14 shadow-evidence regression tests. It covers the Bluesky explorer, JavaScript syntax, source isolation, and a separate shadow-evidence prototype. All four inline JavaScript blocks were parsed with `new Function`.
 
 | Case | Result |
 |---|---|
@@ -34,7 +34,9 @@ The functional unit cases use simulated API responses. The live API and browser 
 
 ## Code correction
 
-URL canonicalization now removes common tracking/session parameters from article URLs even when the URL has a non-empty path. Meaningful query parameters are retained only for URLs without a path. The change is isolated to the Bluesky explorer.
+URL canonicalization removes common tracking/session parameters while preserving meaningful query parameters on search/article paths. This prevents different query results from being merged just because they share the same path. The change is isolated to the shadow prototype/Bluesky explorer.
+
+The shadow classifier was also tightened after tests exposed a conceptual false positive: a post saying “Looking for a tool…” is demand intent, not proof that the writer has personally encountered a confirmed technical failure. The current prototype separately counts concrete problem reports and explicit solution requests; corroborated problems no longer automatically count as corroborated demand. Basic German and Spanish phrases are covered by labelled fixtures.
 
 ## Live API baseline executed in GitHub Actions
 
@@ -58,13 +60,13 @@ A separate, non-production module at `lib/shadow-evidence.js` now models evidenc
 
 The new tests exposed and helped fix a concrete edge case: a failed source record could reserve a URL deduplication key and suppress a later valid record. Failed records no longer reserve deduplication keys. This fix remains confined to the shadow prototype.
 
-The deterministic suite and the shadow-evidence suite pass together: **35/35**.
+The deterministic suite and the shadow-evidence suite pass together: **46/46** (including 18 labelled classification fixtures).
 
 These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that all five experimental UI panels fetched live data from the CI browser origin and did not alter the core domain/trend state. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
 
 ## Remaining verification
 
-1. Repeat browser testing against the actual deployed preview/origin, including rate limiting and retry behavior.
+1. Repeat browser testing against the actual deployed GitHub Pages origin, including rate limiting and retry behavior. The live page was updated to Beta 98.27 at https://dotcomscouts.github.io/app/ in commit https://github.com/DotComScouts/app/commit/10d6d821e8fc17abaf3422a3c916538337324529; the live-origin browser run is being executed separately.
 2. Check source isolation and existing domain-check, CSV-export, language, and risk-review flows for regressions.
 3. Build controlled cross-source fixtures to distinguish problem evidence, independent demand evidence, product evidence, and resonance. Keep source evidence separate and do not let Bluesky alter domain availability checks.
 4. Only after these pass, design a controlled multi-source integration test.
