@@ -172,6 +172,23 @@
  <p class="foot">Quelle: <a href="https://api.stackexchange.com/docs/advanced-search" target="_blank" rel="noopener noreferrer">Stack Exchange API – Advanced Search</a>. Inhalte und Links stammen von Stack Overflow; die API-Nutzungsbedingungen verlangen eine sichtbare Quellenangabe. Fragenaktivität ist ein Community-Signal, kein Nachweis für Domainnachfrage. Die Ergebnisse fließen nicht in die Domainbewertung ein.</p>
 </section>
 
+
+<section class="panel" id="devtoBetaPanel" aria-labelledby="devtoBetaTitle">
+ <div class="eyebrow">BETA 98.6 · EXPERIMENTELLE QUELLE</div>
+ <h2 id="devtoBetaTitle">DEV Community – aktuelle Entwicklerartikel</h2>
+ <p class="sub">Liest öffentliche DEV-Artikel zu ausgewählten Themen und wertet Aktualität, Reaktionen und Kommentare als ergänzende Community-Signale aus. Diese Quelle bleibt vollständig getrennt vom bestehenden Domain-Workflow.</p>
+ <div class="hf-beta-grid">
+  <div class="field"><label for="devtoBetaTags">Themen-Tags (ein Tag, z. B. ai, llm, agents, devtools)</label><input id="devtoBetaTags" value="ai" maxlength="40" /></div>
+  <div class="field"><label for="devtoBetaCount">Max. Treffer</label><select id="devtoBetaCount"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option></select></div>
+  <div class="field"><label for="devtoBetaWindow">Aktualitätsfenster</label><select id="devtoBetaWindow"><option value="7" selected>Letzte 7 Tage</option><option value="30">Letzte 30 Tage</option><option value="365">Letzte 365 Tage</option></select></div>
+ </div>
+ <div class="hf-beta-actions"><button class="primary" id="devtoBetaRun" type="button">DEV-Artikel abrufen</button><button class="secondary" id="devtoBetaClear" type="button">Ergebnisse leeren</button></div>
+ <div class="hf-beta-status" id="devtoBetaStatus" role="status" aria-live="polite">Noch keine DEV-Abfrage ausgeführt. Die öffentliche API kann Limits anwenden.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="devtoBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Reaktionen</span><strong id="devtoBetaReactions">0</strong></div><div class="hf-beta-card"><span class="hint">Kommentare</span><strong id="devtoBetaComments">0</strong></div></div>
+ <div id="devtoBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen Artikel.</p></div>
+ <p class="foot">Quelle: <a href="https://developers.forem.com/api/v1" target="_blank" rel="noopener noreferrer">DEV Community API-Dokumentation</a>. Reaktionen und Kommentare sind Momentaufnahmen, keine Wachstumsraten und kein Nachweis für Domainnachfrage. Es werden nur öffentliche Artikeldaten abgerufen; diese Quelle verändert weder die bestehende Trendbewertung noch die Verfügbarkeitsprüfung.</p>
+</section>
+
 </main>
 <script>
 (()=> {
@@ -967,7 +984,55 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
  byId('stackBetaRun').addEventListener('click',run);byId('stackBetaClear').addEventListener('click',clear);
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.5</div></footer>
+
+<script>
+(()=>{
+ const byId=id=>document.getElementById(id);
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const status=byId('devtoBetaStatus'),results=byId('devtoBetaResults');
+ const dateValue=s=>{const n=Date.parse(s||'');return Number.isFinite(n)?n:null};
+ const ageDays=s=>{const n=dateValue(s);return n===null?Infinity:Math.max(0,(Date.now()-n)/86400000)};
+ function score(a,days){
+  const age=ageDays(a.published_at), freshness=Number.isFinite(age)?Math.max(0,Math.round(45*(1-Math.min(age,days)/days))):0;
+  const reactions=Math.max(0,Number(a.public_reactions_count)||0),comments=Math.max(0,Number(a.comments_count)||0);
+  const engagement=Math.min(35,Math.round(Math.log1p(reactions)*6+Math.log1p(comments)*4));
+  const tagBoost=Array.isArray(a.tag_list)&&a.tag_list.length?Math.min(10,a.tag_list.length*2):0;
+  return Math.max(0,Math.min(100,freshness+engagement+tagBoost));
+ }
+ function render(items,days){
+  byId('devtoBetaTotal').textContent=String(items.length);
+  byId('devtoBetaReactions').textContent=items.reduce((n,a)=>n+(Number(a.public_reactions_count)||0),0).toLocaleString();
+  byId('devtoBetaComments').textContent=items.reduce((n,a)=>n+(Number(a.comments_count)||0),0).toLocaleString();
+  if(!items.length){results.innerHTML='<p class="hint">Keine Artikel für dieses Tag und Zeitfenster gefunden. Versuche z. B. llm, agents, devtools oder webdev.</p>';return;}
+  const ranked=items.map(a=>({...a,_signal:score(a,days)})).sort((a,b)=>b._signal-a._signal);
+  results.innerHTML=ranked.map(a=>{
+   const date=dateValue(a.published_at),dateText=date===null?'Datum unbekannt':new Date(date).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+   const url=/^https:\/\//i.test(a.url||'')?a.url:'#';
+   return `<article class="hf-beta-item"><h3><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(a.title||'Ohne Titel')}</a></h3><p class="hint">DEV Community · Veröffentlicht: ${esc(dateText)} · Trend-Signal: ${a._signal}/100</p><p class="hint">Reaktionen: ${Number(a.public_reactions_count)||0} · Kommentare: ${Number(a.comments_count)||0} · Lesedauer: ${Number(a.reading_time_minutes)||0} Min.</p><p>${esc(a.description||'')}</p><p>${(Array.isArray(a.tag_list)?a.tag_list:[]).slice(0,8).map(t=>`<span class="tag">${esc(t)}</span>`).join(' ')}</p></article>`;
+  }).join('');
+ }
+ async function run(){
+  const tag=byId('devtoBetaTags').value.trim().toLowerCase().replace(/^#/,''),count=Number(byId('devtoBetaCount').value),days=Number(byId('devtoBetaWindow').value),button=byId('devtoBetaRun');
+  if(!/^[a-z0-9-]{1,40}$/.test(tag)){status.textContent='Bitte genau ein gültiges Tag eingeben (Buchstaben, Zahlen und Bindestriche).';return;}
+  button.disabled=true;status.textContent='Öffentliche DEV-Artikel werden abgerufen …';
+  try{
+   const endpoint=`https://dev.to/api/articles?tag=${encodeURIComponent(tag)}&per_page=${count}&top=${days}`;
+   const response=await fetch(endpoint,{headers:{Accept:'application/json'}});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   const data=await response.json();
+   if(!Array.isArray(data))throw new Error('Unerwartetes API-Antwortformat');
+   const items=data.filter(a=>a&&a.title&&ageDays(a.published_at)<=days);
+   render(items,days);
+   status.textContent=`API erfolgreich: ${items.length} Artikel zum Tag „${tag}“ aus dem ${days}-Tage-Fenster geladen. Der Score kombiniert Aktualität mit logarithmisch gewichteten Reaktionen und Kommentaren; er misst keine Zuwachsrate und ist kein Nachweis für Domainnachfrage.`;
+  }catch(err){status.textContent='DEV-API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe Internetverbindung, CORS und mögliche API-Limits.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Die übrigen Funktionen bleiben davon unberührt.</p>';}
+  finally{button.disabled=false;}
+ }
+ function clear(){byId('devtoBetaTotal').textContent='0';byId('devtoBetaReactions').textContent='0';byId('devtoBetaComments').textContent='0';results.innerHTML='<p class="hint">Hier erscheinen die gefundenen Artikel.</p>';status.textContent='Ergebnisse geleert.';}
+ byId('devtoBetaRun').addEventListener('click',run);byId('devtoBetaClear').addEventListener('click',clear);
+})();
+</script>
+
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.6</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -983,5 +1048,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.5</div>Stack-Exchange-Suche: Titelbezug, 365-Tage-Fenster, Aktualitätsgewichtung und sichere Datumsverarbeitung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.6</div>DEV-Community-API als isolierte Zusatzquelle; Stack-Exchange-Suche: Titelbezug, 365-Tage-Fenster, Aktualitätsgewichtung und sichere Datumsverarbeitung · Master V98 bleibt unverändert</div>
 </body></html>
