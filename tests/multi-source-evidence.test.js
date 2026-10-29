@@ -206,7 +206,8 @@ test('23 two explicit independent requests support demand evidence', () => {
     record({ sourceRecordId: 'need2', authorKey: 'bob', problemClusterKey: 'auth-solution', text: 'Does anyone know a tool to diagnose MCP server authentication failures?' })
   ]);
   assert.equal(result.clusters['auth-solution'].demandSupported, true);
-  assert.equal(result.clusters['auth-solution'].problemCorroborated, true);
+  assert.equal(result.clusters['auth-solution'].problemCorroborated, false,
+    'explicit solution requests must not be silently reclassified as confirmed technical failures');
 });
 
 test('24 cross-source problem evidence does not automatically become cross-source demand', () => {
