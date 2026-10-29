@@ -4,6 +4,27 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
+async function runSource(page, source) {
+  if (source.input) await page.locator(source.input).fill(source.query);
+  await page.locator(source.button).click();
+  await page.waitForFunction(({ selector, success, failure }) => {
+    const text = document.querySelector(selector)?.textContent || '';
+    return text.includes(success) || text.includes(failure);
+  }, {
+    selector: source.status,
+    success: source.successText || 'API erfolgreich',
+    failure: source.failureText || 'fehlgeschlagen'
+  }, { timeout: 30000 });
+  const status = await page.locator(source.status).innerText();
+  assert.ok(status.includes(source.successText || 'API erfolgreich'),
+    `${source.name} browser API request failed: ${status}`);
+  if (source.button) {
+    assert.equal(await page.locator(source.button).isDisabled(), false,
+      `${source.name} button should be re-enabled`);
+  }
+  console.log(`PASS ${source.name}: ${status}`);
+}
+
 async function main() {
   const htmlPath = path.join(__dirname, '..', 'index.html');
   const html = fs.readFileSync(htmlPath, 'utf8');
@@ -29,27 +50,64 @@ async function main() {
     const page = await browser.newPage();
     page.on('pageerror', error => pageErrors.push(error.message));
     const address = server.address();
-    await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.goto(`http://127.0.0.1:${address.port}/`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 20000
+    });
 
-    assert.equal(await page.locator('#blueskyBetaQuery').count(), 1, 'Bluesky query input should render');
-    assert.equal(await page.locator('#blueskyBetaRun').count(), 1, 'Bluesky search button should render');
+    const sources = [
+      {
+        name: 'Hugging Face',
+        input: '#hfBetaTopics',
+        query: 'mcp',
+        button: '#hfBetaRun',
+        status: '#hfBetaStatus'
+      },
+      {
+        name: 'npm Registry',
+        input: '#npmBetaQuery',
+        query: 'mcp server',
+        button: '#npmBetaRun',
+        status: '#npmBetaStatus',
+        failureText: 'Abruf fehlgeschlagen'
+      },
+      {
+        name: 'Stack Exchange',
+        input: '#stackBetaQuery',
+        query: 'MCP server',
+        button: '#stackBetaRun',
+        status: '#stackBetaStatus',
+        failureText: 'API fehlgeschlagen'
+      },
+      {
+        name: 'DEV Community',
+        input: '#devtoBetaTags',
+        query: 'ai',
+        button: '#devtoBetaRun',
+        status: '#devtoBetaStatus',
+        failureText: 'DEV-API fehlgeschlagen'
+      },
+      {
+        name: 'Bluesky',
+        input: '#blueskyBetaQuery',
+        query: 'MCP server',
+        button: '#blueskyBetaRun',
+        status: '#blueskyBetaStatus',
+        failureText: 'Bluesky-API fehlgeschlagen'
+      }
+    ];
 
-    await page.locator('#blueskyBetaQuery').fill('MCP server');
-    await page.locator('#blueskyBetaRun').click();
+    for (const source of sources) {
+      assert.equal(await page.locator(source.input).count(), 1,
+        `${source.name} query input should render`);
+      assert.equal(await page.locator(source.button).count(), 1,
+        `${source.name} run button should render`);
+      await runSource(page, source);
+    }
 
-    await page.waitForFunction(() => {
-      const text = document.getElementById('blueskyBetaStatus')?.textContent || '';
-      return text.includes('API erfolgreich') || text.includes('Bluesky-API fehlgeschlagen');
-    }, null, { timeout: 25000 });
-
-    const status = await page.locator('#blueskyBetaStatus').innerText();
-    assert.match(status, /API erfolgreich/, `Browser API request did not succeed: ${status}`);
-    assert.equal(await page.locator('#blueskyBetaRun').isDisabled(), false, 'search button should be re-enabled');
-    assert.equal(pageErrors.length, 0, `uncaught browser errors: ${pageErrors.join('; ')}`);
-
-    console.log('Browser smoke test passed: Bluesky UI rendered and public API fetch succeeded.');
-    console.log(`Status: ${status}`);
-    console.log(`Displayed unique posts: ${await page.locator('#blueskyBetaTotal').innerText()}`);
+    assert.equal(pageErrors.length, 0,
+      `uncaught browser errors: ${pageErrors.join('; ')}`);
+    console.log('Browser smoke test passed: all five experimental source panels fetched live data in Chromium.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
