@@ -84,7 +84,7 @@ test('07 one author reporting a problem is not independent demand', () => {
 
 test('08 two distinct authors reporting the same cluster support independent demand', () => {
   const result = aggregateEvidence([
-    record({ sourceRecordId: 'p1', authorKey: 'alice', problemClusterKey: 'mcp-auth-failure', text: 'MCP server crashes when authentication expires.' }),
+    record({ sourceRecordId: 'p1', authorKey: 'alice', problemClusterKey: 'mcp-auth-failure', text: 'Looking for a tool to monitor MCP server authentication failures.' }),
     record({ sourceRecordId: 'p2', authorKey: 'bob', problemClusterKey: 'mcp-auth-failure', text: 'Looking for a tool to fix MCP server authentication failures.' })
   ]);
   assert.equal(result.clusters['mcp-auth-failure'].independentAuthorCount, 2);
@@ -95,9 +95,10 @@ test('08 two distinct authors reporting the same cluster support independent dem
 test('09 distinct authors across two sources provide cross-source corroboration', () => {
   const result = aggregateEvidence([
     record({ source: 'bluesky', sourceRecordId: 'p1', authorKey: 'alice', problemClusterKey: 'mcp-auth-failure', text: 'MCP server crashes when authentication expires.' }),
-    record({ source: 'stackexchange', sourceRecordId: 'q1', authorKey: 'bob', problemClusterKey: 'mcp-auth-failure', text: 'Looking for a tool to fix MCP server authentication failures.' })
+    record({ source: 'stackexchange', sourceRecordId: 'q1', authorKey: 'bob', problemClusterKey: 'mcp-auth-failure', text: 'MCP server crashes when the authentication token expires.' })
   ]);
-  assert.equal(result.clusters['mcp-auth-failure'].demandSupported, true);
+  assert.equal(result.clusters['mcp-auth-failure'].problemCorroborated, true);
+  assert.equal(result.clusters['mcp-auth-failure'].demandSupported, false);
   assert.equal(result.clusters['mcp-auth-failure'].crossSourceCorroborated, true);
 });
 
@@ -145,4 +146,74 @@ test('14 a failed source record cannot suppress a later validated record for the
   ]);
   assert.equal(result.uniqueRecordCount, 1);
   assert.equal(result.clusters['api-timeout'].independentAuthorCount, 1);
+});
+
+test('15 meaningful query parameters on a path remain distinct', () => {
+  assert.equal(canonicalizeUrl('https://example.com/search?q=alpha'), 'example.com/search?q=alpha');
+  assert.equal(canonicalizeUrl('https://example.com/search?q=beta'), 'example.com/search?q=beta');
+  assert.notEqual(
+    canonicalizeUrl('https://example.com/search?q=alpha'),
+    canonicalizeUrl('https://example.com/search?q=beta')
+  );
+});
+
+test('16 German problem report is recognized without implying demand', () => {
+  const evidence = classifyEvidence(record({ text: 'Der MCP-Server stürzt ab, wenn das Authentifizierungstoken abläuft. Es gibt eine Fehlermeldung.' }));
+  assert.equal(evidence.problem, true);
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('17 German explicit request is demand intent', () => {
+  const evidence = classifyEvidence(record({ text: 'Ich suche ein Tool, das MCP-Server-Fehler in der Produktion überwacht.' }));
+  assert.equal(evidence.demandIntent, true);
+});
+
+test('18 German product launch remains product evidence', () => {
+  const evidence = classifyEvidence(record({ text: 'Wir haben ein neues Open-Source-Tool veröffentlicht; es ist jetzt verfügbar.' }));
+  assert.equal(evidence.product, true);
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('19 German advertisement is excluded', () => {
+  const evidence = classifyEvidence(record({ text: 'Werbung: Jetzt anmelden und Platz für unser Webinar sichern.' }));
+  assert.equal(evidence.promotion, true);
+  assert.equal(evidence.problem, false);
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('20 Spanish explicit solution request is demand intent', () => {
+  const evidence = classifyEvidence(record({ text: 'Busco una herramienta para monitorizar errores de conexión en un servidor MCP.' }));
+  assert.equal(evidence.demandIntent, true);
+});
+
+test('21 product mention without launch language is not automatically product evidence', () => {
+  const evidence = classifyEvidence(record({ text: 'I use an MCP server at work and it has been useful.' }));
+  assert.equal(evidence.product, false);
+});
+
+test('22 two problem reports support problem corroboration, not demand by themselves', () => {
+  const result = aggregateEvidence([
+    record({ sourceRecordId: 'bug1', authorKey: 'alice', problemClusterKey: 'auth-failure', text: 'MCP server crashes when authentication expires.' }),
+    record({ sourceRecordId: 'bug2', authorKey: 'bob', problemClusterKey: 'auth-failure', text: 'MCP server fails to connect when the token expires.' })
+  ]);
+  assert.equal(result.clusters['auth-failure'].problemCorroborated, true);
+  assert.equal(result.clusters['auth-failure'].demandSupported, false);
+});
+
+test('23 two explicit independent requests support demand evidence', () => {
+  const result = aggregateEvidence([
+    record({ sourceRecordId: 'need1', authorKey: 'alice', problemClusterKey: 'auth-solution', text: 'Looking for a tool to monitor MCP server authentication failures.' }),
+    record({ sourceRecordId: 'need2', authorKey: 'bob', problemClusterKey: 'auth-solution', text: 'Does anyone know a tool to diagnose MCP server authentication failures?' })
+  ]);
+  assert.equal(result.clusters['auth-solution'].demandSupported, true);
+  assert.equal(result.clusters['auth-solution'].problemCorroborated, true);
+});
+
+test('24 cross-source problem evidence does not automatically become cross-source demand', () => {
+  const result = aggregateEvidence([
+    record({ source: 'bluesky', sourceRecordId: 'bug1', authorKey: 'alice', problemClusterKey: 'token-expiry', text: 'MCP server crashes when authentication expires.' }),
+    record({ source: 'stackexchange', sourceRecordId: 'q1', authorKey: 'bob', problemClusterKey: 'token-expiry', text: 'MCP server fails to connect when the token expires.' })
+  ]);
+  assert.equal(result.clusters['token-expiry'].crossSourceCorroborated, true);
+  assert.equal(result.clusters['token-expiry'].crossSourceDemandCorroborated, false);
 });
