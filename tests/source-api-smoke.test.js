@@ -37,3 +37,16 @@ test('Stack Exchange advanced search returns an items array', { timeout: 20000 }
   const payload = await getJson(url);
   assert.ok(Array.isArray(payload.items), 'Stack Exchange response must contain items');
 });
+
+test('npm Registry search returns an objects array', { timeout: 20000 }, async () => {
+  const url = 'https://registry.npmjs.org/-/v1/search?text='
+    + encodeURIComponent('ai agent') + '&size=3';
+  const payload = await getJson(url);
+  assert.ok(Array.isArray(payload.objects), 'npm Registry response must contain objects');
+});
+
+test('DEV Community article API returns an array', { timeout: 20000 }, async () => {
+  const url = 'https://dev.to/api/articles?tag=ai&per_page=3&top=7';
+  const payload = await getJson(url);
+  assert.ok(Array.isArray(payload), 'DEV API response must be an array');
+});
