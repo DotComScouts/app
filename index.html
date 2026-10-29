@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.1: adds isolated Hugging Face API explorer; based on Master V98 -->
+<!-- DotComScouts Beta 98.19: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -1165,14 +1165,14 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const seenBrandTopics=new Set(),seenAuthorTopic=new Set(),unique=[];
   for(const p of rankedCandidates){
    const raw=String(p?.record?.text||''),handle=String(p?.author?.handle||'').toLowerCase();
-   const textKey=normalizeText(raw).replace(/\\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno|jak|vlastni|kurze|video|ukazujeme|zeigen|connect|custom|server|to|ke|claude|svuj|serwer|podle|na|do|je)\\b/g,' ').replace(/\\s+/g,' ').trim();
+   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno|jak|vlastni|kurze|video|ukazujeme|zeigen|connect|custom|server|to|ke|claude|svuj|serwer|podle|na|do|je)\b/g,' ').replace(/\s+/g,' ').trim();
    const urls=extractExternalUrls(p);
    if(!textKey)continue;
    if(urls.some(u=>seenUrls.some(existing=>isSameUrl(u,existing))))continue;
    const textKeyCompact=textKey.replace(/[^a-z0-9]/g,'');
    if(textKeyCompact.length>45&&seenText.has(textKeyCompact))continue;
    // Normalize localized account handles and collapse only known equivalent topics.
-   const rawHandle=handle.replace(/\\.bsky\\.social$/,'');
+   const rawHandle=handle.replace(/\.bsky\.social$/,'');
    const brand=rawHandle.replace(/-(?:cesko|czech|cz|de|en|fr|es|it|pt|nl|pl|uk|us|eu|jp|kr|global|official)$/,'');
    const normalized=normalizeText(raw);
    let brandTopic='';
@@ -1183,7 +1183,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    }
    if(brandTopic&&seenBrandTopics.has(brandTopic))continue;
    // Secondary guard for language variants posted by localized accounts of the same brand.
-   const topicWords=normalized.split(/\\s+/).filter(w=>w.length>3&&!/^(the|with|from|this|that|have|your|about|into|using|what|when|how|mcp|server|claude|connect|custom|jak|vlastni|pripojit|ke|pro|na|serveru)$/.test(w));
+   const topicWords=normalized.split(/\s+/).filter(w=>w.length>3&&!/^(the|with|from|this|that|have|your|about|into|using|what|when|how|mcp|server|claude|connect|custom|jak|vlastni|pripojit|ke|pro|na|serveru)$/.test(w));
    const authorTopic=brand&&topicWords.length?brand+'|'+topicWords.slice(0,5).sort().join('-'):'';
    if(authorTopic&&seenAuthorTopic.has(authorTopic))continue;
    urls.forEach(u=>seenUrls.push(u));
@@ -1223,7 +1223,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.16</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.19</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1239,5 +1239,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.18</div>Bluesky-Scoring 98.18: priorisierte Dublettenprüfung und sprachübergreifende Gruppierung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.18</div>Bluesky-Scoring 98.19: korrigierte Regex-Normalisierung, priorisierte Dublettenprüfung und sprachübergreifende Gruppierung · Master V98 bleibt unverändert</div>
 </body></html>
