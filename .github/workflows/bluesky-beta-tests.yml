@@ -62,9 +62,11 @@ jobs:
         run: node --test tests/source-api-smoke.test.js
 
   bluesky-browser-smoke:
-    # Diagnostic only: checks the actual browser UI and CORS path without blocking deterministic tests.
+    # Diagnostic only: checks the deployed GitHub Pages UI and CORS path without blocking deterministic tests.
     continue-on-error: true
     runs-on: ubuntu-latest
+    env:
+      DOTCOMSCOUTS_TEST_URL: https://dotcomscouts.github.io/app/
     steps:
       - name: Check out beta branch
         uses: actions/checkout@v4
