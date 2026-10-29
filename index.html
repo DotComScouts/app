@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Version 95: restore native language selector for preview compatibility -->
+<!-- DotComScouts Version 97: localize CSV and source diagnostics exports -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -185,7 +185,14 @@ async function runSource(source,fn,countOf=x=>Array.isArray(x)?x.length:null){
  try{const value=await fn();d.statusKey='ok';d.status=st('ok');d.count=countOf(value);d.ms=Date.now()-t;d.finishedAt=new Date().toISOString();drawSourceDiagnostics();return value}
  catch(e){d.statusKey='failedSource';d.status=st('failedSource');d.ms=Date.now()-t;d.error=e?.message||String(e)||st('unknownError');d.finishedAt=new Date().toISOString();drawSourceDiagnostics();throw e}
 }
-function exportSourceDiagnostics(){const cols=['source','status','count','duration_ms','error','startedAt','finishedAt'];const rows=[cols.join(';'),...sourceDiagnostics.map(d=>[d.source,d.status,d.count,d.ms,d.error,d.startedAt,d.finishedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';'))];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-quellendiagnose.csv';a.click();URL.revokeObjectURL(url)}
+function exportSourceDiagnostics(){
+ const labels={de:['Quelle','Status','Treffer','Dauer (ms)','Fehlerdetails','Beginn','Ende'],en:['Source','Status','Matches','Duration (ms)','Error details','Started at','Finished at'],es:['Fuente','Estado','Resultados','Duración (ms)','Detalles del error','Inicio','Fin'],fr:['Source','Statut','Résultats','Durée (ms)','Détails de l’erreur','Début','Fin']}[currentLang]||['Quelle','Status','Treffer','Dauer (ms)','Fehlerdetails','Beginn','Ende'];
+ const cols=labels;
+ const rows=[cols.map(csvCell).join(';'),...sourceDiagnostics.map(d=>[d.source,st(d.statusKey||'unknownError'),d.count,d.ms,d.error,d.startedAt,d.finishedAt].map(csvCell).join(';'))];
+ downloadCsv(rows,'DotComScouts-source-diagnostics.csv');
+}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function downloadCsv(rows,filename){const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
 const stopWords=new Set('about above after again against all also among another any are around article articles based because been before being below between both build builds built business businesses can could data day days developer developers does doing down each early even every first from future get getting give gives going good great hacker hackers has have here how into just keep last latest like link links live made make many market may more most much must new news next not now number only open other our over people per post posts product products project projects read real really recent release releases report research right same say says security should show since some something start starts story stories such tech technology than that their them then there these they thing things this those through time today top trend trends two under up use used using very via want was way well were what when where which while who why will with work working world would year years you your'.split(/\s+/));
 const generic=new Set('ai api app apps browser browsers model models open source opensource software tool tools platform platforms system systems agent agents workflow workflows code coding developer developers data cloud server servers startup startups game games gaming voice search engine automation automate digital online web mobile computer computers network networks security privacy identity battery batteries energy solar finance fintech crypto token tokens bitcoin blockchain payment payments pay sales sale lead leads team teams care health legal law learn learning education write writing image video media content creator creators plugin plugins extension extensions build building run running test testing guide how make use best fast free small super efficient native self hosted selfhosted local llm llms assistant assistants company companies launch launches launched release releases released update updates announcement announces introducing introduction official funding raised raises raising million billion series seed venture capital founder founders benchmark benchmarks performance results review reviews comparison vs versus why what when where how who all most some many every first latest today future world years year day days work jobs job market labor labour replacement replacing intelligence intelligent artificial'.split(/\s+/));
@@ -707,12 +714,17 @@ $('start').addEventListener('click',run);
 $('stop').addEventListener('click',()=>{stopRequested=true;appendStatus(st('stopRequested'))});
 $('onlyAvailable').addEventListener('change',draw);
 $('riskFilter').addEventListener('change',draw);
-refreshLanguagePicker(currentLang);
 applyLanguage(currentLang);
-$('csv').addEventListener('click',()=>{const cols=['domain','status','type','length','trend','trendScore','mentions','nameRiskStatus','nameRiskReason','source','sourceLabel','confirmation','sourceUrl','error','checkedAt'];const rows=[cols.join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',r.status,r.type,r.name.length,r.trend,r.trendScore,r.mentions,risk.status==='green'?tr('safe'):risk.status==='red'?tr('highRisk'):tr('riskCheck'),riskReason(risk.kind||'safe',risk.lang),r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')})];const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='DotComScouts-ergebnisse.csv';a.click();URL.revokeObjectURL(url)});
+$('csv').addEventListener('click',()=>{
+ const labels={de:['Domain','Status','Typ','Länge','Trend','Trendwert','Erwähnungen','Sprachrisiko','Erklärung Sprachrisiko','Quelle','Quellenbezeichnung','Bestätigung','Quell-URL','Fehler','Geprüft am'],en:['Domain','Status','Type','Length','Trend','Trend score','Mentions','Language risk','Language risk explanation','Source','Source label','Confirmation','Source URL','Error','Checked at'],es:['Dominio','Estado','Tipo','Longitud','Tendencia','Puntuación de tendencia','Menciones','Riesgo lingüístico','Explicación del riesgo lingüístico','Fuente','Etiqueta de fuente','Confirmación','URL de la fuente','Error','Comprobado el'],fr:['Domaine','Statut','Type','Longueur','Tendance','Score de tendance','Mentions','Risque linguistique','Explication du risque linguistique','Source','Libellé de la source','Confirmation','URL source','Erreur','Vérifié le']}[currentLang]||['Domain','Status','Type','Length','Trend','Trend score','Mentions','Language risk','Language risk explanation','Source','Source label','Confirmation','Source URL','Error','Checked at'];
+ const localStatus=r=>r.status==='available'?tr('free'):r.status==='taken'?tr('taken'):tr('error');
+ const localType=r=>r.type==='Originaltrend'?tr('originalType'):r.type==='Trend-inspiriert'?tr('trendType'):r.type==='Fantasiename'?tr('fantasyType'):r.type;
+ const rows=[labels.map(csvCell).join(';'),...results.map(r=>{const risk=r.languageRisk||languageRisk(r.name);return [r.name+'.com',localStatus(r),localType(r),r.name.length,r.trend,r.trendScore,r.mentions,risk.status==='green'?tr('safe'):risk.status==='red'?tr('highRisk'):tr('riskCheck'),riskReason(risk.kind||'safe',risk.lang),r.source,r.sourceLabel,r.confirmation,r.sourceUrl,r.error,r.checkedAt].map(csvCell).join(';')})];
+ downloadCsv(rows,'DotComScouts-results.csv');
+});
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 95.0</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Version 97.0</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
