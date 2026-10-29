@@ -189,6 +189,23 @@
  <p class="foot">Quelle: <a href="https://developers.forem.com/api/v1" target="_blank" rel="noopener noreferrer">DEV Community API-Dokumentation</a>. Reaktionen und Kommentare sind Momentaufnahmen, keine Wachstumsraten und kein Nachweis für Domainnachfrage. Es werden nur öffentliche Artikeldaten abgerufen; diese Quelle verändert weder die bestehende Trendbewertung noch die Verfügbarkeitsprüfung.</p>
 </section>
 
+
+<section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
+ <div class="eyebrow">BETA 98.7 · EXPERIMENTELLE QUELLE</div>
+ <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
+ <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
+ <div class="hf-beta-grid">
+  <div class="field"><label for="blueskyBetaQuery">Suchbegriff oder Phrase</label><input id="blueskyBetaQuery" value="AI agents" maxlength="100" /></div>
+  <div class="field"><label for="blueskyBetaSort">Sortierung</label><select id="blueskyBetaSort"><option value="latest" selected>Neueste zuerst</option><option value="top">Beliebteste zuerst</option></select></div>
+  <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
+ </div>
+ <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Noch keine Bluesky-Abfrage ausgeführt. Die öffentliche API kann Limits oder Änderungen unterliegen; Browserzugriff/CORS ist noch nicht live verifiziert.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
+ <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
+ <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
+</section>
+
 </main>
 <script>
 (()=> {
@@ -1032,7 +1049,60 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.6</div></footer>
+<script>
+(()=>{
+ const byId=id=>document.getElementById(id);
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const status=byId('blueskyBetaStatus'),results=byId('blueskyBetaResults');
+ function postUrl(post){
+  const uri=String(post?.uri||''),match=uri.match(/\/([^/]+)$/),handle=post?.author?.handle;
+  return handle&&match?`https://bsky.app/profile/${encodeURIComponent(handle)}/post/${encodeURIComponent(match[1])}`:'#';
+ }
+ function score(post){
+  const text=String(post?.record?.text||'').toLowerCase();
+  const likes=Math.max(0,Number(post?.likeCount)||0),reposts=Math.max(0,Number(post?.repostCount)||0),replies=Math.max(0,Number(post?.replyCount)||0);
+  const query=byId('blueskyBetaQuery').value.toLowerCase().trim().replace(/["']/g,'').split(/\s+/).filter(Boolean);
+  const matched=query.filter(term=>text.includes(term)).length;
+  const relevance=query.length?Math.round(25*matched/query.length):0;
+  const engagement=Math.min(45,Math.round(Math.log1p(likes)*8+Math.log1p(reposts)*10+Math.log1p(replies)*7));
+  const date=Date.parse(post?.indexedAt||post?.record?.createdAt||'');
+  const age=Number.isFinite(date)?Math.max(0,(Date.now()-date)/86400000):Infinity;
+  const freshness=Number.isFinite(age)?Math.max(0,Math.round(30*(1-Math.min(age,30)/30))):0;
+  return Math.min(100,relevance+engagement+freshness);
+ }
+ function render(posts){
+  byId('blueskyBetaTotal').textContent=String(posts.length);
+  byId('blueskyBetaLikes').textContent=posts.reduce((n,p)=>n+(Number(p.likeCount)||0),0).toLocaleString();
+  byId('blueskyBetaShares').textContent=posts.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
+  if(!posts.length){results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;}
+  const ranked=posts.map(p=>({...p,_signal:score(p)})).sort((a,b)=>b._signal-a._signal);
+  results.innerHTML=ranked.map(p=>{
+   const rec=p.record||{},author=p.author||{},date=Date.parse(p.indexedAt||rec.createdAt||''),dateText=Number.isFinite(date)?new Date(date).toLocaleString():'Datum unbekannt';
+   const url=postUrl(p),text=String(rec.text||'');
+   return `<article class="hf-beta-item"><h3><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc((text||'Post ohne Text').slice(0,120))}${text.length>120?'…':''}</a></h3><p class="hint">Bluesky · @${esc(author.handle||'unbekannt')} · ${esc(dateText)} · Signalwert: ${p._signal}/100</p><p class="hint">Likes: ${Number(p.likeCount)||0} · Reposts: ${Number(p.repostCount)||0} · Antworten: ${Number(p.replyCount)||0}</p><p>${esc(text)}</p></article>`;
+  }).join('');
+ }
+ async function run(){
+  const query=byId('blueskyBetaQuery').value.trim(),sort=byId('blueskyBetaSort').value,limit=Number(byId('blueskyBetaCount').value),button=byId('blueskyBetaRun');
+  if(!query){status.textContent='Bitte einen Suchbegriff eingeben.';return;}
+  button.disabled=true;status.textContent='Öffentliche Bluesky-Posts werden abgerufen …';
+  try{
+   const endpoint=`https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&sort=${encodeURIComponent(sort)}&limit=${limit}`;
+   const response=await fetch(endpoint,{headers:{Accept:'application/json'}});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   const data=await response.json();
+   if(!data||!Array.isArray(data.posts))throw new Error('Unerwartetes API-Antwortformat');
+   render(data.posts);
+   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Signalwert kombiniert Textübereinstimmung, Aktualität und sichtbare Resonanz; er ist kein Wachstumsmaß und kein Nachweis für Domainnachfrage.`;
+  }catch(err){status.textContent='Bluesky-API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe Internetverbindung, Browser-CORS und mögliche API-Limits. Andere Funktionen bleiben davon unberührt.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Du kannst die Abfrage erneut versuchen.</p>';byId('blueskyBetaTotal').textContent='0';byId('blueskyBetaLikes').textContent='0';byId('blueskyBetaShares').textContent='0';}
+  finally{button.disabled=false;}
+ }
+ function clear(){byId('blueskyBetaTotal').textContent='0';byId('blueskyBetaLikes').textContent='0';byId('blueskyBetaShares').textContent='0';results.innerHTML='<p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p>';status.textContent='Ergebnisse geleert.';}
+ byId('blueskyBetaRun').addEventListener('click',run);byId('blueskyBetaClear').addEventListener('click',clear);
+})();
+</script>
+
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.7</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1048,5 +1118,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.6</div>DEV-Community-API als isolierte Zusatzquelle; Stack-Exchange-Suche: Titelbezug, 365-Tage-Fenster, Aktualitätsgewichtung und sichere Datumsverarbeitung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.7</div>Bluesky-Suche als isolierte Zusatzquelle; DEV Community und Stack Exchange bleiben erhalten · Master V98 bleibt unverändert</div>
 </body></html>
