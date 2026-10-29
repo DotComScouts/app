@@ -8,7 +8,7 @@
 
 ## Executed in the available test harness
 
-The current Bluesky explorer script was executed with mocked DOM elements and mocked API responses. All four inline JavaScript blocks were parsed with `new Function`.
+The committed deterministic Node.js suite has **21 tests; 21 passed, 0 failed** in GitHub Actions. It covers the Bluesky explorer with mocked DOM elements and API responses, JavaScript syntax, and a static isolation guard. All four inline JavaScript blocks were parsed with `new Function`.
 
 | Case | Result |
 |---|---|
@@ -28,8 +28,9 @@ The current Bluesky explorer script was executed with mocked DOM elements and mo
 | Empty API response renders an empty state | PASS |
 | No-resonance product signal is not labelled a strong community signal | PASS |
 | Result text is HTML-escaped | PASS |
+| Bluesky DOM/state remains isolated from the core domain pipeline | PASS |
 
-These are simulated API-response tests, not a live browser test against Bluesky.
+The functional unit cases use simulated API responses. The live API and browser checks below are separate real-network tests.
 
 ## Code correction
 
