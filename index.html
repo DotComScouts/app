@@ -200,7 +200,7 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.17: Signaltypen und Marktsignal trennen konkrete Fehler, Sicherheitsbefunde, Anleitungen, Produktstarts und technische Diskussionen präziser. API-Zugriff muss im Browser getestet werden.</div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.18: Dubletten werden vor der Anzeige nach Signalwert priorisiert; sprachübergreifende Produkt-/Account-Gruppen werden robuster abgeglichen. API-Zugriff muss im Browser getestet werden.</div>
  <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
@@ -1239,5 +1239,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.17</div>Bluesky-Scoring 98.17: präzisere Problem-, Sicherheits-, Anleitung- und Produktklassifikation · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.18</div>Bluesky-Scoring 98.18: priorisierte Dublettenprüfung und sprachübergreifende Gruppierung · Master V98 bleibt unverändert</div>
 </body></html>
