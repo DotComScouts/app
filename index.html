@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.1: adds isolated Hugging Face API explorer; based on Master V98 -->
+<!-- DotComScouts Beta 98.27: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -191,7 +191,7 @@
 
 
 <section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
- <div class="eyebrow">BETA 98.16 · EXPERIMENTELLE QUELLE</div>
+ <div class="eyebrow">BETA 98.21 · EXPERIMENTELLE QUELLE</div>
  <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
  <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
@@ -200,8 +200,8 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.16: Dublettenprüfung ergänzt URL-Abgleich um sprachübergreifende Account-/Produktmuster. Signaltypen priorisieren Probleme und Anleitungen vor allgemeinen Produktbegriffen. API-Zugriff muss im Browser getestet werden.</div>
- <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.21: Dubletten werden nach Signalwert entfernt; Zähler berücksichtigen nur eindeutige, tatsächlich angezeigte Posts und schließen gefilterte Werbung aus. Die API-Verbindung muss im Browser geprüft werden.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Eindeutige Posts</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
 </section>
@@ -1069,21 +1069,23 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   // Beta 98.13: query overlap is only a starting point, not sufficient proof of technical relevance.
   const overlap=terms.length?matched.length/terms.length:0;
   const technicalPattern=/(open[- ]source|github|repository|\brepo\b|\bapi\b|\bsdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|developer tool|framework|software library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|deployment|deploy|automation|code|implementation|protocol|prototype|self-hosted|reverse engineer|reverse engineering|\bcve-\d{4}-\d+\b|pull request|issue tracker|debugging|latency|observability|monitoring|authentication|authorization|database|endpoint|cli tool|command-line)/i.test(rawText);
-  const marketPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
+  const marketPattern=/(looking for|need a tool|we need|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
   const opinionPattern=/(hot take|my opinion|i think|i feel|i hate|i love|fuck ai|ai is ruining|ai-proof our lives|enshittification|what do you think|unpopular opinion|the problem with ai|thoughts\?)/i.test(rawText);
   let relevance=Math.round(overlap*20)+(phraseHit?5:0)+(technicalPattern?8:0);
   if(opinionPattern&&!technicalPattern) relevance-=10;
   relevance=Math.max(0,Math.min(30,relevance));
   // Separate market/problem evidence from community reaction and freshness.
-  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|without guessing|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|clear errors|install command|how did you handle auth|how do you handle auth|how to handle authentication)/i.test(rawText);
+  const problemPattern=/(looking for|need a tool|we need|how to (?:fix|debug|repair|resolve)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|crash(?:es|ing)?|not working|incorrectly|wrong results|data loss)/i.test(rawText);
   const productPattern=/(open[- ]source|github|repository|\brepo\b|built an? |built a |we built|new tool|new framework|new library|new plugin|new mcp server|server connects|sdk|cli|available on github|now available|released|release notes|launch(?:ed|ing)?|prototype|integration|production scheduling)/i.test(rawText);
   const securityPattern=/(security|vulnerability|prompt injection|authentication|authorization|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? the user|unintended access)/i.test(rawText);
   // Concrete problem evidence gets the strongest market score; product/build signals get a medium score.
   // Beta 98.14: market signal reflects the kind of evidence, not just a keyword match.
-  const marketSignal=problemPattern?18:(securityPattern?14:(productPattern?9:(marketPattern?7:(technicalPattern?3:0))));
-  // Absolute Bluesky interactions are a small supporting signal, not a proxy for market size.
-  const rawEngagement=Math.log1p(likes)*2+Math.log1p(reposts)*3+Math.log1p(replies)*2;
-  const engagement=Math.min(15,Math.round(rawEngagement));
+  const strongSecurityPattern=/(prompt injection|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? (?:the )?(?:user )?query|unintended access|unauthorized access|authentication bypass)/i.test(rawText);
+  const marketSignal=strongSecurityPattern?18:(problemPattern?18:(securityPattern?12:(productPattern?9:(marketPattern?7:(technicalPattern?3:0)))));
+  // Engagement is a capped tie-breaker, not a substitute for evidence of a real problem.
+  // Reposts and replies carry slightly more signal than likes; virality alone cannot dominate the score.
+  const rawEngagement=Math.log1p(likes)*0.8+Math.log1p(reposts)*1.4+Math.log1p(replies)*1.6;
+  const engagement=Math.min(8,Math.round(rawEngagement));
   const date=Date.parse(post?.indexedAt||post?.record?.createdAt||'');
   const age=Number.isFinite(date)?Math.max(0,(Date.now()-date)/86400000):Infinity;
   const freshness=Number.isFinite(age)?Math.max(0,Math.round(4*(1-Math.min(age,14)/14))):0;
@@ -1107,31 +1109,37 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const hasResonance=totalInteractions>0;
   const meaningfulResonance=totalInteractions>=3&&engagement>=6;
   const relevantContext=technicalPattern||marketPattern;
-  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,rawText,feedAccount,promoPattern,hardAdPattern,eventPromoPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,problemPattern,productPattern,securityPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
+  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,rawText,feedAccount,promoPattern,hardAdPattern,eventPromoPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,problemPattern,productPattern,securityPattern,strongSecurityPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
  }
  function classify(signal,metrics){
   if(signal<27||metrics.matched.length===0||!metrics.relevantContext||metrics.feedAccount||metrics.hardAdPattern||metrics.eventPromoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.technicalPattern)return 'Schwaches Signal';
-  if(signal>=48&&metrics.marketSignal>=14&&metrics.engagement>=7&&metrics.meaningfulResonance)return 'Stärkeres Community-Signal';
+  if(signal>=48&&metrics.marketSignal>=14&&metrics.engagement>=3&&metrics.meaningfulResonance)return 'Stärkeres Community-Signal';
   return 'Frühes Signal';
  }
  function signalType(metrics){
   const raw=metrics.rawText||'';
   if(metrics.hardAdPattern||metrics.eventPromoPattern)return 'Werbung / Veranstaltung';
-  if(metrics.securityPattern)return 'Sicherheitsproblem';
-  if(metrics.problemPattern||(/\b(how did you handle|how do you handle|how to fix|cannot connect|can't connect|does not work|doesn't work|not working|error|bug|fails when|missing tools)\b/i.test(raw)&&/\b(auth|authentication|authorization|mcp|server|client|token|header|endpoint|install|connect)\b/i.test(raw)))return 'Konkretes technisches Problem';
-  if(/\b(how to|quickstart|tutorial|guide|how do i|step[- ]by[- ]step|anleitung|einrichten|connect.{0,20}to|this article explains how to|design a production-grade)\b/i.test(raw))return 'Anleitung / Umsetzung';
-  if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new)\b/i.test(raw))return 'Produktankündigung / Tool';
-  if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
+  // Explicit incidents outrank launches, generic security mentions, and discussion wording.
+  if(metrics.strongSecurityPattern)return 'Sicherheitsproblem';
+  if(/\b(crash(?:es|ing)?|error message|error occurs|throws an error|returns an error|error when|error on|bug report|fails when|fails to|cannot connect|can't connect|does not work|doesn't work|not working|data loss|wrong results|authentication bypass|unauthorized access|unintended access|leaks? (?:the )?(?:user )?query)\b/i.test(raw))return 'Konkretes technisches Problem';
+  if(/\b(looking for|need a tool|we need|pain point|bottleneck|workaround|struggling with|production issue|missing feature|feature request|token cost|cost reduction|burns through|bill shock|double-book|miss due dates)\b/i.test(raw))return 'Marktbedarf / Problemhinweis';
+  // Questions about implementation are discussions, not automatically evidence of a failure.
+  if(/\b(how did you handle|how do you handle|how would you handle|what was the first check|what would you use|what do you think|compare[sd]?|versus|vs\.)\b/i.test(raw))return 'Technische Nachricht / Diskussion';
+  if(/\b(this article explains how to|design a production-grade|how to (?:connect|install|configure|build|deploy|use)|quickstart|tutorial|guide|step[- ]by[- ]step|anleitung|einrichten|setup guide|getting started)\b/i.test(raw))return 'Anleitung / Umsetzung';
+  if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new|open-source [\w-]+ (?:tracks|provides|offers|connects|lets)|there's an mcp server too|buildinpublic|second venture is|mcp server connects)\b/i.test(raw))return 'Produktankündigung / Tool';
   if(metrics.opinionPattern)return 'Meinung';
+  if(metrics.securityPattern)return 'Sicherheit / technisches Thema';
+  if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
   if(metrics.technicalPattern||metrics.marketPattern)return 'Technische Nachricht / Diskussion';
   return 'Allgemeine Erwähnung';
  }
-
  function render(posts){
-  byId('blueskyBetaTotal').textContent=String(posts.length);
-  byId('blueskyBetaLikes').textContent=posts.reduce((n,p)=>n+(Number(p.likeCount)||0),0).toLocaleString();
-  byId('blueskyBetaShares').textContent=posts.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
-  if(!posts.length){results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;}
+  if(!posts.length){
+   byId('blueskyBetaTotal').textContent='0';
+   byId('blueskyBetaLikes').textContent='0';
+   byId('blueskyBetaShares').textContent='0';
+   results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;
+  }
   const seenText=new Set(),seenUrls=[];
   const canonicalizeUrl=value=>{
    try{
@@ -1142,8 +1150,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
     let path=decodeURIComponent(u.pathname).replace(/\/{2,}/g,'/').replace(/\/$/,'');
     path=path.replace(/^\/(?:en|de|fr|es|it|pt|nl|ja|zh|cs|pl|sv|da|no|fi)(?=\/)/i,'');
     path=path.replace(/\.(?:html?)$/i,'').toLowerCase();
-    // Remove common tracking/session parameters; retain meaningful query parameters only when there is no article path.
-    if(!path && u.searchParams.size){const keep=[...u.searchParams.entries()].filter(([k])=>!/^utm_|^(ref|source|campaign|fbclid|gclid|mc_cid|mc_eid)$/i.test(k)).sort(([a],[b])=>a.localeCompare(b));if(keep.length)path='?'+new URLSearchParams(keep).toString();}
+    // Drop tracking/session parameters on article URLs as well; query-only URLs retain meaningful parameters.
+    if(u.searchParams.size){
+     const keep=[...u.searchParams.entries()]
+      .filter(([k])=>!/^utm_/i.test(k)&&!/^(ref|source|campaign|fbclid|gclid|mc_cid|mc_eid)$/i.test(k))
+      .sort(([a],[b])=>a.localeCompare(b));
+     if(!path&&keep.length)path='?'+new URLSearchParams(keep).toString();
+    }
     return host+path;
    }catch{return String(value||'').replace(/^https?:\/\/(www\.|m\.)?/,'').replace(/[?#].*$/,'').replace(/\/$/,'').toLowerCase();}
   };
@@ -1156,32 +1169,52 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    visit(p?.embed);visit(p?.record?.embed);
    return [...new Set(found.map(canonicalizeUrl).filter(Boolean))];
   };
-  const isSameUrl=(a,b)=>a===b||(a.split('/')[0]===b.split('/')[0]&&((a.length>=22&&b.startsWith(a))||(b.length>=22&&a.startsWith(b))));
-  const seenBrandTopics=new Set();
-  const unique=posts.filter(p=>{
-   const raw=String(p?.record?.text||'');
-   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno|jak|vlastni|kurze|video|ukazujeme|zeigen|connect|custom|server|to|ke|claude)\b/g,' ').replace(/\s+/g,' ').trim();
+  // Exact canonical URL equality avoids merging distinct IDs that merely share a URL prefix.
+  const isSameUrl=(a,b)=>a===b;
+  // Score first, then deduplicate strongest candidates first so API ordering cannot
+  // decide which language variant survives.
+  const rankedCandidates=posts.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
+  const seenBrandTopics=new Set(),seenAuthorTopic=new Set(),unique=[];
+  for(const p of rankedCandidates){
+   const raw=String(p?.record?.text||''),handle=String(p?.author?.handle||'').toLowerCase();
+   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno|jak|vlastni|kurze|video|ukazujeme|zeigen|connect|custom|server|to|ke|claude|svuj|serwer|podle|na|do|je)\b/g,' ').replace(/\s+/g,' ').trim();
    const urls=extractExternalUrls(p);
-   if(!textKey)return false;
-   if(urls.some(u=>seenUrls.some(existing=>isSameUrl(u,existing))))return false;
-   // Exact normalized text catches copy/paste reposts.
+   if(!textKey)continue;
+   if(urls.some(u=>seenUrls.some(existing=>isSameUrl(u,existing))))continue;
    const textKeyCompact=textKey.replace(/[^a-z0-9]/g,'');
-   if(textKeyCompact.length>45&&seenText.has(textKeyCompact))return false;
-   // Merge language variants from the same brand handle when the post refers to the same searched product/topic.
-   const handle=String(p?.author?.handle||'').toLowerCase();
-   const brand=handle.replace(/\.bsky\.social$/,'').replace(/-(?:cesko|cz|de|en|fr|es|it|pt|nl|pl|uk|us|eu|jp|kr)$/,'');
+   if(textKeyCompact.length>45&&seenText.has(textKeyCompact))continue;
+   // Normalize localized account handles and collapse only known equivalent topics.
+   const rawHandle=handle.replace(/\.bsky\.social$/,'');
+   const brand=rawHandle.replace(/-(?:cesko|czech|cz|de|en|fr|es|it|pt|nl|pl|uk|us|eu|jp|kr|global|official)$/,'');
    const normalized=normalizeText(raw);
-   const tutorialLike=/\b(how to connect|jak pripojit|mcp server|tooldurus)\b/i.test(normalized+' '+handle);
-   const brandTopic=brand&&tutorialLike?brand+'|'+(normalized.includes('tooldurus')||handle.includes('tooldurus')?'tooldurus-mcp-claude':normalized.includes('mcp')?'mcp-'+(normalized.includes('claude')?'claude':'server'):'topic'):'';
-   if(brandTopic&&seenBrandTopics.has(brandTopic))return false;
-   urls.forEach(u=>seenUrls.push(u));seenText.add(textKeyCompact);
+   let brandTopic='';
+   if(/(?:^|[.-])tooldurus(?:[.-]|$)/i.test(rawHandle)&&/(?:mcp|claude|jak pripojit|how to connect|custom server|vlastni mcp)/i.test(normalized)){
+    brandTopic='tooldurus|mcp-server-claude-connection';
+   }else if(brand&&/(how to connect|jak pripojit|custom mcp server|vlastni mcp server)/i.test(normalized)){
+    brandTopic=brand+'|mcp-server-connection';
+   }
+   if(brandTopic&&seenBrandTopics.has(brandTopic))continue;
+   // Secondary guard for language variants posted by localized accounts of the same brand.
+   const topicWords=normalized.split(/\s+/).filter(w=>w.length>3&&!/^(the|with|from|this|that|have|your|about|into|using|what|when|how|mcp|server|claude|connect|custom|jak|vlastni|pripojit|ke|pro|na|serveru)$/.test(w));
+   // Only use topic-word deduplication for explicitly localized variants of the same account.
+   // Ordinary posts from the same brand must not collapse just because their first few words overlap.
+   const localizedVariant=brand&&rawHandle!==brand;
+   const authorTopic=localizedVariant&&topicWords.length>=4?brand+'|'+topicWords.sort().join('-'):'';
+   if(authorTopic&&seenAuthorTopic.has(authorTopic))continue;
+   urls.forEach(u=>seenUrls.push(u));
+   if(textKeyCompact.length>45)seenText.add(textKeyCompact);
    if(brandTopic)seenBrandTopics.add(brandTopic);
-   return true;
-  });
-  const ranked=unique.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
+   if(authorTopic)seenAuthorTopic.add(authorTopic);
+   unique.push(p);
+  }
+  const ranked=unique;
   const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=20&&p._metrics.relevantContext&&!p._metrics.hardAdPattern&&!p._metrics.eventPromoPattern&&!p._metrics.feedAccount&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
   const relevant=ranked.filter(p=>eligible(p)&&!p._metrics.statusUpdate&&(!p._metrics.promoPattern||(p._metrics.technicalPattern&&p._metrics.marketSignal>=9)));
   const display=relevant.length?relevant:ranked.filter(p=>eligible(p)&&!p._metrics.promoPattern).slice(0,5);
+  // The counters reflect the unique posts actually shown, excluding duplicates and filtered ads.
+  byId('blueskyBetaTotal').textContent=String(display.length);
+  byId('blueskyBetaLikes').textContent=display.reduce((n,p)=>n+(Number(p.likeCount)||0),0).toLocaleString();
+  byId('blueskyBetaShares').textContent=display.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
   if(!display.length){results.innerHTML='<p class="hint">Die API lieferte Posts, aber keiner hatte ausreichend thematische Übereinstimmung. Formuliere die Suche präziser oder probiere einen Synonymbegriff.</p>';return;}
   results.innerHTML=display.map(p=>{
    const rec=p.record||{},author=p.author||{},date=Date.parse(p.indexedAt||rec.createdAt||''),dateText=Number.isFinite(date)?new Date(date).toLocaleString():'Datum unbekannt';
@@ -1209,7 +1242,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.16</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.27</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1225,5 +1258,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.16</div>Bluesky-Scoring 98.16: sprachübergreifende Produkt-/Account-Dubletten und präzisere Signaltypen · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.27</div>Bluesky-Scoring 98.27: echte Fehler und Marktbedarf werden vor allgemeinen Security-Begriffen und Produktmeldungen eingeordnet · Master V98 bleibt unverändert</div>
 </body></html>
