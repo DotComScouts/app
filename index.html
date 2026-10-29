@@ -155,6 +155,23 @@
  <p class="foot">Quelle: <a href="https://api-docs.npmjs.com/" target="_blank" rel="noopener">npm Registry API-Dokumentation</a>. Paket-Scores und Aktualität sind Indikatoren, kein Nachweis für Domainnachfrage. Es werden nur öffentliche Suchdaten abgerufen; die Ergebnisse werden nicht in die Domainbewertung übernommen.</p>
 </section>
 
+
+<section class="panel" id="stackBetaPanel" aria-labelledby="stackBetaTitle">
+ <div class="eyebrow">BETA 98.4 · EXPERIMENTELLE QUELLE</div>
+ <h2 id="stackBetaTitle">Stack Exchange / Stack Overflow – Entwicklerfragen</h2>
+ <p class="sub">Durchsucht öffentliche Stack Overflow-Fragen nach Begriffen und zeigt Stimmen, Aufrufe, Antworten und Veröffentlichungsdatum. Die Quelle bleibt vom Domain-Workflow getrennt.</p>
+ <div class="hf-beta-grid">
+  <div class="field"><label for="stackBetaQuery">Suchbegriff im Fragetitel</label><input id="stackBetaQuery" value="ai agent" /></div>
+  <div class="field"><label for="stackBetaCount">Max. Treffer</label><select id="stackBetaCount"><option value="10">10</option><option value="20" selected>20</option><option value="40">40</option></select></div>
+  <div class="field"><label for="stackBetaSort">Sortierung</label><select id="stackBetaSort"><option value="relevance" selected>Relevanz</option><option value="creation">Neueste Fragen</option><option value="votes">Stimmen</option><option value="activity">Letzte Aktivität</option></select></div>
+ </div>
+ <div class="hf-beta-actions"><button class="primary" id="stackBetaRun" type="button">Stack Exchange durchsuchen</button><button class="secondary" id="stackBetaClear" type="button">Ergebnisse leeren</button></div>
+ <div class="hf-beta-status" id="stackBetaStatus" role="status" aria-live="polite">Noch keine Stack Exchange-Abfrage ausgeführt. Internetverbindung und API-Limits können das Ergebnis beeinflussen.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="stackBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Gesamtstimmen</span><strong id="stackBetaVotes">0</strong></div><div class="hf-beta-card"><span class="hint">Gesamtaufrufe</span><strong id="stackBetaViews">0</strong></div></div>
+ <div id="stackBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen Fragen.</p></div>
+ <p class="foot">Quelle: <a href="https://api.stackexchange.com/docs/advanced-search" target="_blank" rel="noopener noreferrer">Stack Exchange API – Advanced Search</a>. Inhalte und Links stammen von Stack Overflow; die API-Nutzungsbedingungen verlangen eine sichtbare Quellenangabe. Fragenaktivität ist ein Community-Signal, kein Nachweis für Domainnachfrage. Die Ergebnisse fließen nicht in die Domainbewertung ein.</p>
+</section>
+
 </main>
 <script>
 (()=> {
@@ -901,7 +918,40 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.3</div></footer>
+<script>
+(()=>{
+ const byId=id=>document.getElementById(id);
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const dateFmt=seconds=>{try{return new Date(seconds*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch{return '–';}};
+ const status=byId('stackBetaStatus'), results=byId('stackBetaResults');
+ const score=q=>Math.min(100,Math.round(Math.log1p(Math.max(0,q.score))*14+Math.log1p(Math.max(0,q.view_count))*5+Math.min(15,Math.log1p(Math.max(0,q.answer_count))*5)));
+ function draw(items){
+  byId('stackBetaTotal').textContent=items.length;
+  byId('stackBetaVotes').textContent=items.reduce((n,q)=>n+(q.score||0),0).toLocaleString();
+  byId('stackBetaViews').textContent=items.reduce((n,q)=>n+(q.view_count||0),0).toLocaleString();
+  if(!items.length){results.innerHTML='<p class="hint">Keine passenden Fragen gefunden. Versuche einen allgemeineren Begriff.</p>';return;}
+  results.innerHTML=items.map(q=>`<article class="hf-beta-item"><h3><a href="${esc(q.link)}" target="_blank" rel="noopener noreferrer">${esc(q.title)}</a></h3><p class="hint">Stack Overflow · Erstellt: ${esc(dateFmt(q.creation_date))} · Aktivität: ${esc(dateFmt(q.last_activity_date))} · Signal-Score: ${score(q)}/100</p><p class="hint">Stimmen: ${q.score||0} · Aufrufe: ${(q.view_count||0).toLocaleString()} · Antworten: ${q.answer_count||0} · ${q.is_answered?'Beantwortet':'Noch nicht beantwortet'}</p><p>${(q.tags||[]).slice(0,8).map(t=>`<span class="tag">${esc(t)}</span>`).join(' ')}</p></article>`).join('');
+ }
+ async function run(){
+  const query=byId('stackBetaQuery').value.trim(); if(!query){status.textContent='Bitte einen Suchbegriff eingeben.';return;}
+  const button=byId('stackBetaRun');button.disabled=true;status.textContent='Stack Exchange API wird abgefragt …';
+  try{
+   const params=new URLSearchParams({site:'stackoverflow',intitle:query,sort:byId('stackBetaSort').value,order:'desc',pagesize:byId('stackBetaCount').value});
+   const response=await fetch('https://api.stackexchange.com/2.3/search/advanced?'+params.toString(),{headers:{Accept:'application/json'}});
+   if(!response.ok) throw new Error('HTTP '+response.status);
+   const data=await response.json();
+   if(data.error_message) throw new Error(data.error_message);
+   const items=Array.isArray(data.items)?data.items:[];draw(items);
+   const quota=Number.isFinite(data.quota_remaining)?` · API-Kontingent verbleibend: ${data.quota_remaining}`:'';
+   status.textContent=`API erfolgreich: ${items.length} Fragen geladen. Sortierung: ${byId('stackBetaSort').selectedOptions[0].textContent}. Stimmen, Aufrufe und Antworten sind Community-Indikatoren, kein Nachweis für Domainnachfrage.${quota}`;
+  }catch(err){status.textContent='Stack Exchange API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe die Internetverbindung, CORS und API-Limits.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar.</p>';}
+  finally{button.disabled=false;}
+ }
+ function clear(){byId('stackBetaTotal').textContent='0';byId('stackBetaVotes').textContent='0';byId('stackBetaViews').textContent='0';results.innerHTML='<p class="hint">Hier erscheinen die gefundenen Fragen.</p>';status.textContent='Ergebnisse geleert.';}
+ byId('stackBetaRun').addEventListener('click',run);byId('stackBetaClear').addEventListener('click',clear);
+})();
+</script>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.4</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -917,5 +967,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.3</div>Hugging-Face- und npm-Registry-APIs · differenzierter npm-Score · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.4</div>Hugging-Face-, npm- und Stack-Exchange-APIs · Master V98 bleibt unverändert</div>
 </body></html>
