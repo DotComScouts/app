@@ -218,3 +218,32 @@ test('24 cross-source problem evidence does not automatically become cross-sourc
   assert.equal(result.clusters['token-expiry'].crossSourceCorroborated, true);
   assert.equal(result.clusters['token-expiry'].crossSourceDemandCorroborated, false);
 });
+
+test('25 labelled multilingual corpus keeps signal types separate', () => {
+  const cases = [
+    { id: 'en-problem', text: 'The MCP server crashes when the authentication token expires.', expected: { problem: true, demandIntent: false, product: false, promotion: false } },
+    { id: 'de-problem', text: 'Der Dienst stürzt ab, wenn das Authentifizierungstoken abläuft.', expected: { problem: true, demandIntent: false, product: false, promotion: false } },
+    { id: 'es-problem', text: 'La aplicación no funciona y muestra un error de conexión.', expected: { problem: true, demandIntent: false, product: false, promotion: false } },
+    { id: 'en-demand', text: 'Looking for a tool to monitor MCP server failures in production.', expected: { problem: false, demandIntent: true, product: false, promotion: false } },
+    { id: 'de-demand', text: 'Ich suche ein Tool, das Fehler in meinem MCP-Server überwacht.', expected: { problem: false, demandIntent: true, product: false, promotion: false } },
+    { id: 'es-demand', text: 'Busco una herramienta para monitorizar errores del servidor.', expected: { problem: false, demandIntent: true, product: false, promotion: false } },
+    { id: 'en-product', text: 'We launched a new open-source tool; it is now available on GitHub.', expected: { problem: false, demandIntent: false, product: true, promotion: false } },
+    { id: 'de-product', text: 'Wir haben ein neues Open-Source-Tool veröffentlicht; es ist jetzt verfügbar.', expected: { problem: false, demandIntent: false, product: true, promotion: false } },
+    { id: 'es-product', text: 'Hemos lanzado una nueva herramienta para desarrolladores.', expected: { problem: false, demandIntent: false, product: true, promotion: false } },
+    { id: 'en-opinion', text: 'Hot take: I think AI is changing everything. What do you think?', expected: { problem: false, demandIntent: false, product: false, discussion: true, promotion: false } },
+    { id: 'de-opinion', text: 'Meiner Meinung nach verändert KI alles. Was denkt ihr?', expected: { problem: false, demandIntent: false, product: false, discussion: true, promotion: false } },
+    { id: 'es-opinion', text: 'Opino que la IA está cambiando todo.', expected: { problem: false, demandIntent: false, product: false, discussion: true, promotion: false } },
+    { id: 'en-promo', text: 'Join our webinar! Register now to learn about our product.', expected: { problem: false, demandIntent: false, product: false, promotion: true } },
+    { id: 'de-promo', text: 'Werbung: Jetzt anmelden und Platz für unser Webinar sichern.', expected: { problem: false, demandIntent: false, product: false, promotion: true } },
+    { id: 'es-promo', text: 'Anuncio patrocinado: regístrate ahora para nuestro webinar.', expected: { problem: false, demandIntent: false, product: false, promotion: true } },
+    { id: 'broad-we-need', text: 'We need better tools for the future of AI.', expected: { problem: false, demandIntent: false, product: false, promotion: false } },
+    { id: 'generic-product-mention', text: 'I use an MCP server at work and it has been useful.', expected: { problem: false, demandIntent: false, product: false, promotion: false } },
+    { id: 'high-engagement-opinion', text: 'Hot take: AI changes everything.', expected: { problem: false, demandIntent: false, product: false, discussion: true, promotion: false } }
+  ];
+  for (const fixture of cases) {
+    const actual = classifyEvidence(record({ text: fixture.text }));
+    for (const [key, expected] of Object.entries(fixture.expected)) {
+      assert.equal(actual[key], expected, fixture.id + ': ' + key);
+    }
+  }
+});
