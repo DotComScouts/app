@@ -191,7 +191,7 @@
 
 
 <section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
- <div class="eyebrow">BETA 98.11 · EXPERIMENTELLE QUELLE</div>
+ <div class="eyebrow">BETA 98.12 · EXPERIMENTELLE QUELLE</div>
  <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
  <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
@@ -200,7 +200,7 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.10: Resonanz wird stärker gewichtet, Aktualität ist auf vier Punkte begrenzt; Werbung und Newsletter werden strenger gefiltert. API-Zugriff muss im Browser getestet werden.</div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.12: technische Relevanz, konkreter Markt-/Problembedarf und Community-Resonanz werden getrennt bewertet. API-Zugriff muss im Browser getestet werden.</div>
  <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
@@ -1063,47 +1063,47 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
  function score(post){
   const rawText=String(post?.record?.text||''),text=normalizeText(rawText),terms=queryTerms();
   const likes=Math.max(0,Number(post?.likeCount)||0),reposts=Math.max(0,Number(post?.repostCount)||0),replies=Math.max(0,Number(post?.replyCount)||0);
-  const matched=terms.filter(term=>text.includes(term));
+  const matched=terms.filter(term=>new RegExp('(^|[^a-z0-9])'+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(text));
   const phrase=normalizeText(byId('blueskyBetaQuery').value);
   const phraseHit=phrase.length>2&&text.includes(phrase);
-  // Themenbezug hilft beim Sortieren, darf aber allein keinen hohen Score erzeugen.
-  let relevance=terms.length?Math.round(18*(matched.length/terms.length)+(phraseHit?2:0)):0;
-  // Beta 98.11: konkrete technische oder produktbezogene Signale zählen stärker als bloße Meinungen.
-  const concretePattern=/(open[- ]source|github|repository|repo\b|api\b|sdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|tool|framework|library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|model|deployment|deploy|automation|developer|software|code|implementation|server|client|protocol|prototype|product|feature|platform|research|preprint|experiment|monitoring|self-hosted|reverse engineer|reverse engineering|\bCVE-\d{4}-\d+\b)/i.test(rawText);
-  const opinionPattern=/(hot take|my opinion|i think|i feel|i hate|i love|fuck ai|ai is ruining|ai-proof our lives|enshittification|what do you think|unpopular opinion|the problem with ai)/i.test(rawText);
-  if(concretePattern) relevance+=5;
-  if(opinionPattern&&!concretePattern) relevance-=7;
-  relevance=Math.max(0,Math.min(25,relevance));
-  // Resonanz ist das stärkste Signal; logarithmisch, damit einzelne große Accounts nicht alles dominieren.
-  const rawEngagement=Math.log1p(likes)*6+Math.log1p(reposts)*9+Math.log1p(replies)*4;
-  const engagement=Math.min(50,Math.round(rawEngagement));
+  // Beta 98.12: query overlap is only a starting point, not sufficient proof of technical relevance.
+  const overlap=terms.length?matched.length/terms.length:0;
+  const technicalPattern=/(open[- ]source|github|repository|\brepo\b|\bapi\b|\bsdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|developer tool|framework|software library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|deployment|deploy|automation|code|implementation|protocol|prototype|self-hosted|reverse engineer|reverse engineering|\bcve-\d{4}-\d+\b|pull request|issue tracker|debugging|latency|observability|monitoring|authentication|authorization|database|endpoint|cli tool|command-line)/i.test(rawText);
+  const marketPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
+  const opinionPattern=/(hot take|my opinion|i think|i feel|i hate|i love|fuck ai|ai is ruining|ai-proof our lives|enshittification|what do you think|unpopular opinion|the problem with ai|thoughts\?)/i.test(rawText);
+  let relevance=Math.round(overlap*20)+(phraseHit?5:0)+(technicalPattern?8:0);
+  if(opinionPattern&&!technicalPattern) relevance-=10;
+  relevance=Math.max(0,Math.min(30,relevance));
+  // Separate market/problem evidence from community reaction and freshness.
+  const marketSignal=marketPattern?18:(technicalPattern?8:0);
+  const rawEngagement=Math.log1p(likes)*5+Math.log1p(reposts)*7+Math.log1p(replies)*4;
+  const engagement=Math.min(35,Math.round(rawEngagement));
   const date=Date.parse(post?.indexedAt||post?.record?.createdAt||'');
   const age=Number.isFinite(date)?Math.max(0,(Date.now()-date)/86400000):Infinity;
-  // Aktualitätsbonus ist auf vier Punkte begrenzt.
   const freshness=Number.isFinite(age)?Math.max(0,Math.round(4*(1-Math.min(age,14)/14))):0;
   const words=text.split(' ').filter(Boolean);
-  const substance=words.length>=18?3:words.length>=10?2:words.length>=6?1:0;
+  const substance=words.length>=24?4:words.length>=15?3:words.length>=9?2:words.length>=6?1:0;
   const handle=String(post?.author?.handle||'').toLowerCase();
-  const feedAccount=/(news|newsfeed|newsletter|daily|digest|bot|firehose|feed|press|updates|bulletin|toppnews|ai-firehose|marketing|promo)/.test(handle);
+  const feedAccount=/(news|newsfeed|newsletter|daily|digest|bot|firehose|feed|press|updates|bulletin|toppnews|ai-firehose|marketing|promo|stocktitan)/.test(handle);
   const hardAdPattern=/(^|\s)#ad\b|\b(advertisement|paid promotion|sponsored post|sponsored content|paid partnership)\b|\$\d+(?:\.\d{2})?\s*(?:\/|per\s+month|monthly)|featured spot is|buy now|use code [A-Z0-9_-]+/i.test(rawText);
-  const promoPattern=hardAdPattern||/(subscribe|follow us|sign up|try it free|limited time|our product|we help businesses|book a demo|sponsored|use code|tickets|register now|free ai prompt|copy-paste it free|download now|start your free trial|limited offer|last chance to register|telegram|join our community)/i.test(rawText);
+  const promoPattern=hardAdPattern||/(subscribe|follow us|sign up|try it free|limited time|our product|we help businesses|book a demo|sponsored|use code|tickets|register now|free ai prompt|copy-paste it free|download now|start your free trial|limited offer|last chance to register|telegram|join our community|check out our product|launching our new)/i.test(rawText);
   const newsletterPattern=/(newsletter|this week's roundup|weekly roundup|daily briefing|today's digest|our latest newsletter|sign up for our newsletter|weekly digest|news roundup|roundup of)/i.test(rawText);
   const syndicated=/(original post:|source: @|view in timelines|read more at|continue reading|https?:\/\/ift\.tt\/|link in bio|cross-posted|automated update|status page|partial outage|service disruption|is reporting a .*outage|live timeline)/i.test(rawText);
   const statusUpdate=/(partial outage|service disruption|status page|is reporting a .*outage|api (?:is )?(?:down|degraded)|service is down|incident update)/i.test(rawText);
   const hashtagMatches=(rawText.match(/#[\w-]+/g)||[]).length;
   const repeatedHashtags=hashtagMatches>=5;
   const lowSubstance=words.length<7;
-  const linkOnly=lowSubstance?6:0;
-  const penalties=(feedAccount?18:0)+(promoPattern?24:0)+(newsletterPattern?18:0)+(syndicated?12:0)+(statusUpdate?10:0)+(repeatedHashtags?5:0)+(lowSubstance?5:0)+(opinionPattern&&!concretePattern?7:0);
-  const score=Math.max(0,Math.min(100,relevance+engagement+freshness+substance-linkOnly-penalties));
+  const penalties=(feedAccount?18:0)+(promoPattern?24:0)+(newsletterPattern?18:0)+(syndicated?12:0)+(statusUpdate?10:0)+(repeatedHashtags?5:0)+(lowSubstance?5:0)+(opinionPattern&&!technicalPattern?8:0);
+  const score=Math.max(0,Math.min(100,relevance+marketSignal+engagement+freshness+substance-penalties));
   const totalInteractions=likes+reposts+replies;
   const hasResonance=totalInteractions>0;
   const meaningfulResonance=totalInteractions>=3&&engagement>=6;
-  return {score,relevance,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,hardAdPattern,newsletterPattern,syndicated,statusUpdate,concretePattern,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
+  const relevantContext=technicalPattern||marketPattern;
+  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,hardAdPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
  }
  function classify(signal,metrics){
-  if(signal<25||metrics.matched.length===0||!metrics.meaningfulResonance||metrics.feedAccount||metrics.promoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.concretePattern)return 'Schwaches Signal';
-  if(signal>=48&&metrics.engagement>=18)return 'Stärkeres Community-Signal';
+  if(signal<28||metrics.matched.length===0||!metrics.meaningfulResonance||!metrics.relevantContext||metrics.feedAccount||metrics.promoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.technicalPattern)return 'Schwaches Signal';
+  if(signal>=52&&metrics.marketSignal>=18&&metrics.engagement>=14)return 'Stärkeres Community-Signal';
   return 'Frühes Signal';
  }
 
@@ -1115,14 +1115,14 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const seen=new Set();
   const unique=posts.filter(p=>{const key=normalizeText(p?.record?.text||'');if(!key||seen.has(key))return false;seen.add(key);return true;});
   const ranked=unique.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
-  const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=16&&p._metrics.hasResonance&&!p._metrics.hardAdPattern&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
+  const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=22&&p._metrics.hasResonance&&p._metrics.relevantContext&&!p._metrics.hardAdPattern&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
   const relevant=ranked.filter(p=>eligible(p)&&!p._metrics.statusUpdate);
   const display=relevant.length?relevant:ranked.filter(p=>eligible(p)).slice(0,5);
   if(!display.length){results.innerHTML='<p class="hint">Die API lieferte Posts, aber keiner hatte ausreichend thematische Übereinstimmung. Formuliere die Suche präziser oder probiere einen Synonymbegriff.</p>';return;}
   results.innerHTML=display.map(p=>{
    const rec=p.record||{},author=p.author||{},date=Date.parse(p.indexedAt||rec.createdAt||''),dateText=Number.isFinite(date)?new Date(date).toLocaleString():'Datum unbekannt';
    const url=postUrl(p),text=String(rec.text||''),m=p._metrics,label=classify(m.score,m);
-   return `<article class="hf-beta-item"><h3><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc((text||'Post ohne Text').slice(0,120))}${text.length>120?'…':''}</a></h3><p class="hint">Bluesky · @${esc(author.handle||'unbekannt')} · ${esc(dateText)} · ${esc(label)} · Signalwert: ${m.score}/100</p><p class="hint">Thementreffer: ${m.matched.length}/${queryTerms().length} · Resonanzpunkte: ${m.engagement} · Aktualität: ${m.freshness} · Abzüge: ${m.penalties}</p><p class="hint">Likes: ${Number(p.likeCount)||0} · Reposts: ${Number(p.repostCount)||0} · Antworten: ${Number(p.replyCount)||0}</p><p>${esc(text)}</p></article>`;
+   return `<article class="hf-beta-item"><h3><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc((text||'Post ohne Text').slice(0,120))}${text.length>120?'…':''}</a></h3><p class="hint">Bluesky · @${esc(author.handle||'unbekannt')} · ${esc(dateText)} · ${esc(label)} · Signalwert: ${m.score}/100</p><p class="hint">Thementreffer: ${m.matched.length}/${queryTerms().length} · Relevanz: ${m.relevance} · Marktsignal: ${m.marketSignal} · Resonanz: ${m.engagement} · Aktualität: ${m.freshness} · Abzüge: ${m.penalties}</p><p class="hint">Likes: ${Number(p.likeCount)||0} · Reposts: ${Number(p.repostCount)||0} · Antworten: ${Number(p.replyCount)||0}</p><p>${esc(text)}</p></article>`;
   }).join('');
  }
  async function run(){
@@ -1136,7 +1136,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    const data=await response.json();
    if(!data||!Array.isArray(data.posts))throw new Error('Unerwartetes API-Antwortformat');
    render(data.posts);
-   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Doppelte Texte, explizite Anzeigen, erkennbare Werbe-/Newsletter-Beiträge und Feed-/Syndication-Posts werden gefiltert. Technische und produktbezogene Inhalte werden gegenüber allgemeinen Meinungsbeiträgen bevorzugt; reine Statusmeldungen werden abgewertet. Aktualität ist auf vier Punkte begrenzt; geringe Resonanz wird als schwaches Signal gekennzeichnet. Kein Wachstumsmaß und kein Nachweis für Domainnachfrage.`;
+   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Doppelte Texte, Anzeigen, Werbe-/Newsletter-Beiträge und Feed-/Syndication-Posts werden gefiltert. Relevanz, konkretes Markt-/Problemsignal und Community-Resonanz werden getrennt ausgewiesen; bloße Keyword-Treffer reichen nicht für die Anzeige. Aktualität ist auf vier Punkte begrenzt. Geringe Resonanz und allgemeine Meinungsbeiträge werden abgewertet. Kein Wachstumsmaß und kein Nachweis für Domainnachfrage.`;
   }catch(err){status.textContent='Bluesky-API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe Internetverbindung, Browser-CORS und mögliche API-Limits. Andere Funktionen bleiben davon unberührt.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Du kannst die Abfrage erneut versuchen.</p>';byId('blueskyBetaTotal').textContent='0';byId('blueskyBetaLikes').textContent='0';byId('blueskyBetaShares').textContent='0';}
   finally{button.disabled=false;}
  }
@@ -1145,7 +1145,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.11</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.12</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1161,5 +1161,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.11</div>Bluesky-Scoring 98.11: technische Relevanz, harte Anzeigenfilter, Statusmeldungs-Abwertung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.12</div>Bluesky-Scoring 98.12: Relevanz, Marktsignal und Resonanz getrennt · Master V98 bleibt unverändert</div>
 </body></html>
