@@ -2,13 +2,13 @@
 
 ## Scope
 
-- Base implementation: DotComScouts Beta 98.27 on the isolated development branch.
-- Master V98 and the live site were not changed.
-- No merge is authorized by this report.
+- Base implementation: DotComScouts Beta 98.28 on the isolated development branch.
+- Master V98 remains unchanged.
+- The user-authorized GitHub Pages live test site was updated to Beta 98.28; no PR merge has been performed.
 
 ## Executed in the available test harness
 
-The committed deterministic Node.js suite has **46 tests; 46 passed, 0 failed** in GitHub Actions. This includes an 18-case labelled English/German/Spanish classification corpus and 14 shadow-evidence regression tests. It covers the Bluesky explorer, JavaScript syntax, source isolation, and a separate shadow-evidence prototype. All four inline JavaScript blocks were parsed with `new Function`.
+The committed deterministic Node.js suite has **49 tests; 49 passed, 0 failed** in GitHub Actions. This includes an 18-case labelled English/German/Spanish classification corpus, 14 shadow-evidence regression tests, and three checks for normal-flow shadow integration, failure isolation, and no scoring/domain-check mutation. All four inline JavaScript blocks were parsed with `new Function` in the prior syntax suite.
 
 | Case | Result |
 |---|---|
@@ -50,9 +50,11 @@ The following real network smoke tests passed from a GitHub-hosted Node.js 22 ru
 - npm Registry search: response contains an objects array.
 - DEV Community API: response is an array.
 
-The actual Chromium browser smoke test passed across all five experimental source panels: Hugging Face, npm Registry, Stack Exchange, DEV Community, and Bluesky. With the default Hugging Face topic list, it loaded 40 projects and displayed 5 relevant ones; npm returned 20 packages, Stack Exchange 20 questions, DEV 20 articles, and Bluesky 50 posts with 28 unique posts displayed. The test also compared core domain results, core trend candidates, and domain-check progress before and after all five API calls; all three remained unchanged. No uncaught browser errors were reported.
+The deployed-origin Chromium browser smoke test passed across all five source panels: Hugging Face, npm Registry, Stack Exchange, DEV Community, and Bluesky. It then clicked the ordinary “Trends prüfen → .coms finden” button and verified that the normal run invoked all five shadow adapters. The panel check also confirmed that the standalone panels did not mutate core domain results, core trend candidates, or domain-check progress. No uncaught browser errors were reported.
 
-Run with 35 deterministic tests, live Bluesky API, six other API smoke tests, all five browser source panels, and the core-state isolation check successful: https://github.com/DotComScouts/app/actions/runs/40972369588
+- Deployed-origin browser integration run: https://github.com/DotComScouts/app/actions/runs/40974213585
+- Live test deployment commit: https://github.com/DotComScouts/app/commit/c8a215aaab6f8cd3f6b1d1b18e04da9d3ecfcfc3
+- Live test site: https://dotcomscouts.github.io/app/
 
 ## Shadow evidence prototype
 
@@ -62,12 +64,11 @@ The new tests exposed and helped fix a concrete edge case: a failed source recor
 
 The deterministic suite and the shadow-evidence suite pass together: **46/46** (including 18 labelled classification fixtures).
 
-These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that all five experimental UI panels fetched live data from the CI browser origin and did not alter the core domain/trend state. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
+These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The deployed-origin browser test proves that the ordinary trend run calls all five shadow adapters and that the standalone panels do not mutate core state. It does not yet prove semantic relevance of every returned record, cross-source deduplication quality, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
 
 ## Remaining verification
 
-1. Repeat browser testing against the actual deployed GitHub Pages origin, including rate limiting and retry behavior. The live page was updated to Beta 98.27 at https://dotcomscouts.github.io/app/ in commit https://github.com/DotComScouts/app/commit/10d6d821e8fc17abaf3422a3c916538337324529; the live-origin browser run passed in GitHub Actions run https://github.com/DotComScouts/app/actions/runs/40973112666. The deployed page fetched all five panels successfully and left the core domain results, trend candidates, and domain-check progress unchanged.
-2. Check source isolation and existing domain-check, CSV-export, language, and risk-review flows for regressions.
-3. Build controlled cross-source fixtures to distinguish problem evidence, independent demand evidence, product evidence, and resonance. Keep source evidence separate and do not let Bluesky alter domain availability checks.
-4. Only after these pass, design a controlled multi-source integration test.
-5. Do not merge without explicit approval.
+1. Compare the normalized evidence collected by the five adapters against known labelled examples, including relevance, duplicate handling, and source failures.
+2. Verify CSV export, language-risk filtering, and domain-availability flows after the shadow requests complete; the new adapters currently do not write to those flows.
+3. Keep source evidence in shadow mode until comparison results demonstrate improved signal quality. Only then consider changing the core trend score.
+4. Do not merge the draft PR without explicit approval.
