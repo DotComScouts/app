@@ -191,7 +191,7 @@
 
 
 <section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
- <div class="eyebrow">BETA 98.19 · EXPERIMENTELLE QUELLE</div>
+ <div class="eyebrow">BETA 98.20 · EXPERIMENTELLE QUELLE</div>
  <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
  <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
@@ -200,8 +200,8 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.19: Dubletten werden nach Signalwert priorisiert; Sprachvarianten gemeinsamer Accounts und Themen werden abgeglichen. Die API-Verbindung selbst muss im Browser geprüft werden.</div>
- <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.20: Dubletten werden vor der Anzeige nach Signalwert priorisiert. Interaktionssummen zählen nur eindeutige Posts, damit Sprachvarianten die Resonanz nicht künstlich erhöhen. Die API-Verbindung muss im Browser geprüft werden.</div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Eindeutige Posts</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
 </section>
@@ -1130,10 +1130,12 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
  }
 
  function render(posts){
-  byId('blueskyBetaTotal').textContent=String(posts.length);
-  byId('blueskyBetaLikes').textContent=posts.reduce((n,p)=>n+(Number(p.likeCount)||0),0).toLocaleString();
-  byId('blueskyBetaShares').textContent=posts.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
-  if(!posts.length){results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;}
+  if(!posts.length){
+   byId('blueskyBetaTotal').textContent='0';
+   byId('blueskyBetaLikes').textContent='0';
+   byId('blueskyBetaShares').textContent='0';
+   results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;
+  }
   const seenText=new Set(),seenUrls=[];
   const canonicalizeUrl=value=>{
    try{
@@ -1193,6 +1195,10 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    unique.push(p);
   }
   const ranked=unique;
+  // Aggregate engagement only after deduplication; otherwise translated copies inflate the totals.
+  byId('blueskyBetaTotal').textContent=String(ranked.length);
+  byId('blueskyBetaLikes').textContent=ranked.reduce((n,p)=>n+(Number(p.likeCount)||0),0).toLocaleString();
+  byId('blueskyBetaShares').textContent=ranked.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
   const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=20&&p._metrics.relevantContext&&!p._metrics.hardAdPattern&&!p._metrics.eventPromoPattern&&!p._metrics.feedAccount&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
   const relevant=ranked.filter(p=>eligible(p)&&!p._metrics.statusUpdate&&(!p._metrics.promoPattern||(p._metrics.technicalPattern&&p._metrics.marketSignal>=9)));
   const display=relevant.length?relevant:ranked.filter(p=>eligible(p)&&!p._metrics.promoPattern).slice(0,5);
@@ -1223,7 +1229,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.19</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.20</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1239,5 +1245,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.18</div>Bluesky-Scoring 98.19: korrigierte Regex-Normalisierung, priorisierte Dublettenprüfung und sprachübergreifende Gruppierung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.18</div>Bluesky-Scoring 98.20: korrigierte Regex-Normalisierung, priorisierte Dublettenprüfung und Interaktionssummen ohne Dubletten · Master V98 bleibt unverändert</div>
 </body></html>
