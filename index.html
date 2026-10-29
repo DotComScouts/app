@@ -200,7 +200,7 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.12: technische Relevanz, konkreter Markt-/Problembedarf und Community-Resonanz werden getrennt bewertet. API-Zugriff muss im Browser getestet werden.</div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.13: technische Relevanz, konkreter Markt-/Problembedarf und Community-Resonanz werden getrennt bewertet. API-Zugriff muss im Browser getestet werden.</div>
  <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
@@ -1066,7 +1066,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const matched=terms.filter(term=>new RegExp('(^|[^a-z0-9])'+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(text));
   const phrase=normalizeText(byId('blueskyBetaQuery').value);
   const phraseHit=phrase.length>2&&text.includes(phrase);
-  // Beta 98.12: query overlap is only a starting point, not sufficient proof of technical relevance.
+  // Beta 98.13: query overlap is only a starting point, not sufficient proof of technical relevance.
   const overlap=terms.length?matched.length/terms.length:0;
   const technicalPattern=/(open[- ]source|github|repository|\brepo\b|\bapi\b|\bsdk\b|mcp server|agentic|integration|release|launched|launching|built|builds|developer tool|framework|software library|plugin|workflow|production|security|vulnerability|prompt injection|benchmark|deployment|deploy|automation|code|implementation|protocol|prototype|self-hosted|reverse engineer|reverse engineering|\bcve-\d{4}-\d+\b|pull request|issue tracker|debugging|latency|observability|monitoring|authentication|authorization|database|endpoint|cli tool|command-line)/i.test(rawText);
   const marketPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|real[- ]world use|in production|case study|benchmark results|released|release notes|open[- ]sourced|now available|available on github|try the demo|security advisory|cve-\d{4}-\d+|vulnerability|prompt injection|token cost|cost reduction|faster than|reduces? (?:cost|latency|time)|automate[sd]?)/i.test(rawText);
@@ -1075,7 +1075,11 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   if(opinionPattern&&!technicalPattern) relevance-=10;
   relevance=Math.max(0,Math.min(30,relevance));
   // Separate market/problem evidence from community reaction and freshness.
-  const marketSignal=marketPattern?18:(technicalPattern?8:0);
+  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|without guessing|unintended access|leaks? (?:the )?(?:user )?query)/i.test(rawText);
+  const productPattern=/(open[- ]source|github|repository|\brepo\b|built an? |built a |we built|new tool|new framework|new library|new plugin|new mcp server|server connects|sdk|cli|available on github|now available|released|release notes|launch(?:ed|ing)?|prototype|integration|production scheduling)/i.test(rawText);
+  const securityPattern=/(security|vulnerability|prompt injection|authentication|authorization|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? the user|unintended access)/i.test(rawText);
+  // Concrete problem evidence gets the strongest market score; product/build signals get a medium score.
+  const marketSignal=problemPattern?20:(securityPattern?15:(productPattern?12:(marketPattern?10:(technicalPattern?6:0))));
   const rawEngagement=Math.log1p(likes)*5+Math.log1p(reposts)*7+Math.log1p(replies)*4;
   const engagement=Math.min(35,Math.round(rawEngagement));
   const date=Date.parse(post?.indexedAt||post?.record?.createdAt||'');
@@ -1085,7 +1089,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const substance=words.length>=24?4:words.length>=15?3:words.length>=9?2:words.length>=6?1:0;
   const handle=String(post?.author?.handle||'').toLowerCase();
   const feedAccount=/(news|newsfeed|newsletter|daily|digest|bot|firehose|feed|press|updates|bulletin|toppnews|ai-firehose|marketing|promo|stocktitan)/.test(handle);
-  const hardAdPattern=/(^|\s)#ad\b|\b(advertisement|paid promotion|sponsored post|sponsored content|paid partnership)\b|\$\d+(?:\.\d{2})?\s*(?:\/|per\s+month|monthly)|featured spot is|buy now|use code [A-Z0-9_-]+/i.test(rawText);
+  const hardAdPattern=/(^|\s)#ad\b|\b(advertisement|paid promotion|sponsored post|sponsored content|paid partnership)\b|\$\d+(?:\.\d{2})?\s*(?:\/|per\s+month|monthly)|featured spot is|buy now|use code [A-Z0-9_-]+|affiliate link|sponsored by|paid placement|promoted post/i.test(rawText);
   const promoPattern=hardAdPattern||/(subscribe|follow us|sign up|try it free|limited time|our product|we help businesses|book a demo|sponsored|use code|tickets|register now|free ai prompt|copy-paste it free|download now|start your free trial|limited offer|last chance to register|telegram|join our community|check out our product|launching our new)/i.test(rawText);
   const newsletterPattern=/(newsletter|this week's roundup|weekly roundup|daily briefing|today's digest|our latest newsletter|sign up for our newsletter|weekly digest|news roundup|roundup of)/i.test(rawText);
   const syndicated=/(original post:|source: @|view in timelines|read more at|continue reading|https?:\/\/ift\.tt\/|link in bio|cross-posted|automated update|status page|partial outage|service disruption|is reporting a .*outage|live timeline)/i.test(rawText);
@@ -1099,11 +1103,11 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   const hasResonance=totalInteractions>0;
   const meaningfulResonance=totalInteractions>=3&&engagement>=6;
   const relevantContext=technicalPattern||marketPattern;
-  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,hardAdPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
+  return {score,relevance,marketSignal,engagement,freshness,matched,age,penalties,feedAccount,promoPattern,hardAdPattern,newsletterPattern,syndicated,statusUpdate,technicalPattern,marketPattern,problemPattern,productPattern,securityPattern,relevantContext,opinionPattern,hasResonance,meaningfulResonance,totalInteractions,phraseHit};
  }
  function classify(signal,metrics){
   if(signal<28||metrics.matched.length===0||!metrics.meaningfulResonance||!metrics.relevantContext||metrics.feedAccount||metrics.promoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.technicalPattern)return 'Schwaches Signal';
-  if(signal>=52&&metrics.marketSignal>=18&&metrics.engagement>=14)return 'Stärkeres Community-Signal';
+  if(signal>=55&&metrics.marketSignal>=15&&metrics.engagement>=12&&metrics.meaningfulResonance)return 'Stärkeres Community-Signal';
   return 'Frühes Signal';
  }
 
@@ -1113,7 +1117,16 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   byId('blueskyBetaShares').textContent=posts.reduce((n,p)=>n+(Number(p.repostCount)||0)+(Number(p.replyCount)||0),0).toLocaleString();
   if(!posts.length){results.innerHTML='<p class="hint">Keine passenden Posts gefunden. Versuche einen allgemeineren Suchbegriff.</p>';return;}
   const seen=new Set();
-  const unique=posts.filter(p=>{const key=normalizeText(p?.record?.text||'');if(!key||seen.has(key))return false;seen.add(key);return true;});
+  const unique=posts.filter(p=>{
+   const raw=String(p?.record?.text||'');
+   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y)\b/g,' ').replace(/\s+/g,' ').trim();
+   const embed=p?.embed?.external?.uri||p?.record?.embed?.external?.uri||'';
+   const urls=[...raw.matchAll(/https?:\/\/[^\s)]+/gi)].map(m=>m[0].replace(/[.,!?]+$/,'').toLowerCase());
+   const canonicalUrl=String(embed||urls[0]||'').replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').toLowerCase();
+   const key=canonicalUrl?'url:'+canonicalUrl:'text:'+textKey;
+   if(!textKey||seen.has(key))return false;
+   seen.add(key);return true;
+  });
   const ranked=unique.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
   const eligible=p=>p._metrics.matched.length>0&&p._metrics.score>=22&&p._metrics.hasResonance&&p._metrics.relevantContext&&!p._metrics.hardAdPattern&&!p._metrics.feedAccount&&!p._metrics.promoPattern&&!p._metrics.newsletterPattern&&!p._metrics.syndicated;
   const relevant=ranked.filter(p=>eligible(p)&&!p._metrics.statusUpdate);
@@ -1161,5 +1174,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.12</div>Bluesky-Scoring 98.12: Relevanz, Marktsignal und Resonanz getrennt · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.13</div>Bluesky-Scoring 98.13: Problem-/Produktsignal, Werbeprüfung und sprachübergreifende Dubletten · Master V98 bleibt unverändert</div>
 </body></html>
