@@ -48,9 +48,9 @@ The following real network smoke tests passed from a GitHub-hosted Node.js 22 ru
 - npm Registry search: response contains an objects array.
 - DEV Community API: response is an array.
 
-The actual Chromium browser smoke test also passed across all five experimental source panels: Hugging Face, npm Registry, Stack Exchange, DEV Community, and Bluesky. With the default Hugging Face topic list, it loaded 40 projects and displayed 7 relevant ones; npm returned 20 packages, Stack Exchange 20 questions, DEV 20 articles, and Bluesky 50 posts with 28 unique posts displayed. No uncaught browser errors were reported.
+The actual Chromium browser smoke test passed across all five experimental source panels: Hugging Face, npm Registry, Stack Exchange, DEV Community, and Bluesky. With the default Hugging Face topic list, it loaded 40 projects and displayed 5 relevant ones; npm returned 20 packages, Stack Exchange 20 questions, DEV 20 articles, and Bluesky 50 posts with 28 unique posts displayed. The test also compared core domain results, core trend candidates, and domain-check progress before and after all five API calls; all three remained unchanged. No uncaught browser errors were reported.
 
-Run with 35 deterministic tests, live Bluesky API, six other API smoke tests, and all five browser source panels successful: https://github.com/DotComScouts/app/actions/runs/40972172471
+Run with 35 deterministic tests, live Bluesky API, six other API smoke tests, all five browser source panels, and the core-state isolation check successful: https://github.com/DotComScouts/app/actions/runs/40972369588
 
 ## Shadow evidence prototype
 
@@ -60,7 +60,7 @@ The new tests exposed and helped fix a concrete edge case: a failed source recor
 
 The deterministic suite and the shadow-evidence suite pass together: **35/35**.
 
-These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that all five experimental UI panels fetched live data from the CI browser origin. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
+These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that all five experimental UI panels fetched live data from the CI browser origin and did not alter the core domain/trend state. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
 
 ## Remaining verification
 
