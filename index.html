@@ -191,7 +191,7 @@
 
 
 <section class="panel" id="blueskyBetaPanel" aria-labelledby="blueskyBetaTitle">
- <div class="eyebrow">BETA 98.15 · EXPERIMENTELLE QUELLE</div>
+ <div class="eyebrow">BETA 98.16 · EXPERIMENTELLE QUELLE</div>
  <h2 id="blueskyBetaTitle">Bluesky – öffentliche Posts und Resonanz</h2>
  <p class="sub">Durchsucht öffentliche Bluesky-Beiträge nach Stichwörtern. Likes, Reposts und Antworten dienen als ergänzende Community-Signale. Die Quelle ist isoliert: Sie verändert weder die bestehende Trendbewertung noch die Domain-Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
@@ -200,7 +200,7 @@
   <div class="field"><label for="blueskyBetaCount">Max. Treffer</label><select id="blueskyBetaCount"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></div>
  </div>
  <div class="hf-beta-actions"><button class="primary" id="blueskyBetaRun" type="button">Bluesky durchsuchen</button><button class="secondary" id="blueskyBetaClear" type="button">Ergebnisse leeren</button></div>
- <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.15: Signaltypen werden explizit gekennzeichnet; sprachübergreifende Dubletten werden anhand gemeinsamer Original-URLs, URL-Präfixen und normalisierter Inhalte zusammengeführt. Webinar-/Registrierungswerbung wird getrennt von Produktankündigungen behandelt. API-Zugriff muss im Browser getestet werden.</div>
+ <div class="hf-beta-status" id="blueskyBetaStatus" role="status" aria-live="polite">Beta 98.16: Dublettenprüfung ergänzt URL-Abgleich um sprachübergreifende Account-/Produktmuster. Signaltypen priorisieren Probleme und Anleitungen vor allgemeinen Produktbegriffen. API-Zugriff muss im Browser getestet werden.</div>
  <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="blueskyBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Likes</span><strong id="blueskyBetaLikes">0</strong></div><div class="hf-beta-card"><span class="hint">Reposts + Antworten</span><strong id="blueskyBetaShares">0</strong></div></div>
  <div id="blueskyBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen öffentlichen Posts.</p></div>
  <p class="foot">Quelle: <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener noreferrer">Bluesky API – Search posts</a> und <a href="https://docs.bsky.app/docs/advanced-guides/rate-limits" target="_blank" rel="noopener noreferrer">Rate limits</a>. Resonanzwerte sind Momentaufnahmen, keine Wachstumsraten. Suchergebnisse sind nicht repräsentativ für alle Nutzer und kein Nachweis für Domainnachfrage. Diese experimentelle Quelle beeinflusst keine Kernfunktion.</p>
@@ -1075,7 +1075,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   if(opinionPattern&&!technicalPattern) relevance-=10;
   relevance=Math.max(0,Math.min(30,relevance));
   // Separate market/problem evidence from community reaction and freshness.
-  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|without guessing|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|clear errors|install command)/i.test(rawText);
+  const problemPattern=/(looking for|need a tool|need to|we need|how do i|how to (?:build|deploy|secure|integrate|monitor|automate)|pain point|bottleneck|workaround|fails when|doesn't work|does not work|broken|bug report|feature request|missing feature|hard to|struggling with|production issue|token cost|cost reduction|reduces? (?:cost|latency|time)|double[- ]book|miss due dates|burns through|bill shock|without guessing|unintended access|leaks? (?:the )?(?:user )?query|can't (?:use|connect|run)|cannot (?:use|connect|run)|fails to|error message|clear errors|install command|how did you handle auth|how do you handle auth|how to handle authentication)/i.test(rawText);
   const productPattern=/(open[- ]source|github|repository|\brepo\b|built an? |built a |we built|new tool|new framework|new library|new plugin|new mcp server|server connects|sdk|cli|available on github|now available|released|release notes|launch(?:ed|ing)?|prototype|integration|production scheduling)/i.test(rawText);
   const securityPattern=/(security|vulnerability|prompt injection|authentication|authorization|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? the user|unintended access)/i.test(rawText);
   // Concrete problem evidence gets the strongest market score; product/build signals get a medium score.
@@ -1115,11 +1115,13 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   return 'Frühes Signal';
  }
  function signalType(metrics){
+  const raw=metrics.rawText||'';
   if(metrics.hardAdPattern||metrics.eventPromoPattern)return 'Werbung / Veranstaltung';
   if(metrics.securityPattern)return 'Sicherheitsproblem';
-  if(metrics.problemPattern)return 'Konkretes technisches Problem';
-  if(metrics.productPattern)return 'Produktankündigung / Tool';
-  if(/\b(how to|quickstart|tutorial|guide|how do i|step[- ]by[- ]step|anleitung|einrichten|connect.{0,20}to)\b/i.test(metrics.rawText||''))return 'Anleitung / Umsetzung';
+  if(metrics.problemPattern||(/\b(how did you handle|how do you handle|how to fix|cannot connect|can't connect|does not work|doesn't work|not working|error|bug|fails when|missing tools)\b/i.test(raw)&&/\b(auth|authentication|authorization|mcp|server|client|token|header|endpoint|install|connect)\b/i.test(raw)))return 'Konkretes technisches Problem';
+  if(/\b(how to|quickstart|tutorial|guide|how do i|step[- ]by[- ]step|anleitung|einrichten|connect.{0,20}to|this article explains how to|design a production-grade)\b/i.test(raw))return 'Anleitung / Umsetzung';
+  if(/\b(we built|i built|new (?:open-source )?(?:tool|product|server|app|platform|library|framework)|launch(?:ed|ing)?|now available|introducing|released|release notes|available on github|today, anyone on your team can|our new)\b/i.test(raw))return 'Produktankündigung / Tool';
+  if(metrics.productPattern)return 'Technische Nachricht / Diskussion';
   if(metrics.opinionPattern)return 'Meinung';
   if(metrics.technicalPattern||metrics.marketPattern)return 'Technische Nachricht / Diskussion';
   return 'Allgemeine Erwähnung';
@@ -1155,16 +1157,25 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    return [...new Set(found.map(canonicalizeUrl).filter(Boolean))];
   };
   const isSameUrl=(a,b)=>a===b||(a.split('/')[0]===b.split('/')[0]&&((a.length>=22&&b.startsWith(a))||(b.length>=22&&a.startsWith(b))));
+  const seenBrandTopics=new Set();
   const unique=posts.filter(p=>{
    const raw=String(p?.record?.text||'');
-   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno)\b/g,' ').replace(/\s+/g,' ').trim();
+   const textKey=normalizeText(raw).replace(/\b(the|a|an|and|or|der|die|das|ein|eine|und|oder|le|la|les|un|une|et|el|los|las|y|que|como|para|con|una|uno|jak|vlastni|kurze|video|ukazujeme|zeigen|connect|custom|server|to|ke|claude)\b/g,' ').replace(/\s+/g,' ').trim();
    const urls=extractExternalUrls(p);
    if(!textKey)return false;
    if(urls.some(u=>seenUrls.some(existing=>isSameUrl(u,existing))))return false;
-   // Text-level exact dedupe catches reposts with the same copy even when the source URL is absent.
+   // Exact normalized text catches copy/paste reposts.
    const textKeyCompact=textKey.replace(/[^a-z0-9]/g,'');
    if(textKeyCompact.length>45&&seenText.has(textKeyCompact))return false;
+   // Merge language variants from the same brand handle when the post refers to the same searched product/topic.
+   const handle=String(p?.author?.handle||'').toLowerCase();
+   const brand=handle.replace(/\.bsky\.social$/,'').replace(/-(?:cesko|cz|de|en|fr|es|it|pt|nl|pl|uk|us|eu|jp|kr)$/,'');
+   const normalized=normalizeText(raw);
+   const tutorialLike=/\b(how to connect|jak pripojit|mcp server|tooldurus)\b/i.test(normalized+' '+handle);
+   const brandTopic=brand&&tutorialLike?brand+'|'+(normalized.includes('tooldurus')||handle.includes('tooldurus')?'tooldurus-mcp-claude':normalized.includes('mcp')?'mcp-'+(normalized.includes('claude')?'claude':'server'):'topic'):'';
+   if(brandTopic&&seenBrandTopics.has(brandTopic))return false;
    urls.forEach(u=>seenUrls.push(u));seenText.add(textKeyCompact);
+   if(brandTopic)seenBrandTopics.add(brandTopic);
    return true;
   });
   const ranked=unique.map(p=>({...p,_metrics:score(p)})).sort((a,b)=>b._metrics.score-a._metrics.score);
@@ -1189,7 +1200,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
    const data=await response.json();
    if(!data||!Array.isArray(data.posts))throw new Error('Unerwartetes API-Antwortformat');
    render(data.posts);
-   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Dubletten werden anhand aller erkannten Original-URLs, normalisierter Sprachpfade und URL-Präfixe reduziert. Explizite Anzeigen und Webinar-/Registrierungswerbung werden ausgeschlossen; Produktankündigungen bleiben erhalten. Jeder Treffer erhält einen Signaltyp. Bluesky-Interaktionen sind nur ein kleines Zusatzsignal, kein Nachweis für Domainnachfrage.`;
+   status.textContent=`API erfolgreich: ${data.posts.length} öffentliche Posts für „${query}“ geladen (${sort==='latest'?'neueste zuerst':'beliebteste zuerst'}). Dublettenprüfung nutzt Original-URLs, Sprachpfade sowie erkennbare gemeinsame Accounts und Produktbezüge. Anzeigen und Webinar-/Registrierungswerbung werden ausgeschlossen; echte Produktankündigungen bleiben erhalten. Signaltypen unterscheiden Probleme, Anleitungen, Produkte und Diskussionen. Interaktionen sind kein Nachweis für Domainnachfrage.`;
   }catch(err){status.textContent='Bluesky-API fehlgeschlagen: '+(err?.message||String(err))+'. Prüfe Internetverbindung, Browser-CORS und mögliche API-Limits. Andere Funktionen bleiben davon unberührt.';results.innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Du kannst die Abfrage erneut versuchen.</p>';byId('blueskyBetaTotal').textContent='0';byId('blueskyBetaLikes').textContent='0';byId('blueskyBetaShares').textContent='0';}
   finally{button.disabled=false;}
  }
@@ -1198,7 +1209,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.15</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.16</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1214,5 +1225,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.15</div>Bluesky-Scoring 98.15: Signaltyp-Kennzeichnung, URL-/Sprach-Dubletten und Veranstaltungswerbung · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.16</div>Bluesky-Scoring 98.16: sprachübergreifende Produkt-/Account-Dubletten und präzisere Signaltypen · Master V98 bleibt unverändert</div>
 </body></html>
