@@ -40,7 +40,7 @@ async function main() {
     await page.waitForFunction(() => {
       const text = document.getElementById('blueskyBetaStatus')?.textContent || '';
       return text.includes('API erfolgreich') || text.includes('Bluesky-API fehlgeschlagen');
-    }, { timeout: 25000 });
+    }, null, { timeout: 25000 });
 
     const status = await page.locator('#blueskyBetaStatus').innerText();
     assert.match(status, /API erfolgreich/, `Browser API request did not succeed: ${status}`);
