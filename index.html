@@ -150,7 +150,7 @@
  </div>
  <div class="hf-beta-actions"><button class="primary" id="npmBetaRun" type="button">npm Registry durchsuchen</button><button class="secondary" id="npmBetaClear" type="button">Ergebnisse leeren</button></div>
  <div class="hf-beta-status" id="npmBetaStatus" role="status" aria-live="polite">Noch keine npm-Abfrage ausgeführt. Internetverbindung und Browserzugriff können das Ergebnis beeinflussen.</div>
- <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="npmBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Relevanz ≥ 0,5</span><strong id="npmBetaRelevant">0</strong></div><div class="hf-beta-card"><span class="hint">Suchbegriff</span><strong id="npmBetaTerm">–</strong></div></div>
+ <div class="hf-beta-grid" style="margin-top:10px"><div class="hf-beta-card"><span class="hint">Treffer</span><strong id="npmBetaTotal">0</strong></div><div class="hf-beta-card"><span class="hint">Relevanz ≥ 50/100</span><strong id="npmBetaRelevant">0</strong></div><div class="hf-beta-card"><span class="hint">Suchbegriff</span><strong id="npmBetaTerm">–</strong></div></div>
  <div id="npmBetaResults" class="hf-beta-results"><p class="hint">Hier erscheinen die gefundenen npm-Pakete.</p></div>
  <p class="foot">Quelle: <a href="https://api-docs.npmjs.com/" target="_blank" rel="noopener">npm Registry API-Dokumentation</a>. Paket-Scores und Aktualität sind Indikatoren, kein Nachweis für Domainnachfrage. Es werden nur öffentliche Suchdaten abgerufen; die Ergebnisse werden nicht in die Domainbewertung übernommen.</p>
 </section>
@@ -831,12 +831,31 @@ const npmEl=id=>document.getElementById(id);
 const npmEsc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function npmDate(value){if(!value)return 'unbekannt';const date=new Date(value);return Number.isNaN(date.getTime())?'unbekannt':date.toLocaleDateString('de-DE');}
 function npmScore(pkg, query){
- const text=[pkg.name,pkg.description,...(pkg.keywords||[])].join(' ').toLowerCase();
- const terms=query.toLowerCase().split(/[\s,]+/).filter(t=>t.length>1);
- const matches=[...new Set(terms.filter(t=>text.includes(t)))];
- const quality=Number(pkg.score?.detail?.quality||0), popularity=Number(pkg.score?.detail?.popularity||0), maintenance=Number(pkg.score?.detail?.maintenance||0);
- const score=Math.round((matches.length/Math.max(terms.length,1))*60 + popularity*25 + quality*10 + maintenance*5);
- return {score,matches,quality,popularity,maintenance};
+ const name=String(pkg.name||'').toLowerCase();
+ const description=String(pkg.description||'').toLowerCase();
+ const keywords=(pkg.keywords||[]).map(x=>String(x).toLowerCase());
+ const text=[name,description,...keywords].join(' ');
+ const terms=[...new Set(query.toLowerCase().split(/[\s,]+/).filter(t=>t.length>1))];
+ const matches=terms.filter(t=>text.includes(t));
+ const nameHits=terms.filter(t=>name.includes(t));
+ const descriptionHits=terms.filter(t=>description.includes(t));
+ const keywordHits=terms.filter(t=>keywords.some(k=>k.includes(t)));
+ const quality=Math.max(0,Math.min(1,Number(pkg.score?.detail?.quality||0)));
+ const popularity=Math.max(0,Math.min(1,Number(pkg.score?.detail?.popularity||0)));
+ const maintenance=Math.max(0,Math.min(1,Number(pkg.score?.detail?.maintenance||0)));
+ const exactPhrase=query.trim().length>2&&text.includes(query.trim().toLowerCase());
+ const date=new Date(pkg.date||0); const ageDays=Number.isNaN(date.getTime())?9999:Math.max(0,(Date.now()-date.getTime())/86400000);
+ const recency=ageDays<=7?1:ageDays<=30?.75:ageDays<=90?.45:ageDays<=180?.2:0;
+ // Weighted components deliberately avoid assigning 100 merely because every query word appears.
+ const termCoverage=matches.length/Math.max(terms.length,1);
+ const nameCoverage=nameHits.length/Math.max(terms.length,1);
+ const descriptionCoverage=descriptionHits.length/Math.max(terms.length,1);
+ const keywordCoverage=keywordHits.length/Math.max(terms.length,1);
+ const score=Math.round(Math.min(100,
+   termCoverage*20 + nameCoverage*22 + descriptionCoverage*13 + keywordCoverage*10 +
+   (exactPhrase?8:0) + popularity*12 + quality*5 + maintenance*5 + recency*5
+ ));
+ return {score,matches,quality,popularity,maintenance,recency,ageDays,nameHits,exactPhrase};
 }
 function npmRender(packages,query){
  const container=npmEl('npmBetaResults');
@@ -845,7 +864,7 @@ function npmRender(packages,query){
   const url=pkg.links?.npm||`https://www.npmjs.com/package/${encodeURIComponent(pkg.name)}`;
   const score=npmScore(pkg,query);
   const keywords=(pkg.keywords||[]).slice(0,8).join(' · ');
-  return `<article class="hf-beta-item"><h3><a href="${npmEsc(url)}" target="_blank" rel="noopener noreferrer">${npmEsc(pkg.name)}</a></h3><div class="hf-beta-meta">Relevanzscore: ${score.score} · Aktualisiert: ${npmEsc(npmDate(pkg.date))}${score.matches.length?' · Treffer: '+npmEsc(score.matches.slice(0,5).join(', ')):''}</div><p>${npmEsc(pkg.description||'Keine Beschreibung hinterlegt.')}</p><p class="hf-beta-meta">Registry-Score: ${Math.round(Number(pkg.score?.final||0)*100)} · Popularität: ${Math.round(score.popularity*100)} · Pflege: ${Math.round(score.maintenance*100)}</p>${keywords?`<p class="hf-beta-meta">${npmEsc(keywords)}</p>`:''}</article>`;
+  return `<article class="hf-beta-item"><h3><a href="${npmEsc(url)}" target="_blank" rel="noopener noreferrer">${npmEsc(pkg.name)}</a></h3><div class="hf-beta-meta">Relevanzscore: ${score.score}/100 · Aktualisiert: ${npmEsc(npmDate(pkg.date))}${score.matches.length?' · Treffer: '+npmEsc(score.matches.slice(0,5).join(', ')):''}</div><p>${npmEsc(pkg.description||'Keine Beschreibung hinterlegt.')}</p><p class="hf-beta-meta">npm-Ranking: ${Math.round(Number(pkg.score?.final||0)*100)} · Popularität: ${Math.round(score.popularity*100)} · Qualität: ${Math.round(score.quality*100)} · Pflege: ${Math.round(score.maintenance*100)} · Aktualität: ${Math.round(score.recency*100)}</p>${keywords?`<p class="hf-beta-meta">${npmEsc(keywords)}</p>`:''}</article>`;
  }).join('');
 }
 async function npmRun(){
@@ -866,7 +885,7 @@ async function npmRun(){
   npmEl('npmBetaRelevant').textContent=String(relevant);
   npmEl('npmBetaTerm').textContent=query;
   npmRender(packages,query);
-  npmEl('npmBetaStatus').textContent=`API erfolgreich: ${packages.length} Pakete geladen. Sortierung: ${sort==='recent'?'Aktualisierung':'Relevanzscore'}. Der Relevanzscore ist heuristisch und kein Nachweis für Domainnachfrage.`;
+  npmEl('npmBetaStatus').textContent=`API erfolgreich: ${packages.length} Pakete geladen. Sortierung: ${sort==='recent'?'Aktualisierung':'Relevanzscore'}. Der differenzierte Relevanzscore gewichtet Namens-, Beschreibungs- und Keyword-Treffer sowie npm-Signale und Aktualität. Er ist heuristisch und kein Nachweis für Domainnachfrage.`;
  }catch(error){
   npmEl('npmBetaStatus').textContent=`Abruf fehlgeschlagen: ${error.message||error}. Prüfe Internetverbindung, Browserkonsole und möglichen CORS-/Rate-Limit-Fehler.`;
   npmEl('npmBetaResults').innerHTML='<p class="hint">Keine Ergebnisse verfügbar. Die übrigen Funktionen bleiben davon unberührt.</p>';
@@ -882,7 +901,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 
 })();
 </script>
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.2</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.3</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -898,5 +917,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.2</div>Hugging-Face- und npm-Registry-APIs · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.3</div>Hugging-Face- und npm-Registry-APIs · differenzierter npm-Score · Master V98 bleibt unverändert</div>
 </body></html>
