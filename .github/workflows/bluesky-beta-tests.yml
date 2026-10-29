@@ -78,5 +78,5 @@ jobs:
         run: npm install --no-save --no-package-lock playwright@1.56.0
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
-      - name: Test experimental source panels in Chromium
+      - name: Test deployed panels and normal-flow shadow integration in Chromium
         run: node tests/bluesky-browser-smoke.cjs
