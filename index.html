@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.25: isolated signal explorers; based on Master V98, which remains unchanged -->
+<!-- DotComScouts Beta 98.26: isolated signal explorers; based on Master V98, which remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -1082,9 +1082,10 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
   // Beta 98.14: market signal reflects the kind of evidence, not just a keyword match.
   const strongSecurityPattern=/(prompt injection|exploit|attack success|\bcve-\d{4}-\d+\b|data leak|leaks? (?:the )?(?:user )?query|unintended access|unauthorized access|authentication bypass)/i.test(rawText);
   const marketSignal=strongSecurityPattern?18:(problemPattern?18:(securityPattern?12:(productPattern?9:(marketPattern?7:(technicalPattern?3:0)))));
-  // Absolute Bluesky interactions are a small supporting signal, not a proxy for market size.
-  const rawEngagement=Math.log1p(likes)*2+Math.log1p(reposts)*3+Math.log1p(replies)*2;
-  const engagement=Math.min(15,Math.round(rawEngagement));
+  // Engagement is a capped tie-breaker, not a substitute for evidence of a real problem.
+  // Reposts and replies carry slightly more signal than likes; virality alone cannot dominate the score.
+  const rawEngagement=Math.log1p(likes)*0.8+Math.log1p(reposts)*1.4+Math.log1p(replies)*1.6;
+  const engagement=Math.min(8,Math.round(rawEngagement));
   const date=Date.parse(post?.indexedAt||post?.record?.createdAt||'');
   const age=Number.isFinite(date)?Math.max(0,(Date.now()-date)/86400000):Infinity;
   const freshness=Number.isFinite(age)?Math.max(0,Math.round(4*(1-Math.min(age,14)/14))):0;
@@ -1112,7 +1113,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
  }
  function classify(signal,metrics){
   if(signal<27||metrics.matched.length===0||!metrics.relevantContext||metrics.feedAccount||metrics.hardAdPattern||metrics.eventPromoPattern||metrics.newsletterPattern||metrics.syndicated||metrics.statusUpdate||metrics.opinionPattern&&!metrics.technicalPattern)return 'Schwaches Signal';
-  if(signal>=48&&metrics.marketSignal>=14&&metrics.engagement>=7&&metrics.meaningfulResonance)return 'Stärkeres Community-Signal';
+  if(signal>=48&&metrics.marketSignal>=14&&metrics.engagement>=3&&metrics.meaningfulResonance)return 'Stärkeres Community-Signal';
   return 'Frühes Signal';
  }
  function signalType(metrics){
@@ -1234,7 +1235,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.25</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.26</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1250,5 +1251,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.25</div>Bluesky-Scoring 98.25: generische Erwähnungen von Error-Analytics gelten nicht automatisch als konkrete technische Fehler · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.26</div>Bluesky-Scoring 98.26: Interaktionen sind gedeckelt und können konkrete Problembelege nicht mehr überstimmen · Master V98 bleibt unverändert</div>
 </body></html>
