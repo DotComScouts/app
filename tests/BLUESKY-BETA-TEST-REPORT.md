@@ -8,7 +8,7 @@
 
 ## Executed in the available test harness
 
-The committed deterministic Node.js suite has **21 tests; 21 passed, 0 failed** in GitHub Actions. It covers the Bluesky explorer with mocked DOM elements and API responses, JavaScript syntax, and a static isolation guard. All four inline JavaScript blocks were parsed with `new Function`.
+The committed deterministic Node.js suite has **35 tests; 35 passed, 0 failed** in GitHub Actions. It covers the Bluesky explorer, JavaScript syntax, source isolation, and a separate shadow-evidence prototype. All four inline JavaScript blocks were parsed with `new Function`.
 
 | Case | Result |
 |---|---|
@@ -49,6 +49,14 @@ The following real network smoke tests passed from a GitHub-hosted Node.js 22 ru
 The actual Chromium browser smoke test also passed: it loaded the isolated page, queried Bluesky from the browser, received 50 posts, and displayed 28 unique results. No uncaught browser errors were reported.
 
 Run with the deterministic suite, live Bluesky API, and the four other API smoke tests successful: https://github.com/DotComScouts/app/actions/runs/40971618131
+
+## Shadow evidence prototype
+
+A separate, non-production module at `lib/shadow-evidence.js` now models evidence without feeding the main domain pipeline. Its 14 tests cover problem evidence, explicit demand intent, product evidence, promotion exclusion, resonance separation, URL canonicalization, independent authors, cross-source corroboration, and failed-source handling.
+
+The new tests exposed and helped fix a concrete edge case: a failed source record could reserve a URL deduplication key and suppress a later valid record. Failed records no longer reserve deduplication keys. This fix remains confined to the shadow prototype.
+
+The deterministic suite and the shadow-evidence suite pass together: **35/35**.
 
 These tests prove that the public endpoints were reachable and their response shapes matched expectations at the time of the run. The browser test also proves that the Bluesky UI fetch worked from the CI browser origin. It does not prove behavior on the production domain, semantic relevance of every real result, or long-term availability. External-source smoke jobs are diagnostic and do not block the deterministic suite.
 
