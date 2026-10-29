@@ -59,7 +59,7 @@ async function main() {
       timeout: 45000
     });
 
-    assert.ok((await page.locator('.version-label').innerText()).includes('Beta 98.28'),
+    assert.ok((await page.locator('div.version-label').innerText()).includes('Beta 98.28'),
       'deployed test site should serve Beta 98.28');
     assert.ok((await page.locator('.version-label').innerText()).includes('Shadow-Integration 98.28'),
       'deployed test site should advertise the normal-flow shadow integration');
