@@ -106,9 +106,17 @@ async function main() {
       await runSource(page, source);
     }
 
+    // Experimental sources must not mutate core trend/domain state.
+    assert.match(await page.locator('#results').innerText(), /Noch keine Ergebnisse/,
+      'experimental sources must not populate the core domain results table');
+    assert.match(await page.locator('#trendCandidates').innerText(), /Noch keine Trendkandidaten/,
+      'experimental sources must not alter the core trend candidates');
+    assert.match(await page.locator('#domainProgress').innerText(), /Bereit für den Domain-Check/,
+      'experimental sources must not start the core domain-availability workflow');
+
     assert.equal(pageErrors.length, 0,
       `uncaught browser errors: ${pageErrors.join('; ')}`);
-    console.log('Browser smoke test passed: all five experimental source panels fetched live data in Chromium.');
+    console.log('Browser smoke test passed: all five experimental source panels fetched live data in Chromium and core domain/trend state remained unchanged.');
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
