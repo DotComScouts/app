@@ -57,3 +57,12 @@ for (const sample of cases) {
     assert.equal(evidence.demandIntent, false, 'feature/bug reports are not automatically solution-seeking demand');
   });
 }
+
+test('a negated feature request is not classified as a feature request', () => {
+  const evidence = classifyEvidence({
+    source: 'github',
+    text: 'No feature request is being made; this issue only documents the current behavior.'
+  });
+  assert.equal(evidence.featureRequest, false);
+  assert.equal(evidence.demandIntent, false);
+});
