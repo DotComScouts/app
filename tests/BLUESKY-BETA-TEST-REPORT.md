@@ -71,7 +71,7 @@ Ein Suchwunsch ist kein bestätigter Fehler. Downloads, Popularität, Likes und 
 
 ## Regressionstests
 
-Die deterministische Node.js-Suite umfasst jetzt **62 Tests: 62 bestanden, 0 fehlgeschlagen**. Sie prüft:
+Die deterministische Node.js-Suite umfasst jetzt **68 Tests: 68 bestanden, 0 fehlgeschlagen**. Sie prüft:
 - API-Fehler, leere und fehlerhafte Antworten sowie Wiederherstellung der Bedienelemente
 - Trennung von Problem, Nachfrage, Produktinventar, Veröffentlichung, Werbung und Diskussion
 - englische, deutsche und spanische Testbeispiele
@@ -98,7 +98,7 @@ Zusätzlich prüft die Heuristik auf unmittelbar vorausgehende Negationen. Verne
 
 Diese Regeln sind deterministische Textheuristiken. Sie können Negationen, Ironie, Kontext, implizite Nachfrage und mehrsprachige Formulierungsvarianten weiterhin falsch einordnen. `buyingIntent` ist daher ein Indiz, kein bestätigter Kauf oder Marktumsatz. Die Erweiterung ist in der separaten Bibliothek getestet und noch nicht in die produktive Trendbewertung eingebunden.
 
-CI-Erweiterungslauf: https://github.com/DotComScouts/app/actions/runs/41021333922
+CI-Erweiterungslauf (68 Tests, alle vier Jobs erfolgreich): https://github.com/DotComScouts/app/actions/runs/41026061598
 
 ## Produktionsgrenzen
 
@@ -106,3 +106,17 @@ CI-Erweiterungslauf: https://github.com/DotComScouts/app/actions/runs/4102133392
 - Sie verändern keine Sprachrisiko-Bewertung, CSV-Domainexporte oder Domain-Verfügbarkeitsprüfungen.
 - Es erfolgt keine automatische Übernahme der Shadow-Belege in die produktive Trendbewertung.
 - Der Draft-PR wird nicht gemergt, solange keine ausdrückliche Freigabe vorliegt.
+
+
+## Adversariale Regressionstests – 30.10.2026
+
+Sechs zusätzliche Grenzfalltests prüfen insbesondere:
+- Ein bloßer Workaround-Hinweis wird nicht automatisch als Problembericht gewertet.
+- Fehlendes oder nicht genehmigtes Budget zählt nicht als positive Zahlungsbereitschaft.
+- Fehlerfreie bzw. ausdrücklich problemfreie Aussagen zählen nicht als Problembeleg.
+- Dringlichkeit allein erzeugt keine Nachfrage- oder Kaufabsicht.
+- Die Suche nach einer kostenlosen Alternative zählt als Nachfrage, aber nicht als Kaufabsicht.
+
+Die Korrektur der Negationserkennung behebt außerdem doppelt maskierte Regex-Zeichen; API-Timeouts werden als Problemindikator berücksichtigt. Die Regression-Suite wurde anschließend vollständig erneut ausgeführt: **68/68 bestanden**. Der CI-Lauf schloss alle vier Jobs erfolgreich ab (Regression, Browser-Smoke, API-Baseline und Live-API-Smoke).
+
+CI-Lauf: https://github.com/DotComScouts/app/actions/runs/41026061598
