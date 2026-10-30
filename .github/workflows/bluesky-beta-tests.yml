@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 22
       - name: Run deterministic regression suite
-        run: node --test tests/bluesky-beta.test.js tests/multi-source-evidence.test.js tests/real-world-evidence.test.js tests/evidence-score.test.js tests/normal-flow-shadow-integration.test.js tests/shadow-normalization.test.js
+        run: node --test tests/bluesky-beta.test.js tests/multi-source-evidence.test.js tests/real-world-evidence.test.js tests/evidence-score.test.js tests/market-evidence-panel.test.js tests/normal-flow-shadow-integration.test.js tests/shadow-normalization.test.js
 
   bluesky-live-api-smoke:
     # This is diagnostic only: a transient public API outage must not mask unit-test results.
