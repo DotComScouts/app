@@ -652,8 +652,8 @@ function trendVariants(term){
   // Prefer names that sound like an intentional compound, not a chopped stem plus filler.
   let score=relation+nameQuality(n)*0.15;
   if(root&&n.startsWith(root))score+=3;
-  if(/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n))score-=2;
-  if(/(forge|works|studio|scout|signal|craft|pilot|atlas|spark|shift|logic|foundry|field|orbit|wise|path)$/.test(n))score+=1;
+  if(/(lab|kit|hub|works|forge|wise|path|pilot|atlas|craft|flow|stack)$/.test(n))score+=2;
+  if(/(go|ify)$/.test(n))score-=1;
   seenNames.add(n);candidates.push({name:n,score});
  };
  // Compact source-derived variants are especially important for short or coined trend names
@@ -661,7 +661,7 @@ function trendVariants(term){
  // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
  const usableRoot=x=>/^[a-z]{3,}$/.test(x)&&/[aeiou]/.test(x)&&!/[bcdfghjklmnpqrstvwxyz]{3}/.test(x);
  const compactRoots=[...new Set((parts.length>=2?parts:[full,...parts]).filter(usableRoot))];
- const compactEndings=['io','ai','ly','ify','lab','go'];
+ const compactEndings=['io','ai','ly','lab','kit','hub'];
  for(const root of compactRoots){
   for(const ending of compactEndings){
    const n=root+ending;
@@ -708,7 +708,7 @@ function trendVariants(term){
    for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
   }
  }
- return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n)?3:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
+ return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;return nameQuality(b.name)-nameQuality(a.name)||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
 }
 function nameQuality(n){
  n=String(n||'').toLowerCase();let score=0;
@@ -716,7 +716,9 @@ function nameQuality(n){
  if(/^[bcdfghjklmnpqrstvwxyz]?[aeiou][bcdfghjklmnpqrstvwxyz]?[aeiou]/.test(n))score+=2;
  if(!/[qxz]{2}|[bcdfghjklmnpqrstvwxyz]{3}/.test(n))score+=2;
  if(n.length>=5&&n.length<=7)score+=1;
- if(/(ia|io|ora|iva|aro|era|ova|ena|ilo|ivo|ela|ino|ari)$/.test(n))score+=1;
+ if(/(io|ly)$/.test(n))score+=1;
+ if(/(ora|era|iva|ova|ena|aro|ivo|go|ify)$/.test(n))score-=1;
+ if(/(lab|kit|hub|works|forge|wise|path|pilot|atlas|craft)$/.test(n))score+=2;
  if(/(.)\1|(.{2})\2/.test(n))score-=3;
  if(/(?:dada|fisi|dudo|raco|tradi|refra|kofe|tupu)/.test(n))score-=4;
  return score;
