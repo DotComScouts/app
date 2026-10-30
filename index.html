@@ -842,44 +842,65 @@ function buildCandidates(){
   return strength(b)-strength(a);
  });
  const pools={original:[],inspired:[],creation:[]},allNames=new Set();
- // Reserve all original trend names before generating alternatives.
+ const metaFor=term=>{
+  const best=term.bestStory||term.stories?.[0]||{};
+  return {trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
+ };
+ // Keep exact trend names only when they are pronounceable, or independently corroborated.
  for(const term of variants){
-  const name=normalizeTerm(term.term);
+  const name=normalizeTerm(term.term),letters=name.replace(/[0-9]/g,'');
+  const corroborated=(term.sourceFamilies?.size||0)>=2||Number(term.hnMentions)>=2||Number(term.bestScore)>=8||Number(term.stars)>=25;
   if(!name||!fitsOriginal(name)||!/^[a-z0-9]+$/.test(name)||allNames.has(name))continue;
+  if(!goodNameShape(letters)||(/[0-9]/.test(name)&&!corroborated))continue;
   allNames.add(name);
-  const best=term.bestStory||term.stories[0]||{};
-  const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
-  pools.original.push([{name,type:'Originaltrend',...meta,trendKey:name}]);
+  pools.original.push([{name,type:'Originaltrend',...metaFor(term),trendKey:name}]);
  }
  for(const term of variants){
   const original=normalizeTerm(term.term);
   if(!original||!pools.original.some(bucket=>bucket[0].name===original))continue;
-  const best=term.bestStory||term.stories[0]||{};
-  const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
-  const inspired=[];
+  const meta=metaFor(term),inspired=[];
   for(const name of trendVariants(term.term)){
-   if(name===original||!fits(name)||!goodNameShape(name)||allNames.has(name))continue;
+   if(name===original||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name))continue;
    allNames.add(name);inspired.push({name,type:'Trend-inspiriert',...meta,trendKey:original});
-   if(inspired.length>=4)break;
+   if(inspired.length>=8)break;
   }
   if(inspired.length)pools.inspired.push(inspired);
-  const parts=splitProductName(term.term).parts,root=splitProductName(term.term).full,words=new Set(),creations=[];
+  // Trend-Kreationen combine complete, meaningful source concepts with complete trend roots.
+  // No chopped three/four-letter fragments: each component must survive lexical filters.
+  const parts=splitProductName(term.term).parts.filter(w=>w.length>=4&&!stopWords.has(w)&&!generic.has(w)&&!commonWords.has(w));
+  const words=new Set(),creations=[],storyTitles=[];
   for(const story of (term.stories||[])){
-   const title=String(story.title||'').toLowerCase();
-   for(const word of title.match(/[a-z]{3,}/g)||[]){
+   const title=String(story.title||'').replace(/<[^>]*>/g,' ').toLowerCase();
+   storyTitles.push(title);
+   for(const word of title.match(/[a-z]{4,}/g)||[]){
     if(parts.includes(word)||stopWords.has(word)||generic.has(word)||commonWords.has(word)||stopTitles.has(word)||knownBrands.has(word)||badWords.has(word))continue;
     words.add(word);
    }
   }
-  for(const word of words){
-   const stem=root.slice(0,Math.min(4,root.length));
-   for(const raw of [stem+word,word+root.slice(0,3),root.slice(0,3)+word]){
-    const name=raw.toLowerCase();
-    if(name.length<3||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')continue;
-    allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original});
+  const roots=[...new Set(parts)].filter(w=>goodNameShape(w));
+  const concepts=[...words].filter(w=>goodNameShape(w)&&!isGenericTerm(w)).slice(0,18);
+  const addCreation=raw=>{
+   const name=String(raw||'').toLowerCase().replace(/[^a-z]/g,'');
+   if(!name||name.length<5||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')return;
+   allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original});
+  };
+  for(const root of roots){
+   for(const word of concepts){
+    if(root===word)continue;
+    // Prefer the complete source words; order is varied to create distinct compounds.
+    addCreation(root+word);
+    if(creations.length>=10)break;
+    addCreation(word+root);
+    if(creations.length>=10)break;
+   }
+   if(creations.length>=10)break;
+  }
+  // When a story contains two meaningful concepts, allow a concept-to-concept compound.
+  if(creations.length<6){
+   for(let i=0;i<concepts.length;i++)for(let j=i+1;j<concepts.length;j++){
+    addCreation(concepts[i]+concepts[j]);
     if(creations.length>=6)break;
    }
-   if(creations.length>=6)break;
   }
   if(creations.length)pools.creation.push(creations);
  }
@@ -896,15 +917,20 @@ function buildCandidates(){
   }
   return added;
  };
- const originalGoal=Math.round(count*.4),inspiredBase=Math.round(count*.4),creationBase=count-originalGoal-inspiredBase;
+ const originalGoal=Math.round(count*.4),inspiredGoalBase=Math.round(count*.4),creationGoal=count-originalGoal-inspiredGoalBase;
  const originals=take(pools.original,originalGoal,false);
- const inspiredGoal=inspiredBase+originalGoal-originals;
+ const inspiredGoal=inspiredGoalBase+originalGoal-originals;
  const inspired=take(pools.inspired,inspiredGoal,false);
- take(pools.creation,creationBase+inspiredGoal-inspired,false);
+ const creations=take(pools.creation,creationGoal+inspiredGoal-inspired,false);
+ // If a tier is short, roll its unused share forward without relaxing name-quality filters.
+ if(selected.length<count){
+  take(pools.inspired,count-selected.length,false);
+  if(selected.length<count)take(pools.creation,count-selected.length,false);
+ }
  if(selected.length<count&&skipSeen){
-  take(pools.original,Math.max(0,originalGoal-selected.filter(x=>x.type==='Originaltrend').length),true);
-  take(pools.inspired,Math.max(0,inspiredGoal-selected.filter(x=>x.type==='Trend-inspiriert').length),true);
-  take(pools.creation,count-selected.length,true);
+  take(pools.original,count-selected.length,true);
+  if(selected.length<count)take(pools.inspired,count-selected.length,true);
+  if(selected.length<count)take(pools.creation,count-selected.length,true);
  }
  return selected.slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
 }
