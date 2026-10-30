@@ -71,10 +71,12 @@ Ein Suchwunsch ist kein bestätigter Fehler. Downloads, Popularität, Likes und 
 
 ## Regressionstests
 
-Die deterministische Node.js-Suite umfasst **55 Tests: 55 bestanden, 0 fehlgeschlagen**. Sie prüft:
+Die deterministische Node.js-Suite umfasst jetzt **62 Tests: 62 bestanden, 0 fehlgeschlagen**. Sie prüft:
 - API-Fehler, leere und fehlerhafte Antworten sowie Wiederherstellung der Bedienelemente
 - Trennung von Problem, Nachfrage, Produktinventar, Veröffentlichung, Werbung und Diskussion
 - englische, deutsche und spanische Testbeispiele
+- Negationserkennung, damit verneinte Fehler- und Nachfrageaussagen nicht als positive Signale zählen
+- getrennte Zusatzsignale für Dringlichkeit, Workarounds, Budget-/Zahlungsbereitschaft und daraus abgeleitete Kaufabsicht
 - URL-Normalisierung, Tracking-Dubletten und Erhalt bedeutungsvoller Suchparameter
 - Relevanzberechnung pro tatsächlicher Suchanfrage
 - Teilfehlerdiagnostik pro Quelle
@@ -83,6 +85,20 @@ Die deterministische Node.js-Suite umfasst **55 Tests: 55 bestanden, 0 fehlgesch
 Der Browser-Smoke-Test lief gegen die lokale Beta-Datei im CI-Runner, rief alle fünf Adapter im normalen Suchlauf auf und gab die obige Quellenvergleichszeile aus. Die fünf separaten Quellenpanels und die öffentlichen API-Smoke-Tests waren ebenfalls erfolgreich.
 
 CI-Lauf: https://github.com/DotComScouts/app/actions/runs/41020584120
+
+## Erweiterte Signaltrennung – 30.10.2026
+
+Die separate Klassifikationsbibliothek `lib/shadow-evidence.js` wurde um vier Zusatzmerkmale erweitert:
+- `urgency`: explizite Dringlichkeit oder Blockade
+- `workaroundSignal`: Hinweis auf einen manuellen oder temporären Umweg
+- `budgetSignal`: Budget-, Preis- oder Zahlungsbereitschaftssprache
+- `buyingIntent`: nur dann wahr, wenn explizite Lösungssuche und ein Budget-/Zahlungssignal gemeinsam vorliegen
+
+Zusätzlich prüft die Heuristik auf unmittelbar vorausgehende Negationen. Verneinte Aussagen wie „does not crash“ sollen dadurch nicht als positiver Fehlerbeleg gewertet werden. Werbe-/Promotionsbeiträge bleiben von diesen Zusatzsignalen ausgeschlossen.
+
+Diese Regeln sind deterministische Textheuristiken. Sie können Negationen, Ironie, Kontext, implizite Nachfrage und mehrsprachige Formulierungsvarianten weiterhin falsch einordnen. `buyingIntent` ist daher ein Indiz, kein bestätigter Kauf oder Marktumsatz. Die Erweiterung ist in der separaten Bibliothek getestet und noch nicht in die produktive Trendbewertung eingebunden.
+
+CI-Erweiterungslauf: https://github.com/DotComScouts/app/actions/runs/41021333922
 
 ## Produktionsgrenzen
 
