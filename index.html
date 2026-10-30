@@ -862,7 +862,7 @@ function buildCandidates(){
   for(const name of trendVariants(term.term)){
    if(name===original||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name))continue;
    allNames.add(name);inspired.push({name,type:'Trend-inspiriert',...meta,trendKey:original});
-   if(inspired.length>=8)break;
+   if(inspired.length>=12)break;
   }
   if(inspired.length)pools.inspired.push(inspired);
   // Trend-Kreationen combine complete, meaningful source concepts with complete trend roots.
@@ -889,17 +889,17 @@ function buildCandidates(){
     if(root===word)continue;
     // Prefer the complete source words; order is varied to create distinct compounds.
     addCreation(root+word);
-    if(creations.length>=10)break;
+    if(creations.length>=16)break;
     addCreation(word+root);
-    if(creations.length>=10)break;
+    if(creations.length>=16)break;
    }
-   if(creations.length>=10)break;
+   if(creations.length>=16)break;
   }
   // When a story contains two meaningful concepts, allow a concept-to-concept compound.
   if(creations.length<6){
    for(let i=0;i<concepts.length;i++)for(let j=i+1;j<concepts.length;j++){
     addCreation(concepts[i]+concepts[j]);
-    if(creations.length>=6)break;
+    if(creations.length>=8)break;
    }
   }
   if(creations.length)pools.creation.push(creations);
@@ -955,20 +955,33 @@ function draw(){
  const availableCount=results.filter(x=>x.status==='available').length;$('checkedN').textContent=results.filter(x=>x.status!=='error').length;$('availN').textContent=availableCount;$('availN').parentElement.classList.toggle('has-available',availableCount>0);$('trendN').textContent=trendTerms.length;$('csv').disabled=!results.length;
 }
 async function checkAvail(n){
- const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
+ const ctl=new AbortController(),timeoutMs=20000,timer=setTimeout(()=>ctl.abort(),timeoutMs);
  try{
   let r;
-  try{r=await fetch(AVAIL+encodeURIComponent(n)+'&tlds=com',{signal:ctl.signal})}
-  catch(e){if(e?.name==='AbortError')throw Error('Zeitüberschreitung (15 s)');throw e}
+  try{r=await fetch(AVAIL+encodeURIComponent(n)+'&tlds=com',{signal:ctl.signal,cache:'no-store'})}
+  catch(e){if(e?.name==='AbortError')throw Error('Zeitüberschreitung nach 20 Sekunden');throw e}
   if(!r.ok)throw Error('HTTP '+r.status);
-  const j=await r.json(),a=j?.data?.results;
-  if(!j?.ok||!Array.isArray(a))throw Error('Antwortformat unbekannt');
-  const row=a.find(x=>(x.tld||'').replace(/^\./,'').toLowerCase()==='com')||a[0];
-  if(!row||typeof row.available!=='boolean')throw Error('Kein Status geliefert');
-  return row.available?'available':'taken';
+  let j;try{j=await r.json()}catch(_){throw Error('Antwort ist kein gültiges JSON')}
+  const roots=[j?.data?.results,j?.results,j?.data,j].filter(Boolean);
+  let row=null;
+  for(const root of roots){
+   if(Array.isArray(root)){
+    row=root.find(x=>String(x?.tld||x?.extension||'').replace(/^\./,'').toLowerCase()==='com')||root[0]||null;
+   }else if(root&&typeof root==='object'){
+    if(typeof root.available==='boolean'||typeof root.status==='string'||typeof root.availability==='string'){row=root;break}
+    if(root.com&&typeof root.com==='object')row=root.com;
+   }
+   if(row)break;
+  }
+  if(!row)throw Error('Kein .com-Ergebnis in der Antwort (HTTP '+r.status+')');
+  if(typeof row.available==='boolean')return row.available?'available':'taken';
+  const status=String(row.status||row.availability||'').trim().toLowerCase();
+  if(['available','free','frei'].includes(status))return 'available';
+  if(['taken','unavailable','registered','belegt'].includes(status))return 'taken';
+  throw Error('Unklarer Verfügbarkeitsstatus: '+status.slice(0,40));
  }finally{clearTimeout(timer)}
 }
-function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein Status geliefert|Antwortformat unbekannt|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
+function retryableAvailabilityError(e){return e?.name==='AbortError'||e instanceof TypeError||/Zeitüberschreitung|Kein .com-Ergebnis|Unklarer Verfügbarkeitsstatus|Antwort ist kein gültiges JSON|HTTP (408|425|429|5\d\d)|network|fetch failed|failed to fetch|load failed/i.test(e?.message||'')}
 function updateDomainProgress(checked,total,state='running',detail=''){
  const wrap=$('domainProgress'),fill=$('progressFill'),title=$('progressTitle'),sub=$('progressDetail'),icon=$('progressIcon'),track=$('progressTrack');
  const pct=total>0?Math.min(100,Math.round(checked/total*100)):0;
@@ -1033,12 +1046,12 @@ async function run(){
   for(let i=0;i<candidates.length;i++){
    if(stopRequested)break;const c=candidates[i];
    let status='error',error='';
-   for(let attempt=1;attempt<=3;attempt++){
+   for(let attempt=1;attempt<=4;attempt++){
     try{status=await checkAvail(c.name);error='';break}
     catch(checkError){
      error=checkError.message||st('sourceError');
-     if(attempt>=3||stopRequested||!retryableAvailabilityError(checkError))break;
-     const pause=attempt===1?1000:1800;
+     if(attempt>=4||stopRequested||!retryableAvailabilityError(checkError))break;
+     const pause=[1500,3000,5000][attempt-1];
      appendStatus(st('retry',{name:c.name,error,attempt:attempt+1}));
      await wait(pause);
     }
