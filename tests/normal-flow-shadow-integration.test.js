@@ -34,5 +34,5 @@ test('shadow evidence does not directly alter ranking or domain-check results', 
   const adapter = html.slice(start, end);
   assert.match(adapter, /shadowEvidence\s*=\s*evidence/);
   assert.doesNotMatch(adapter, /trendScore\s*=|results\.push\(|checkAvail\(/);
-  assert.match(adapter, /Ergebnisse verändern die Bewertung noch nicht/);
+  assert.match(adapter, /Keine Auswirkung auf die reguläre Bewertung/);
 });
