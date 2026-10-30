@@ -161,3 +161,20 @@ Der Wert misst ausschließlich die Stärke der beobachteten Belege. Er ist **kei
 Neue Regressionstests decken Einzelautor-Wiederholungen, unabhängige Mehrquellen-Belege, Feature-Wünsche ohne Nachfrage, Promotion-Ausschluss und URL-Deduplizierung ab.
 
 **Aktuelle Verifikation:** 80/80 deterministische Tests bestanden. Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich. CI-Lauf 187: https://github.com/DotComScouts/app/actions/runs/41028193635
+
+
+## Beta 98.29 – sichtbare Marktbeobachtung mit fünf Zusatzquellen – 30.10.2026
+
+Die fünf öffentlichen Zusatzquellen werden im normalen Trend-Suchlauf nicht mehr nur im Statusprotokoll erfasst. Ein eigener Bereich „Marktbeobachtung aus fünf Zusatzquellen“ zeigt nach dem Suchlauf:
+- Anzahl erfolgreich abgefragter Quellen und eindeutige Belege
+- erkannte Problemberichte und explizite Lösungssuche
+- Abrufstatus und Trefferzahl je Quelle, einschließlich Teilfehlern
+- bis zu zwölf nach lexikalischem Themenbezug sortierte Fundstellen mit Original-Link, Quelle, Autor, Datum und Resonanz, soweit vorhanden
+
+Die Ansicht ist in Deutsch, Englisch, Spanisch und Französisch beschriftet. Die bestehenden fünf Quellenadapter bleiben im normalen Suchlauf parallel und fehlertolerant. Ein Ausfall oder Teilfehler einer Zusatzquelle soll den normalen Domain-Suchlauf nicht abbrechen.
+
+**Wichtige Abgrenzung:** Die Kategorien in der sichtbaren Ansicht sind heuristische Textklassifikationen. Trefferzahl, Resonanz, Problembericht und Lösungssuche sind keine validierten Marktgrößen oder Kaufabsichten. Die Zusatzquellen verändern weiterhin weder TrendScore noch Domain-Kandidaten, Sprachrisiko, CSV-Domainexporte oder Verfügbarkeitsprüfungen. Die neue Ansicht ist ein Live-Beobachtungsinstrument, kein automatischer Ranking-Faktor.
+
+Neue Regressionstests prüfen die sichtbare Ansicht, Mehrsprachigkeit und die unveränderte Trennung vom Domain-Workflow. **83/83 deterministische Tests bestanden.** Browser-Smoke in Chromium, Live-API-Smoke und Source-API-Baseline-Smoke ebenfalls erfolgreich.
+
+CI-Lauf Beta 98.29: https://github.com/DotComScouts/app/actions/runs/41032631176
