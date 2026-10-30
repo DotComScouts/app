@@ -55,6 +55,11 @@ test('per-record relevance is scored against its own query, not the union of can
   assert.equal(result.find(x => x.source === 'npm Registry').relevance, 100);
 });
 
+test('model and package registry records are classified as product inventory, not demand', () => {
+  assert.equal(classifyShadowEvidence({kind:'model',title:'acme/ai-model',description:'text-generation'}), 'product');
+  assert.equal(classifyShadowEvidence({kind:'package',title:'agent-workflow-kit',description:'A JavaScript package'}), 'product');
+});
+
 test('shadow adapter reports raw, deduplicated and relevant evidence without activating scoring', () => {
   assert.match(html, /normalizeShadowEvidence\(rawEvidence,candidates\.join\(' '\)\)/);
   assert.match(html, /Rohbelege/);
