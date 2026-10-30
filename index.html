@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.31: broader launch/repository discovery, capped natural name variants, supplementary source provenance; language and CSV workflows preserved; Master V98 remains unchanged -->
+<!-- DotComScouts Beta 98.32: consolidated source evidence, trend-only candidate generation and diversified trend variants; language and CSV workflows preserved; Master V98 remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -88,7 +88,7 @@
 <div class="grid">
 
 <div class="field"><label for="length">Max. Länge (ohne .com)</label><select id="length"><option value="max5">Bis 5 Zeichen · kurz zuerst</option><option value="max8" selected>Bis 8 Zeichen · kurz zuerst</option><option value="max10">Bis 10 Zeichen · kurz zuerst</option></select></div>
-<div class="field"><label for="count">Domains live prüfen</label><select id="count"><option selected>60</option><option>80</option><option>100</option></select></div>
+<div class="field"><label for="count">Domains live prüfen</label><select id="count"><option selected>60</option><option>80</option><option>100</option><option>120</option></select></div>
 <div class="field"><label for="scope">Trendquellen</label><select id="scope"><option value="new">Aktuelle Meldungen + neue Softwareprojekte</option><option value="mixed" selected>Breite Suche: aktuelle und beliebte Meldungen, Produktvorstellungen + Softwareprojekte</option></select></div>
 <div class="field"><label for="delay">Pause pro Check</label><select id="delay"><option value="1800" selected>1,8 Sek.</option><option value="2400">2,4 Sek.</option><option value="3200">3,2 Sek.</option></select></div>
 <div class="field"><label for="seenMode">Wiederholungen</label><select id="seenMode"><option value="skip" selected>Neue Funde bevorzugen</option><option value="allow">Alle Funde erneut berücksichtigen</option></select></div>
@@ -118,17 +118,17 @@
 </div></div>
 </section>
 <section class="panel" id="marketEvidencePanel" aria-labelledby="marketEvidenceTitle">
- <div class="sectionhead"><div><div class="eyebrow" id="marketEvidenceEyebrow">BETA 98.31 · LIVE-QUELLEN</div><h2 id="marketEvidenceTitle">Gemeinsame Marktbeobachtung</h2><span class="sectionnote" id="marketEvidenceIntro">Alle Zusatzquellen in einer gemeinsamen Übersicht – mit Fundstellen, Problemberichten und Lösungssuche. Getrennt von der Domainbewertung.</span></div></div>
+ <div class="sectionhead"><div><div class="eyebrow" id="marketEvidenceEyebrow">BETA 98.32 · AKTIVE MARKTBEOBACHTUNG</div><h2 id="marketEvidenceTitle">Aktive Marktbeobachtung</h2><span class="sectionnote" id="marketEvidenceIntro">Fundstellen, Problemberichte und Lösungssuche aus den beobachteten Quellen – getrennt von der Domainbewertung.</span></div></div>
  <div class="market-evidence-kpis">
   <div class="market-evidence-kpi"><strong id="marketSourceN">–</strong><span id="marketSourceLabel">Quellen erfolgreich</span></div>
   <div class="market-evidence-kpi"><strong id="marketRecordN">–</strong><span id="marketRecordLabel">Eindeutige Belege</span></div>
   <div class="market-evidence-kpi"><strong id="marketProblemN">–</strong><span id="marketProblemLabel">Problemberichte</span></div>
   <div class="market-evidence-kpi"><strong id="marketDemandN">–</strong><span id="marketDemandLabel">Lösungssuche</span></div>
  </div>
- <div class="market-source-grid" id="marketSourceGrid"><div class="market-evidence-empty">Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.</div></div>
+ <div class="market-source-grid" id="marketSourceGrid"><div class="market-evidence-empty">Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der beobachteten Quellen.</div></div>
  <div class="row"><strong id="marketFindingsTitle">Ausgewählte Fundstellen</strong><span class="hint" id="marketRelevantNote">Nach Themenbezug sortiert</span></div>
  <div class="market-evidence-list" id="marketEvidenceList"><div class="market-evidence-empty">Noch keine Marktdaten geladen.</div></div>
- <p class="market-disclaimer" id="marketDisclaimer">Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Die Zusatzquellen verändern weder TrendScore noch Domain-Kandidaten, Sprachrisiko, CSV-Export oder Verfügbarkeitsprüfung.</p>
+ <p class="market-disclaimer" id="marketDisclaimer">Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Die Marktbeobachtung verändert weder TrendScore noch Domain-Kandidaten, Sprachrisiko, CSV-Export oder Verfügbarkeitsprüfung.</p>
 </section>
 
 <section class="panel signal-panel"><details id="signalsDetails"><summary class="sectionhead"><div><div class="eyebrow">HINTERGRUND</div><h2>Trendsignale & Quellen</h2><span class="hint">Produktnamen, Signalstärke und Fundstellen anzeigen.</span></div></summary>
@@ -159,7 +159,7 @@
 <section class="panel" id="npmBetaPanel" aria-labelledby="npmBetaTitle">
  <div class="eyebrow">BETA 98.2 · EXPERIMENTELLE QUELLE</div>
  <h2 id="npmBetaTitle">npm Registry – neue Entwicklerpakete</h2>
- <p class="sub">Durchsucht öffentliche npm-Pakete nach Entwickler- und KI-Themen. Diese Zusatzquelle ist unabhängig vom bestehenden Domain-Workflow; sie verändert weder Domainbewertung noch Verfügbarkeitsprüfung.</p>
+ <p class="sub">Durchsucht öffentliche npm-Pakete nach Entwickler- und KI-Themen. Diese Quelle ist unabhängig vom bestehenden Domain-Workflow; sie verändert weder Domainbewertung noch Verfügbarkeitsprüfung.</p>
  <div class="hf-beta-grid">
   <div class="field"><label for="npmBetaQuery">Suchbegriffe</label><input id="npmBetaQuery" value="ai agent" /></div>
   <div class="field"><label for="npmBetaCount">Max. Treffer</label><select id="npmBetaCount"><option value="10">10</option><option value="20" selected>20</option><option value="40">40</option></select></div>
@@ -318,7 +318,7 @@ function candidatePhrases(story){
  const push=(raw,kind)=>{const term=String(raw||'').trim().replace(/^['"“”]+|['"“”]+$/g,'');if(term&&looksLikeName(term))out.push({term,kind});};
  // Show HN is the strongest public launch signal. Keep hyphens inside product names,
  // but cut off descriptive subtitles such as "for React" or "— an open source ...".
- const show=title.match(/^(?:Show|Launch) HN:\s*(.+)$/i);
+ const show=title.match(/^Show HN:\s*(.+)$/i);
  if(show){
    let head=show[1].split(/\s+(?:—|–|\||for|and|built with|powered by)\s+/i)[0].trim();
    head=head.split(/:\s+/)[0].trim().replace(/\s+\([^)]*\)$/,'');
@@ -331,7 +331,7 @@ function candidatePhrases(story){
  }
  // Capture names only when a title has an explicit launch cue. Avoid mining arbitrary
  // CamelCase technology words from unrelated headlines (e.g. iPad or JavaScript).
- const cue=title.match(/\b(?:Introducing|Meet|Announcing|Launch(?:es|ed|ing)?|New product:?|I built|We built|I made|We made|Built)\s+(?:["“])?([A-Z][A-Za-z0-9]*(?:[- ][A-Z][A-Za-z0-9]*){0,2})/);
+ const cue=title.match(/\b(?:Introducing|Meet|Announcing|Launch(?:es|ed|ing)?|New product:?|I built|We built|I made|We made)\s+([A-Z][A-Za-z0-9]*(?:[- ][A-Z][A-Za-z0-9]*){0,2})/);
  if(cue)push(cue[1],'launch');
  return out;
 }
@@ -339,15 +339,14 @@ function addEvidence(map,raw,source,score,comments,url,title,time,kind){
  const evidenceSource=source||'Hacker News';
  const isHN=evidenceSource==='Hacker News'||evidenceSource==='Hacker News Search';
  const term=normalizeTerm(raw);if(!term||term.length<4||term.length>24||isGenericTerm(raw))return;
- if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,supplementaryMentions:0,supplementaryActivity:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),sourceFamilies:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
+ if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),sourceFamilies:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
  const x=map.get(term);x.mentions++;x.sources.add(evidenceSource);x.sourceFamilies.add(isHN?'Hacker News':evidenceSource);x.kinds.add(kind||'named');if(url&&!seenSources.has(url))x.newSourceMentions=(x.newSourceMentions||0)+1;
  if(isHN){x.hnMentions++;x.score+=Math.max(0,Number(score)||0);x.comments+=Math.max(0,Number(comments)||0);x.bestScore=Math.max(x.bestScore,Number(score)||0);x.bestComments=Math.max(x.bestComments,Number(comments)||0)}
- else if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
- else {x.supplementaryMentions++;x.supplementaryActivity=Math.max(x.supplementaryActivity,Number(score)||0)}
+ if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
  x.latest=Math.max(x.latest,Number(time)||0);
  if(x.stories.length<10)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
 }
-function findTerms(stories,githubRepos=[],supplementaryRecords=[]){
+function findTerms(stories,githubRepos=[]){
  const map=new Map();
  for(const s of stories){
   const local=new Set();
@@ -361,51 +360,30 @@ function findTerms(stories,githubRepos=[],supplementaryRecords=[]){
   if(!looksLikeName(raw))continue;
   // A recent repository with meaningful early adoption is a product lead even if its name
   // has not yet appeared verbatim in Hacker News. It is labeled as an early signal below.
-  if(Number(r.stargazers_count||0)<5)continue;
+  if(Number(r.stargazers_count||0)<8)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
- }
- // Additional public APIs are active discovery sources, not comparison-only feeds.
- for(const record of supplementaryRecords||[]){
-  if(!record||!record.title||!record.source||!record.url)continue;
-  const candidates=candidatePhrases({title:String(record.title)});
-  if(record.kind==='package'||record.kind==='model'){
-   const raw=String(record.title).split('/').pop().replace(/[-_]+/g,' ').trim();
-   if(looksLikeName(raw))candidates.push({term:raw,kind:'product'});
-  }
-  const local=new Set();
-  for(const candidate of candidates){
-   const raw=String(candidate.term||'').trim(),key=normalizeTerm(raw);
-   if(!key||local.has(key))continue;local.add(key);
-   const activity=Number(record.activity)||0,comments=Number(record.comments)||Number(record.answers)||0;
-   addEvidence(map,raw,record.source,activity,comments,record.url,record.title,Date.parse(record.observedAt||'')/1000,candidate.kind||record.kind||'product');
-  }
  }
  const now=Date.now()/1000;
  return [...map.values()].filter(x=>{
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
-   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=8;
-   const supplementaryCross=x.supplementaryMentions>=1&&x.sourceFamilies.size>=2;
-   const repeatedSupplementary=x.supplementaryMentions>=2&&x.supplementaryActivity>=12;
-   const strongSupplementary=x.supplementaryMentions===1&&x.supplementaryActivity>=20&&[...x.kinds].some(k=>['launch','product','repo'].includes(k));
-   x.signalType=(hnConfirmed||crossSource||supplementaryCross)?'Mehrfachsignal':'Frühsignal';
-   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':strongSupplementary?'Frühsignal: starkes Einzelsignal aus '+[...x.sources].join(', '):repeatedSupplementary?'Frühsignal: wiederholte Zusatzquellen-Signale':'Noch schwaches Signal';
-   return (hnConfirmed||crossSource||strongLaunch||strongRepo||supplementaryCross||repeatedSupplementary||strongSupplementary)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=15;
+   x.signalType=(hnConfirmed||crossSource)?'Mehrfachsignal':'Frühsignal';
+   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
+   return (hnConfirmed||crossSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
  }).map(x=>{
    const ageDays=Math.max(0,(now-x.latest)/86400);
    // Bounded 0–100 score: engagement helps, but recency cannot overwhelm all other evidence.
    const sourcePoints=x.sourceFamilies.size>=2?32:0;
-   const supplementaryPoints=Math.min(18,Math.max(0,x.supplementaryMentions)*5);
    const repetitionPoints=Math.min(24,Math.max(0,x.hnMentions-1)*12);
    const hnPoints=Math.min(18,Math.log1p(x.bestScore)*5);
    const commentPoints=Math.min(14,Math.log1p(x.bestComments)*4);
    const starPoints=Math.min(16,Math.log1p(x.stars)*3.7);
-   const activityPoints=Math.min(14,Math.log1p(x.supplementaryActivity)*2.5);
    const recencyPoints=16*Math.exp(-ageDays/5);
    const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
-   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.stars<20)?12:0;
-   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+supplementaryPoints+repetitionPoints+hnPoints+commentPoints+starPoints+activityPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
+   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.stars<25)?12:0;
+   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
    x.term=String(x.term).replace(/[^a-zA-Z0-9]/g,'');
    x.sourceLabel=[...x.sources].join(' + ');
    x.confirmation=x.signalReason;
@@ -414,7 +392,7 @@ function findTerms(stories,githubRepos=[],supplementaryRecords=[]){
  }).sort((a,b)=>{
    const tier=x=>x.sourceFamilies.size>=2?3:(x.hnMentions>=2?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=25?1:0));
    return tier(b)-tier(a)||b.trendScore-a.trendScore||b.sources.size-a.sources.size||b.mentions-a.mentions||(Number(b.newSourceMentions)||0)-(Number(a.newSourceMentions)||0);
- }).slice(0,100);
+ }).slice(0,60);
 }
 async function getJSON(url){const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
 async function story(id){try{return await getJSON(HN+'item/'+id+'.json')}catch(e){return null}}
@@ -461,8 +439,8 @@ async function fetchAlgoliaStories(){
  if(!successfulQueries)throw Error('Alle Algolia-Abfragen fehlgeschlagen'+(queryErrors.length?': '+queryErrors.join('; '):''));
  const result=[...out.values()];result._meta={successfulQueries,totalQueries:queries.length,queryErrors};return result;
 }
-// Beta 98.32: collect the five additional public sources as active trend-discovery inputs.
-// Their records are normalized, quality-gated and merged into the shared trend candidate pool.
+// Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
+// Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
 let devCommunityFallbackLoaded=false;
 function classifyShadowEvidence(record){
  const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
@@ -511,9 +489,8 @@ function normalizeShadowEvidence(records,query){
 }
 async function collectShadowMarketEvidence(terms){
  devCommunityFallbackLoaded=false;
- const dynamic=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,2);
- const candidates=[...new Set([...dynamic,'AI agent','open source','developer tools'])].slice(0,4);
- if(!candidates.length)return {count:0,sourceCounts:[],note:'Keine geeigneten Trendbegriffe für ergänzende Quellen.'};
+ const candidates=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,3);
+ if(!candidates.length)return {count:0,sourceCounts:[],note:'Keine geeigneten Trendbegriffe für die Marktbeobachtung.'};
  const safeJson=async(url,headers={Accept:'application/json'})=>{
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{const response=await fetch(url,{headers,signal:controller.signal});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json()}
@@ -568,12 +545,12 @@ async function collectShadowMarketEvidence(terms){
   }]
  ];
  const queryErrors=[];
- const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Zusatzquelle · '+name,async()=>{
+ const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Shadow · '+name,async()=>{
   const all=[];
   for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){
    const detail={source:name,query,error:error?.message||String(error)};
    queryErrors.push(detail);
-   appendStatus('Zusatzquelle · '+name+' · '+query+': '+detail.error);
+   appendStatus('Shadow · '+name+' · '+query+': '+detail.error);
   }}
   return all;
  }));
@@ -582,19 +559,6 @@ async function collectShadowMarketEvidence(terms){
  const rawEvidence=settled.flatMap(r=>r.status==='fulfilled'?r.value:[]);
  const evidence=normalizeShadowEvidence(rawEvidence,candidates.join(' '));
  shadowEvidence=evidence;
- // Direct product/project matches from supplementary sources enrich provenance only.
- // They never create candidates or alter TrendScore, sorting, language risk or availability.
- for(const term of terms||[]){
-  const key=normalizeTerm(term.term);
-  if(!key)continue;
-  const corroborating=evidence.filter(item=>normalizeTerm(item.query)===key&&item.relevance>=50&&item.category==='product');
-  const extra=[...new Set(corroborating.flatMap(item=>item.sources||[item.source]).filter(Boolean)
-   .filter(source=>!['Hacker News','Hacker News Search','GitHub'].includes(source)))];
-  if(extra.length){
-   term.supplementarySources=extra;
-   term.sourceLabel=[...new Set([...(String(term.sourceLabel||'').split(' + ').filter(Boolean)),...extra])].join(' + ');
-  }
- }
  const categories=['problem','demand','product','tutorial','promotion','discussion','other'];
  const categoryCounts=Object.fromEntries(categories.map(category=>[category,evidence.filter(x=>x.category===category).length]));
  const relevantCount=evidence.filter(x=>x.relevance>=50).length;
@@ -610,26 +574,26 @@ async function collectShadowMarketEvidence(terms){
   const errors=queryErrors.filter(item=>item.source===name).length;
   return name+' '+rawCount+' roh/'+items.length+' eindeutig, '+relevant+' relevant'+(errors?', '+errors+' Abfragefehler':'')+(cats?' ['+cats+']':'');
  });
- const note='Aktive Zusatzquellen: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Qualifizierte Zusatzquellen-Signale fließen in TrendScore und Kandidatenauswahl ein.';
+ const note='Shadow-Vergleich: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
  appendStatus(note);
  const summary={count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,records:evidence,rawCount:rawEvidence.length,duplicateCount,successfulQueries,totalQueries:sourceJobs.length*candidates.length,queryErrorCount:queryErrors.length,note};shadowMarketSummary=summary;drawShadowMarketPanel(summary);return summary;
 }
 function getLengthRange(){const v=$('length').value;return [3,v==='max5'?5:v==='max10'?10:8]}
 function drawShadowMarketPanel(summary=shadowMarketSummary){
  const t={
- de:{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:'Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Zusatzquellen können eigene Domain-Kandidaten erzeugen und fließen nach quellenabhängigen Qualitätskriterien in TrendScore und Rangfolge ein. Sprachrisiko und Verfügbarkeit werden anschließend wie bisher geprüft.'},
- en:{source:'Sources successful',records:'Unique records',problems:'Problem reports',demand:'Solution seeking',findings:'Selected findings',relevant:'Sorted by topic relevance',empty:'No matching records in this run.',initial:'Results from the additional sources will appear here after the next search.',noData:'No market data loaded yet.',failed:'Failed',partial:'Partial',ok:'Successful',category:{problem:'Problem',demand:'Solution seeking',product:'Product/project',tutorial:'Tutorial',promotion:'Promotion',discussion:'Discussion',other:'Other'},disclaimer:'Note: These are early, heuristically classified signals. Hits, engagement and individual problem reports do not prove market size, willingness to pay or commercial success. Additional sources can create domain candidates and contribute to TrendScore and ranking under source-specific quality criteria. Language risk and availability are then checked as before.'},
- es:{source:'Fuentes correctas',records:'Registros únicos',problems:'Informes de problemas',demand:'Búsqueda de soluciones',findings:'Hallazgos seleccionados',relevant:'Ordenados por relevancia temática',empty:'No hay registros coincidentes en esta búsqueda.',initial:'Los resultados de las cinco fuentes adicionales aparecerán aquí tras la próxima búsqueda.',noData:'Todavía no se han cargado datos de mercado.',failed:'Error',partial:'Parcial',ok:'Correcto',category:{problem:'Problema',demand:'Búsqueda de soluciones',product:'Producto/proyecto',tutorial:'Tutorial',promotion:'Promoción',discussion:'Debate',other:'Otros'},disclaimer:'Nota: Son señales tempranas clasificadas mediante heurísticas. Los resultados, la interacción y los informes individuales no demuestran el tamaño del mercado, la disposición a pagar ni el éxito comercial. Las fuentes adicionales pueden generar candidatos de dominio y contribuir a TrendScore y clasificación según criterios de calidad específicos. Después se comprueban el riesgo lingüístico y la disponibilidad como hasta ahora.'},
- fr:{source:'Sources réussies',records:'Résultats uniques',problems:'Signalements de problèmes',demand:'Recherche de solution',findings:'Résultats sélectionnés',relevant:'Triés par pertinence thématique',empty:'Aucun résultat correspondant lors de cette recherche.',initial:'Les résultats des cinq sources supplémentaires apparaîtront ici après la prochaine recherche.',noData:'Aucune donnée de marché chargée.',failed:'Échec',partial:'Partiel',ok:'Réussi',category:{problem:'Problème',demand:'Recherche de solution',product:'Produit/projet',tutorial:'Tutoriel',promotion:'Promotion',discussion:'Discussion',other:'Autre'},disclaimer:'Remarque : il s’agit de signaux précoces classés par heuristique. Les résultats, interactions et signalements individuels ne prouvent ni la taille du marché, ni la volonté de payer, ni le succès commercial. Les sources supplémentaires peuvent générer leurs propres candidats de domaine et contribuer au TrendScore et au classement selon des critères de qualité spécifiques. Le risque linguistique et la disponibilité sont ensuite vérifiés comme auparavant.'}
+ de:{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der beobachteten Quellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:'Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Die Marktbeobachtung verändert weder TrendScore noch Domain-Kandidaten, Sprachrisiko, CSV-Export oder Verfügbarkeitsprüfung.'},
+ en:{source:'Sources successful',records:'Unique records',problems:'Problem reports',demand:'Solution seeking',findings:'Selected findings',relevant:'Sorted by topic relevance',empty:'No matching records in this run.',initial:'Results from the observed sources will appear here after the next search.',noData:'No market data loaded yet.',failed:'Failed',partial:'Partial',ok:'Successful',category:{problem:'Problem',demand:'Solution seeking',product:'Product/project',tutorial:'Tutorial',promotion:'Promotion',discussion:'Discussion',other:'Other'},disclaimer:'Note: These are early, heuristically classified signals. Hits, engagement and individual problem reports do not prove market size, willingness to pay or commercial success. The market monitor does not change TrendScore, domain candidates, language risk, CSV exports or availability checks.'},
+ es:{source:'Fuentes correctas',records:'Registros únicos',problems:'Informes de problemas',demand:'Búsqueda de soluciones',findings:'Hallazgos seleccionados',relevant:'Ordenados por relevancia temática',empty:'No hay registros coincidentes en esta búsqueda.',initial:'Los resultados de las fuentes observadas aparecerán aquí tras la próxima búsqueda.',noData:'Todavía no se han cargado datos de mercado.',failed:'Error',partial:'Parcial',ok:'Correcto',category:{problem:'Problema',demand:'Búsqueda de soluciones',product:'Producto/proyecto',tutorial:'Tutorial',promotion:'Promoción',discussion:'Debate',other:'Otros'},disclaimer:'Nota: Son señales tempranas clasificadas mediante heurísticas. Los resultados, la interacción y los informes individuales no demuestran el tamaño del mercado, la disposición a pagar ni el éxito comercial. Las fuentes observadas no modifican TrendScore, candidatos de dominio, riesgo lingüístico, exportaciones CSV ni comprobaciones de disponibilidad.'},
+ fr:{source:'Sources réussies',records:'Résultats uniques',problems:'Signalements de problèmes',demand:'Recherche de solution',findings:'Résultats sélectionnés',relevant:'Triés par pertinence thématique',empty:'Aucun résultat correspondant lors de cette recherche.',initial:'Les résultats des sources suivies apparaîtront ici après la prochaine recherche.',noData:'Aucune donnée de marché chargée.',failed:'Échec',partial:'Partiel',ok:'Réussi',category:{problem:'Problème',demand:'Recherche de solution',product:'Produit/projet',tutorial:'Tutoriel',promotion:'Promotion',discussion:'Discussion',other:'Autre'},disclaimer:'Remarque : il s’agit de signaux précoces classés par heuristique. Les résultats, interactions et signalements individuels ne prouvent ni la taille du marché, ni la volonté de payer, ni le succès commercial. Les sources suivies ne modifient ni TrendScore, ni les candidats de domaine, ni le risque linguistique, ni les exports CSV, ni les vérifications de disponibilité.'}
  }[currentLang]||null;
  const panelText={
- de:{eyebrow:'BETA 98.32 · AKTIVE MARKTBEOBACHTUNG',title:'Aktive Marktbeobachtung',intro:'Die Zusatzquellen liefern eigene Trendkandidaten und Bestätigungssignale. Herkunft und Qualität bleiben in den Ergebnissen und technischen Details nachvollziehbar.'},
- en:{eyebrow:'BETA 98.32 · ACTIVE MARKET MONITOR',title:'Active market monitor',intro:'Additional sources contribute their own trend candidates and corroborating signals. Provenance and quality remain traceable in results and technical details.'},
- es:{eyebrow:'BETA 98.32 · OBSERVACIÓN ACTIVA DEL MERCADO',title:'Observación activa del mercado',intro:'Las fuentes adicionales aportan candidatos propios y señales de corroboración. El origen y la calidad siguen siendo trazables.'},
- fr:{eyebrow:'BETA 98.32 · VEILLE DE MARCHÉ ACTIVE',title:'Veille de marché active',intro:'Les sources supplémentaires proposent leurs propres candidats et des signaux de corroboration. La provenance et la qualité restent traçables.'}
+ de:{eyebrow:'BETA 98.32 · AKTIVE MARKTBEOBACHTUNG',title:'Aktive Marktbeobachtung',intro:'Relevante Fundstellen aus den beobachteten Quellen in einer gemeinsamen Übersicht. Einzelne Quellen werden nur in den technischen Details angezeigt.'},
+ en:{eyebrow:'BETA 98.32 · ACTIVE MARKET MONITOR',title:'Active market monitor',intro:'Relevant findings from the observed sources in one shared view. Individual sources are shown only in the technical details.'},
+ es:{eyebrow:'BETA 98.32 · OBSERVACIÓN ACTIVA DEL MERCADO',title:'Observación activa del mercado',intro:'Hallazgos relevantes de las fuentes observadas en una sola vista. Las fuentes individuales solo aparecen en los detalles técnicos.'},
+ fr:{eyebrow:'BETA 98.32 · VEILLE DE MARCHÉ ACTIVE',title:'Veille de marché active',intro:'Résultats pertinents des sources suivies dans une vue commune. Les sources individuelles ne figurent que dans les détails techniques.'}
  }[currentLang]||null;
  if(panelText){$('marketEvidenceEyebrow').textContent=panelText.eyebrow;$('marketEvidenceTitle').textContent=panelText.title;$('marketEvidenceIntro').textContent=panelText.intro;}
- const L=t||{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:''};
+ const L=t||{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der beobachteten Quellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:''};
  $('marketSourceLabel').textContent=L.source;$('marketRecordLabel').textContent=L.records;$('marketProblemLabel').textContent=L.problems;$('marketDemandLabel').textContent=L.demand;$('marketFindingsTitle').textContent=L.findings;$('marketRelevantNote').textContent=L.relevant;$('marketDisclaimer').textContent=L.disclaimer;
  if(!summary){$('marketSourceN').textContent='–';$('marketRecordN').textContent='–';$('marketProblemN').textContent='–';$('marketDemandN').textContent='–';$('marketSourceGrid').innerHTML='<div class="market-evidence-empty">'+esc(L.initial)+'</div>';$('marketEvidenceList').innerHTML='<div class="market-evidence-empty">'+esc(L.noData)+'</div>';return}
  const records=summary.records||[],sources=summary.sourceCounts||[];
@@ -675,20 +639,31 @@ function trendVariants(term){
   // Prefer names that sound like an intentional compound, not a chopped stem plus filler.
   let score=relation+nameQuality(n)*0.15;
   if(root&&n.startsWith(root))score+=3;
-  if(/(lab|kit|hub|works|forge|wise|path|pilot|atlas|craft|flow|stack)$/.test(n))score+=2;
-  if(/(go|ify)$/.test(n))score-=1;
+  if(/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n))score-=2;
+  if(/(forge|works|studio|scout|signal|craft|pilot|atlas|spark|shift|logic|foundry|field|orbit|wise|path)$/.test(n))score+=1;
   seenNames.add(n);candidates.push({name:n,score});
  };
  // Compact source-derived variants are especially important for short or coined trend names
  // (e.g. LYNX): ordinary long suffixes often produce no candidates within the selected length.
  // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
- const usableRoot=x=>/^[a-z]{3,}$/.test(x)&&/[aeiou]/.test(x)&&!/[bcdfghjklmnpqrstvwxyz]{3}/.test(x);
- const compactRoots=[...new Set((parts.length>=2?parts:[full,...parts]).filter(usableRoot))];
- const compactEndings=['io','ai','ly','lab','kit','hub'];
+ const compactRoots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ const compactEndings=['io','ai','ora','era','iva','ova','ena','aro','ivo','ify','ly','app','lab','go','one'];
  for(const root of compactRoots){
   for(const ending of compactEndings){
    const n=root+ending;
    if(n.length>=min&&n.length<=max)add(n,84,root.slice(0,Math.min(3,root.length)));
+  }
+ }
+ // For multi-part names, reverse compact blends can retain more of the original idea
+ // while still fitting short .com names.
+ if(parts.length>=2){
+  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=2&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
+   if(i===j)continue;
+   const a=meaningful[i],b=meaningful[j];
+   for(const n of [a+b.slice(0,3),a.slice(0,Math.min(4,a.length))+b.slice(-Math.min(3,b.length)),b+a.slice(0,Math.min(3,a.length))]){
+    if(n.length>=min&&n.length<=max)add(n,82,a.slice(0,Math.min(3,a.length)));
+   }
   }
  }
  // Short-domain fallback: when the selected maximum is 5 characters, normal root+suffix
@@ -712,10 +687,21 @@ function trendVariants(term){
    }
   }
  }
+ // Prefer source-derived blends before generic root+suffix patterns. These keep a
+ // recognizable link to the product/topic while creating more distinctive candidates.
+ if(parts.length>=2){
+  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
+   if(i===j)continue;
+   const a=meaningful[i],b=meaningful[j];
+   const blends=[a.slice(0,Math.min(4,a.length))+b.slice(Math.min(2,b.length)),a.slice(0,Math.min(3,a.length))+b.slice(-Math.min(3,b.length)),a.slice(0,Math.min(2,a.length))+b];
+   for(const blend of blends)add(blend,88,a.slice(0,2));
+  }
+ }
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
  const suffixes=['forge','works','studio','scout','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit','wise','path'];
- const roots=[...new Set((parts.length>=2?parts:[full,...parts]).filter(usableRoot))];
+ const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
    // Longer suffixes remain available when the user selects a longer name range.
@@ -725,13 +711,13 @@ function trendVariants(term){
  // A few natural compounds can reverse the order when the source has a clear second word.
  // This avoids blindly attaching the same suffix to every product name.
  if(parts.length>=2){
-  const meaningful=parts.filter(usableRoot).filter(p=>!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
+  const meaningful=parts.filter(p=>p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p));
   if(meaningful.length>=2){
    add(meaningful[meaningful.length-1]+meaningful[0],72,meaningful[meaningful.length-1]);
    for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
   }
  }
- return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;return nameQuality(b.name)-nameQuality(a.name)||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
+ return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n)?3:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
 }
 function nameQuality(n){
  n=String(n||'').toLowerCase();let score=0;
@@ -739,9 +725,7 @@ function nameQuality(n){
  if(/^[bcdfghjklmnpqrstvwxyz]?[aeiou][bcdfghjklmnpqrstvwxyz]?[aeiou]/.test(n))score+=2;
  if(!/[qxz]{2}|[bcdfghjklmnpqrstvwxyz]{3}/.test(n))score+=2;
  if(n.length>=5&&n.length<=7)score+=1;
- if(/(io|ly)$/.test(n))score+=1;
- if(/(ora|era|iva|ova|ena|aro|ivo|go|ify)$/.test(n))score-=1;
- if(/(lab|kit|hub|works|forge|wise|path|pilot|atlas|craft)$/.test(n))score+=2;
+ if(/(ia|io|ora|iva|aro|era|ova|ena|ilo|ivo|ela|ino|ari)$/.test(n))score+=1;
  if(/(.)\1|(.{2})\2/.test(n))score-=3;
  if(/(?:dada|fisi|dudo|raco|tradi|refra|kofe|tupu)/.test(n))score-=4;
  return score;
@@ -815,7 +799,7 @@ function buildCandidates(){
   const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
   const bucket=[];local.add(original);bucket.push({name:original,type:'Originaltrend',...meta,trendKey:original});
   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name)
-   .filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!($('seenMode').value==='skip'&&seen.has(n))).slice(0,5);
+   .filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!( $('seenMode').value==='skip'&&seen.has(n)));
   for(const n of choices){local.add(n);bucket.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
   if(bucket.length)buckets.push(bucket);
  }
@@ -912,7 +896,7 @@ async function run(){
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
    const githubEligibleCount=githubRepos.filter(r=>looksLikeName(String(r.name||'').replace(/[-_]+/g,' ').trim())&&Number(r.stargazers_count||0)>=8).length;
    trendTerms=findTerms(storyList,githubRepos);
-   try{await collectShadowMarketEvidence(trendTerms);trendTerms=findTerms(storyList,githubRepos,shadowEvidence)}catch(sourceError){appendStatus('Zusatzquellen konnten nicht vollständig integriert werden: '+(sourceError?.message||String(sourceError))+'. Die übrigen Quellen laufen weiter.')}
+   try{await collectShadowMarketEvidence(trendTerms)}catch(shadowError){appendStatus('Ergänzende Shadow-Quellen konnten nicht vollständig gestartet werden: '+(shadowError?.message||String(shadowError))+'. Die normale Suche läuft weiter.')}
    const githubSignals=trendTerms.filter(t=>t.githubMentions>0).length;
    const algoliaSignals=trendTerms.filter(t=>t.sources.has('Hacker News Search')).length;
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
@@ -1399,7 +1383,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.30</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.32</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1415,5 +1399,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.30</div>Beta 98.30: zusammengeführte Marktbeobachtung, ausschließlich trendbezogene Domainvorschläge und breitere Trendabdeckung · Sprachversionen und CSV-Export unverändert · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.32</div>Beta 98.32: aktive Marktbeobachtung, vollständigerer Domain-Prüfumfang und erweiterte Auswahl bis 120 · Sprachversionen und CSV-Export unverändert · Master V98 bleibt unverändert</div>
 </body></html>
