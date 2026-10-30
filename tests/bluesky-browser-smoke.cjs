@@ -145,7 +145,7 @@ async function main() {
       });
     }, { timeout: 90000 });
     const statusLog = await page.locator('#status').innerText();
-    const comparisonLine = statusLog.match(/Shadow-Vergleich:[^\\r\\n]*/)?.[0];
+    const comparisonLine = statusLog.split(String.fromCharCode(10)).find(line => line.includes('Shadow-Vergleich:'));
     assert.ok(comparisonLine, 'normal trend flow should emit a source comparison summary');
     console.log('SHADOW COMPARISON RESULT: ' + comparisonLine);
     const shadowRows = await page.locator('#sourceRows').innerText();
