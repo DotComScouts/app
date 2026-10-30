@@ -71,7 +71,7 @@ Ein Suchwunsch ist kein bestätigter Fehler. Downloads, Popularität, Likes und 
 
 ## Regressionstests
 
-Die deterministische Node.js-Suite umfasst jetzt **68 Tests: 68 bestanden, 0 fehlgeschlagen**. Sie prüft:
+Die deterministische Node.js-Suite umfasst jetzt **74 Tests: 74 bestanden, 0 fehlgeschlagen**. Sie prüft:
 - API-Fehler, leere und fehlerhafte Antworten sowie Wiederherstellung der Bedienelemente
 - Trennung von Problem, Nachfrage, Produktinventar, Veröffentlichung, Werbung und Diskussion
 - englische, deutsche und spanische Testbeispiele
@@ -120,3 +120,33 @@ Sechs zusätzliche Grenzfalltests prüfen insbesondere:
 Die Korrektur der Negationserkennung behebt außerdem doppelt maskierte Regex-Zeichen; API-Timeouts werden als Problemindikator berücksichtigt. Die Regression-Suite wurde anschließend vollständig erneut ausgeführt: **68/68 bestanden**. Der CI-Lauf schloss alle vier Jobs erfolgreich ab (Regression, Browser-Smoke, API-Baseline und Live-API-Smoke).
 
 CI-Lauf: https://github.com/DotComScouts/app/actions/runs/41026061598
+
+
+## Manuell geprüfte Realwelt-Stichprobe – 30.10.2026
+
+Für einen ersten externen Plausibilitätscheck wurden sechs öffentlich zugängliche MCP-Fehler-/Verbesserungsberichte aus den GitHub-Repositories von OpenAI und Anthropic ausgewählt. Die Kurztexte im Testfixture sind paraphrasiert; die Originalquellen sind direkt verlinkt.
+
+| Fall | Quelle | Manuelle Einordnung | Klassifikation |
+|---|---|---|---|
+| MCP-Startup-Timeout und irreführende UX | [openai/codex#35611](https://github.com/openai/codex/issues/35611) | Problem + konkreter UX-Feature-Wunsch | problem ✓, featureRequest ✓ |
+| Tool-Call-Timeout wird nicht durchgesetzt | [anthropics/claude-code#53641](https://github.com/anthropics/claude-code/issues/53641) | Problembericht | problem ✓ |
+| Stdio-Aufruf läuft nach einer Sekunde in Timeout | [anthropics/claude-code#62121](https://github.com/anthropics/claude-code/issues/62121) | Problembericht | problem ✓ |
+| Optionaler MCP-Server blockiert neue Unterhaltungen | [openai/codex#29416](https://github.com/openai/codex/issues/29416) | Problembericht | problem ✓ |
+| Konfigurierbarer Timeout für lange HTTP-Aufrufe | [anthropics/claude-code#52441](https://github.com/anthropics/claude-code/issues/52441) | Problem + expliziter Feature-Wunsch | problem ✓, featureRequest ✓ |
+| HTTP-Authentifizierung hängt bis zum Verbindungs-Timeout | [anthropics/claude-code#76459](https://github.com/anthropics/claude-code/issues/76459) | Problembericht | problem ✓ |
+
+Ergebnis für diese gezielt ausgewählte Stichprobe:
+- Problemberichte erkannt: **6/6**
+- Explizite Feature-Wünsche separat erkannt: **2/2** der manuell so markierten Fälle
+- Allgemeine Lösungssuche (demandIntent) fälschlich ausgelöst: **0/6**
+- Kaufabsicht abgeleitet: **0/6**
+
+Die Stichprobe ist klein, technisch eng umrissen und durch GitHub-Issue-Suche selektionsverzerrt. Sie misst daher weder allgemeine Klassifikationspräzision noch Marktnachfrage. Insbesondere sind Fehlerberichte und Feature-Wünsche keine unabhängigen Nachfragesignale. Die Ergebnisse sind ein Plausibilitätscheck, kein repräsentativer Benchmark.
+
+## Anpassung nach Realwelt-Stichprobe
+
+- Problem-Erkennung ergänzt um reale Formulierungen wie „timed out“, „hangs indefinitely“, „not enforced“ und „slow to respond“.
+- Ein neues Signal featureRequest trennt explizite Funktionswünsche von allgemeiner Lösungssuche. Feature-Wünsche werden **nicht** automatisch als Nachfrage oder Kaufabsicht gezählt.
+- Sechs reproduzierbare Realwelt-Testfälle wurden in tests/real-world-evidence.test.js aufgenommen und in die CI-Suite integriert.
+
+Aktueller CI-Lauf: **74/74 deterministische Tests bestanden**; Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich: https://github.com/DotComScouts/app/actions/runs/41027367155
