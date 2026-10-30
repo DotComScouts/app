@@ -154,3 +154,11 @@ test('20 status explains Bluesky is not proof of domain demand', async () => {
   const d = await run({ posts: [post('builder.bsky.social', 'We built an open-source MCP server integration for Claude. Now available on GitHub with production workflow support.', 'disclaimer')] });
   assert.match(status(d), /kein Nachweis für Domainnachfrage/);
 });
+
+test('21 Bluesky explorer remains isolated from the core domain pipeline', () => {
+  assert.match(explorer, /^\s*\(\(\)=>\{/);
+  const referencedIds = [...explorer.matchAll(/byId\('([^']+)'\)/g)].map(match => match[1]);
+  assert.ok(referencedIds.length > 0, 'the explorer should use its own DOM controls');
+  assert.ok(referencedIds.every(id => id.startsWith('blueskyBeta')), 'unexpected non-Bluesky DOM IDs: ' + referencedIds.filter(id => !id.startsWith('blueskyBeta')).join(', '));
+  assert.doesNotMatch(explorer, /\b(localStorage|sessionStorage|trendCandidates|domainProgress|onlyAvailable|riskFilter)\b/, 'the experimental source must not mutate core state');
+});
