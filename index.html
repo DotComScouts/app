@@ -378,6 +378,10 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
   if(r.category==='product'&&['DEV Community','Bluesky'].includes(source)){
    for(const candidate of candidatePhrases({title:String(r.title||'')}))candidates.push(candidate);
   }
+  // A concrete, engaged problem or demand result can corroborate the queried trend term.
+  if(['problem','demand'].includes(r.category)&&(Number(r.activity)||0)>=1||['problem','demand'].includes(r.category)&&(Number(r.comments)||0)+(Number(r.answers)||0)>=1){
+   const queried=String(r.query||'').trim();if(looksLikeName(queried))candidates.push({term:queried,kind:'market-need'});
+  }
   for(const candidate of candidates){
    addEvidence(map,candidate.term,source,Number(r.activity)||0,Number(r.comments)||Number(r.answers)||0,r.url,r.title,Date.parse(r.observedAt||'')/1000,candidate.kind||'market-product');
    const item=map.get(normalizeTerm(candidate.term));if(item){item.marketMentions=(item.marketMentions||0)+1;item.marketActivity=Math.max(item.marketActivity||0,Number(r.activity)||0);}
