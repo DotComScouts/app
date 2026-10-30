@@ -286,6 +286,42 @@ test('31 workaround statements are distinguished from explicit demand', () => {
   assert.equal(evidence.demandIntent, false);
 });
 
+test('33 workaround mention alone is not automatically a confirmed problem', () => {
+  const evidence = classifyEvidence(record({ text: "Our team has a workaround for the old workflow." }));
+  assert.equal(evidence.problem, false);
+  assert.equal(evidence.workaroundSignal, true);
+});
+
+test('34 negated budget availability is not a positive budget signal', () => {
+  const evidence = classifyEvidence(record({ text: "We have no budget; funding is not available and we are not willing to pay." }));
+  assert.equal(evidence.budgetSignal, false);
+  assert.equal(evidence.buyingIntent, false);
+});
+
+test('35 budget being unapproved is not a positive buying signal', () => {
+  const evidence = classifyEvidence(record({ text: "The project budget is not approved yet." }));
+  assert.equal(evidence.budgetSignal, false);
+});
+
+test('36 error-free and no-issue statements are not problem evidence', () => {
+  const evidence = classifyEvidence(record({ text: "The migration is error-free; no issues and no data loss have been reported." }));
+  assert.equal(evidence.problem, false);
+});
+
+test('37 urgency without a solution request does not imply buying intent', () => {
+  const evidence = classifyEvidence(record({ text: "The deadline is today, but we are not looking for a new tool." }));
+  assert.equal(evidence.urgency, true);
+  assert.equal(evidence.demandIntent, false);
+  assert.equal(evidence.buyingIntent, false);
+});
+
+test('38 a free alternative request is demand but not buying intent', () => {
+  const evidence = classifyEvidence(record({ text: "Looking for a free alternative; we have no budget for paid software." }));
+  assert.equal(evidence.demandIntent, true);
+  assert.equal(evidence.budgetSignal, false);
+  assert.equal(evidence.buyingIntent, false);
+});
+
 test('32 promotional urgency and budget language are excluded', () => {
   const evidence = classifyEvidence(record({ text: "Sponsored webinar: urgent offer, register now and get special pricing." }));
   assert.equal(evidence.promotion, true);
