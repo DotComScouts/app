@@ -118,7 +118,7 @@
 </div></div>
 </section>
 <section class="panel" id="marketEvidencePanel" aria-labelledby="marketEvidenceTitle">
- <div class="sectionhead"><div><div class="eyebrow" id="marketEvidenceEyebrow">BETA 98.32 · AKTIVE MARKTBEOBACHTUNG</div><h2 id="marketEvidenceTitle">Aktive Marktbeobachtung</h2><span class="sectionnote" id="marketEvidenceIntro">Fundstellen, Problemberichte und Lösungssuche aus den beobachteten Quellen – getrennt von der Domainbewertung.</span></div></div>
+ <div class="sectionhead"><div><div class="eyebrow" id="marketEvidenceEyebrow">AKTIVE MARKTBEOBACHTUNG</div><h2 id="marketEvidenceTitle">Aktive Marktbeobachtung</h2><span class="sectionnote" id="marketEvidenceIntro">Fundstellen, Problemberichte und Lösungssuche aus den beobachteten Quellen – getrennt von der Domainbewertung.</span></div></div>
  <div class="market-evidence-kpis">
   <div class="market-evidence-kpi"><strong id="marketSourceN">–</strong><span id="marketSourceLabel">Quellen erfolgreich</span></div>
   <div class="market-evidence-kpi"><strong id="marketRecordN">–</strong><span id="marketRecordLabel">Eindeutige Belege</span></div>
@@ -126,8 +126,7 @@
   <div class="market-evidence-kpi"><strong id="marketDemandN">–</strong><span id="marketDemandLabel">Lösungssuche</span></div>
  </div>
  <div class="market-source-grid" id="marketSourceGrid"><div class="market-evidence-empty">Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der beobachteten Quellen.</div></div>
- <div class="row"><strong id="marketFindingsTitle">Ausgewählte Fundstellen</strong><span class="hint" id="marketRelevantNote">Nach Themenbezug sortiert</span></div>
- <div class="market-evidence-list" id="marketEvidenceList"><div class="market-evidence-empty">Noch keine Marktdaten geladen.</div></div>
+ <details class="source-diagnostics market-findings-details"><summary><strong id="marketFindingsTitle">Ausgewählte Fundstellen</strong><span class="hint" id="marketRelevantNote">Nach Themenbezug sortiert</span></summary><div class="market-evidence-list" id="marketEvidenceList"><div class="market-evidence-empty">Noch keine Marktdaten geladen.</div></div></details>
  <p class="market-disclaimer" id="marketDisclaimer">Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Die Marktbeobachtung verändert weder TrendScore noch Domain-Kandidaten, Sprachrisiko, CSV-Export oder Verfügbarkeitsprüfung.</p>
 </section>
 
@@ -587,10 +586,10 @@ function drawShadowMarketPanel(summary=shadowMarketSummary){
  fr:{source:'Sources réussies',records:'Résultats uniques',problems:'Signalements de problèmes',demand:'Recherche de solution',findings:'Résultats sélectionnés',relevant:'Triés par pertinence thématique',empty:'Aucun résultat correspondant lors de cette recherche.',initial:'Les résultats des sources suivies apparaîtront ici après la prochaine recherche.',noData:'Aucune donnée de marché chargée.',failed:'Échec',partial:'Partiel',ok:'Réussi',category:{problem:'Problème',demand:'Recherche de solution',product:'Produit/projet',tutorial:'Tutoriel',promotion:'Promotion',discussion:'Discussion',other:'Autre'},disclaimer:'Remarque : il s’agit de signaux précoces classés par heuristique. Les résultats, interactions et signalements individuels ne prouvent ni la taille du marché, ni la volonté de payer, ni le succès commercial. Les sources suivies ne modifient ni TrendScore, ni les candidats de domaine, ni le risque linguistique, ni les exports CSV, ni les vérifications de disponibilité.'}
  }[currentLang]||null;
  const panelText={
- de:{eyebrow:'BETA 98.32 · AKTIVE MARKTBEOBACHTUNG',title:'Aktive Marktbeobachtung',intro:'Relevante Fundstellen aus den beobachteten Quellen in einer gemeinsamen Übersicht. Einzelne Quellen werden nur in den technischen Details angezeigt.'},
- en:{eyebrow:'BETA 98.32 · ACTIVE MARKET MONITOR',title:'Active market monitor',intro:'Relevant findings from the observed sources in one shared view. Individual sources are shown only in the technical details.'},
- es:{eyebrow:'BETA 98.32 · OBSERVACIÓN ACTIVA DEL MERCADO',title:'Observación activa del mercado',intro:'Hallazgos relevantes de las fuentes observadas en una sola vista. Las fuentes individuales solo aparecen en los detalles técnicos.'},
- fr:{eyebrow:'BETA 98.32 · VEILLE DE MARCHÉ ACTIVE',title:'Veille de marché active',intro:'Résultats pertinents des sources suivies dans une vue commune. Les sources individuelles ne figurent que dans les détails techniques.'}
+ de:{eyebrow:'AKTIVE MARKTBEOBACHTUNG',title:'Aktive Marktbeobachtung',intro:'Relevante Fundstellen aus den beobachteten Quellen in einer gemeinsamen Übersicht. Einzelne Quellen werden nur in den technischen Details angezeigt.'},
+ en:{eyebrow:'ACTIVE MARKET MONITOR',title:'Active market monitor',intro:'Relevant findings from the observed sources in one shared view. Individual sources are shown only in the technical details.'},
+ es:{eyebrow:'OBSERVACIÓN ACTIVA DEL MERCADO',title:'Observación activa del mercado',intro:'Hallazgos relevantes de las fuentes observadas en una sola vista. Las fuentes individuales solo aparecen en los detalles técnicos.'},
+ fr:{eyebrow:'VEILLE DE MARCHÉ ACTIVE',title:'Veille de marché active',intro:'Résultats pertinents des sources suivies dans une vue commune. Les sources individuelles ne figurent que dans les détails techniques.'}
  }[currentLang]||null;
  if(panelText){$('marketEvidenceEyebrow').textContent=panelText.eyebrow;$('marketEvidenceTitle').textContent=panelText.title;$('marketEvidenceIntro').textContent=panelText.intro;}
  const L=t||{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der beobachteten Quellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:''};
