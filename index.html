@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.37: exact requested domain count with seen-cache fallback, stronger trend diversity, capped variants, stricter GitHub qualification and source-diversity diagnostics; four languages preserved -->
+<!-- DotComScouts Beta 98.38: Beta 98.37 candidate improvements plus bounded source requests to prevent indefinite loading; four languages preserved -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -432,7 +432,18 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
    return tier(b)-tier(a)||b.trendScore-a.trendScore||b.sources.size-a.sources.size||b.mentions-a.mentions||(Number(b.newSourceMentions)||0)-(Number(a.newSourceMentions)||0);
  }).slice(0,60);
 }
-async function getJSON(url){const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+async function getJSON(url,timeoutMs=15000){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{
+  const response=await fetch(url,{signal:controller.signal});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  return await response.json();
+ }catch(error){
+  if(error?.name==='AbortError')throw Error('Zeitüberschreitung nach '+Math.round(timeoutMs/1000)+' Sekunden bei der Quellenabfrage');
+  throw error;
+ }finally{clearTimeout(timer)}
+}
 async function story(id){try{return await getJSON(HN+'item/'+id+'.json')}catch(e){return null}}
 async function fetchStories(){
  const kinds=$('scope').value==='new'?['newstories']:['newstories','topstories','showstories'];
@@ -1435,7 +1446,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.37</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.38</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
