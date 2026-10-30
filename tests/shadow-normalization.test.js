@@ -6,10 +6,12 @@ const { URL } = require('node:url');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const start = html.indexOf('function normalizeShadowEvidence(');
-const end = html.indexOf('async function collectShadowMarketEvidence(', start);
-assert.ok(start >= 0 && end > start, 'normalizer function is present');
-const normalizeShadowEvidence = vm.runInNewContext('(' + html.slice(start, end).trim() + ')', { URL });
+const classifyStart = html.indexOf('function classifyShadowEvidence(');
+const normalizeStart = html.indexOf('function normalizeShadowEvidence(', classifyStart);
+const end = html.indexOf('async function collectShadowMarketEvidence(', normalizeStart);
+assert.ok(classifyStart >= 0 && normalizeStart > classifyStart && end > normalizeStart, 'classifier and normalizer functions are present');
+const classifyShadowEvidence = vm.runInNewContext('(' + html.slice(classifyStart, normalizeStart).trim() + ')', { URL });
+const normalizeShadowEvidence = vm.runInNewContext('(' + html.slice(normalizeStart, end).trim() + ')', { URL, classifyShadowEvidence });
 
 test('shadow normalizer computes deterministic term-overlap relevance', () => {
   const result = normalizeShadowEvidence([
