@@ -80,3 +80,29 @@ This is a design proposal, not a production data contract. The isolated prototyp
 5. Run a shadow comparison that shows proposed combined evidence beside current scores but does not change domain rankings.
 6. Review results and approve a separate integration change explicitly.
 7. Never modify the domain availability API or make availability a proxy for demand.
+
+
+## Evidence-strength scoring prototype – 30.10.2026
+
+The isolated classifier now exposes a transparent, deterministic `evidenceScore` (0–100) per problem cluster. It is a **strength-of-evidence indicator**, not a market-size estimate, purchase probability, or forecast of commercial success.
+
+Scoring components:
+- Up to 21 points for up to three independently identified problem authors.
+- Up to 30 points for up to three independently identified solution-seeking authors.
+- 10 points when problem reports are corroborated by at least two sources and two authors.
+- 10 points when explicit demand is corroborated by at least two sources and two authors.
+- Up to 16 points for up to two independent authors expressing both solution-seeking and budget/payment language.
+- Up to 6 points for urgency among up to two independent authors.
+
+The raw maximum (93) is normalized to 0–100. Repeated records from the same author do not add author points. Canonical-URL duplicates are excluded before aggregation. Promotion is excluded. Feature requests are counted separately and add no score by themselves. Product inventory, likes, downloads, and raw record volume do not add points.
+
+Evidence levels are descriptive bands: insufficient (<20), early (20–39), developing (40–59), corroborated (60–79), strong (80–100). These are provisional thresholds for triage, not validated commercial labels.
+
+Regression fixtures verify that:
+- One author repeating a problem cannot manufacture independent corroboration.
+- Independent problem, demand, buying, and cross-source signals increase the score.
+- Feature requests do not become demand or buying intent.
+- Promotional records are excluded.
+- Duplicate canonical URLs count once.
+
+The scoring remains isolated in `lib/shadow-evidence.js`. It is not imported by `index.html`, does not change TrendScore, candidate generation, language-risk assessment, CSV output, or availability checks. Do not surface it as a production ranking until it has been calibrated on a broader, manually labelled sample containing both positive and negative cases across multiple markets and languages.
