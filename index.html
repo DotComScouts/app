@@ -371,7 +371,7 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
   if(!Number.isFinite(repoAgeDays)||repoAgeDays>30)continue;
   if(!recognizable&&!strongDistinctive)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
-  const repoEvidence=map.get(normalized);if(repoEvidence)repoEvidence.githubForks=Math.max(repoEvidence.githubForks||0,forks);
+  const repoEvidence=map.get(normalized);if(repoEvidence){repoEvidence.githubForks=Math.max(repoEvidence.githubForks||0,forks);const repoStory=repoEvidence.stories[repoEvidence.stories.length-1];if(repoStory&&repoStory.url===r.html_url)repoStory.description=String(r.description||'').slice(0,500);}
  }
  // Independent market sources may corroborate a candidate or reveal a product name.
  // Only explicit product records with a strong query match are admitted; tutorials,
@@ -841,12 +841,12 @@ function buildCandidates(){
   const strength=x=>(x.sourceFamilies?.size>=2?55:0)+(x.hnMentions>=2?30:0)+(x.marketMentions>0?24:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?8:0)+(Number(x.trendScore)||0);
   return strength(b)-strength(a);
  });
- const pools={original:[],inspired:[],creation:[]},allNames=new Set();
+ const pools={original:[],inspired:[],creation:[]},allNames=new Set(),suffixUse=new Map();
  const metaFor=term=>{
   const best=term.bestStory||term.stories?.[0]||{};
   return {trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
  };
- // Keep exact trend names only when they are pronounceable, or independently corroborated.
+ // Exact source names remain a separate tier; numeric names need independent corroboration.
  for(const term of variants){
   const name=normalizeTerm(term.term),letters=name.replace(/[0-9]/g,'');
   const corroborated=(term.sourceFamilies?.size||0)>=2||Number(term.hnMentions)>=2||Number(term.bestScore)>=8||Number(term.stars)>=25;
@@ -855,54 +855,61 @@ function buildCandidates(){
   allNames.add(name);
   pools.original.push([{name,type:'Originaltrend',...metaFor(term),trendKey:name}]);
  }
+ // Keep inspired variants, but prevent one source trend from dominating the result set.
+ // Also cap repeated generic endings across the complete run.
  for(const term of variants){
   const original=normalizeTerm(term.term);
   if(!original||!pools.original.some(bucket=>bucket[0].name===original))continue;
   const meta=metaFor(term),inspired=[];
   for(const name of trendVariants(term.term)){
    if(name===original||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name))continue;
+   const suffix=(name.match(/(ify|io|hq|lab|hub|kit|flow|works|studio|forge|pilot|atlas|spark|shift|logic|field|orbit)$/)||[])[0]||'';
+   if(suffix&&['ify','io','hq','lab'].includes(suffix)&&(suffixUse.get(suffix)||0)>=4)continue;
    allNames.add(name);inspired.push({name,type:'Trend-inspiriert',...meta,trendKey:original});
-   if(inspired.length>=12)break;
+   if(suffix)suffixUse.set(suffix,(suffixUse.get(suffix)||0)+1);
+   if(inspired.length>=4)break;
   }
   if(inspired.length)pools.inspired.push(inspired);
-  // Trend-Kreationen combine complete, meaningful source concepts with complete trend roots.
-  // No chopped three/four-letter fragments: each component must survive lexical filters.
-  const parts=splitProductName(term.term).parts.filter(w=>w.length>=4&&!stopWords.has(w)&&!generic.has(w)&&!commonWords.has(w));
-  const words=new Set(),creations=[],storyTitles=[];
+  // Trend creations now use both launch headlines and GitHub repository descriptions.
+  // Descriptive source language supplies concepts; the trend root keeps the connection traceable.
+  const parts=splitProductName(term.term).parts.filter(w=>w.length>=3&&!stopWords.has(w)&&!generic.has(w)&&!commonWords.has(w)&&!knownBrands.has(w)&&!badWords.has(w));
+  const roots=[...new Set(parts)].filter(w=>goodNameShape(w));
+  const conceptSet=new Set();
   for(const story of (term.stories||[])){
-   const title=String(story.title||'').replace(/<[^>]*>/g,' ').toLowerCase();
-   storyTitles.push(title);
-   for(const word of title.match(/[a-z]{4,}/g)||[]){
+   const text=[story.title||'',story.description||''].join(' ').replace(/<[^>]*>/g,' ').toLowerCase();
+   for(const word of text.match(/[a-z]{4,}/g)||[]){
     if(parts.includes(word)||stopWords.has(word)||generic.has(word)||commonWords.has(word)||stopTitles.has(word)||knownBrands.has(word)||badWords.has(word))continue;
-    words.add(word);
+    if(isGenericTerm(word)||!goodNameShape(word))continue;
+    conceptSet.add(word);
    }
   }
-  const roots=[...new Set(parts)].filter(w=>goodNameShape(w));
-  const concepts=[...words].filter(w=>goodNameShape(w)&&!isGenericTerm(w)).slice(0,18);
-  const addCreation=raw=>{
+  const concepts=[...conceptSet].slice(0,24),creations=[];
+  const addCreation=(raw,root,concept)=>{
    const name=String(raw||'').toLowerCase().replace(/[^a-z]/g,'');
    if(!name||name.length<5||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')return;
-   allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original});
+   // Avoid opaque blends: both source components must contribute at least three letters.
+   if(root&&concept&&!name.includes(root.slice(0,3))&&!name.includes(concept.slice(0,3)))return;
+   allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original,_quality:nameQuality(name)});
   };
   for(const root of roots){
-   for(const word of concepts){
-    if(root===word)continue;
-    // Prefer the complete source words; order is varied to create distinct compounds.
-    addCreation(root+word);
-    if(creations.length>=16)break;
-    addCreation(word+root);
-    if(creations.length>=16)break;
-   }
-   if(creations.length>=16)break;
-  }
-  // When a story contains two meaningful concepts, allow a concept-to-concept compound.
-  if(creations.length<6){
-   for(let i=0;i<concepts.length;i++)for(let j=i+1;j<concepts.length;j++){
-    addCreation(concepts[i]+concepts[j]);
+   for(const concept of concepts){
+    if(root===concept)continue;
+    const full=root+concept;
+    if(full.length<=getLengthRange()[1])addCreation(full,root,concept);
+    // Brandable portmanteaus preserve recognizable portions of both source concepts.
+    const max=getLengthRange()[1];
+    for(let rootLen=Math.min(root.length,4);rootLen>=3;rootLen--){
+     const remaining=max-rootLen;
+     if(remaining<3)continue;
+     const conceptLen=Math.min(concept.length,remaining);
+     if(conceptLen<3)continue;
+     addCreation(root.slice(0,rootLen)+concept.slice(0,conceptLen),root,concept);
+    }
     if(creations.length>=8)break;
    }
+   if(creations.length>=8)break;
   }
-  if(creations.length)pools.creation.push(creations);
+  if(creations.length)pools.creation.push(creations.sort((a,b)=>b._quality-a._quality).map(({_quality,...item})=>item));
  }
  const selected=[],selectedNames=new Set();
  const take=(buckets,limit,includeSeen)=>{
@@ -922,7 +929,7 @@ function buildCandidates(){
  const inspiredGoal=inspiredGoalBase+originalGoal-originals;
  const inspired=take(pools.inspired,inspiredGoal,false);
  const creations=take(pools.creation,creationGoal+inspiredGoal-inspired,false);
- // If a tier is short, roll its unused share forward without relaxing name-quality filters.
+ // Roll unused tier capacity forward only into independently sourced, quality-filtered candidates.
  if(selected.length<count){
   take(pools.inspired,count-selected.length,false);
   if(selected.length<count)take(pools.creation,count-selected.length,false);
@@ -1519,7 +1526,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.42</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.43</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
