@@ -8,7 +8,7 @@
 
 ## Executed in the available test harness
 
-The committed deterministic Node.js suite has **49 tests; 49 passed, 0 failed** in GitHub Actions. This includes an 18-case labelled English/German/Spanish classification corpus, 14 shadow-evidence regression tests, and three checks for normal-flow shadow integration, failure isolation, and no scoring/domain-check mutation. All four inline JavaScript blocks were parsed with `new Function` in the prior syntax suite.
+The committed deterministic Node.js suite has **53 tests; 53 passed, 0 failed** in GitHub Actions. This includes an 18-case labelled English/German/Spanish classification corpus, 14 shadow-evidence regression tests, three normal-flow integration architecture checks, and four shadow-normalization checks for term relevance, tracking-URL deduplication, distinct query preservation, and scoring isolation. All four inline JavaScript blocks were parsed with `new Function` in the prior syntax suite.
 
 | Case | Result |
 |---|---|
