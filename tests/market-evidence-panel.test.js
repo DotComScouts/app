@@ -18,6 +18,12 @@ test('Beta 98.29 exposes the five live shadow sources in a dedicated market evid
   assert.match(html, /records\.filter\(x=>\(x\.relevance\|\|0\)>=50\)/);
 });
 
+test('the five legacy standalone source panels are consolidated into the shared market view', () => {
+  assert.match(html, /#hfBetaPanel,#npmBetaPanel,#stackBetaPanel,#devtoBetaPanel,#blueskyBetaPanel\\{display:none!important\\}/);
+  assert.match(html, /Gemeinsame Marktbeobachtung/);
+  assert.match(html, /Alle fünf Zusatzquellen in einer gemeinsamen Übersicht/);
+});
+
 test('market evidence panel is localized in all four supported interface languages', () => {
   for (const lang of ['de', 'en', 'es', 'fr']) {
     assert.match(html, new RegExp(lang + ':\\{source:'));
