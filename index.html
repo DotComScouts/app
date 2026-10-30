@@ -396,7 +396,7 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
-   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=30;
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=15;
    const marketCrossSource=x.marketMentions>=1&&x.sourceFamilies.size>=2;
    const multiSource=crossSource||marketCrossSource;
    x.signalType=(hnConfirmed||multiSource)?'Mehrfachsignal':'Frühsignal';
