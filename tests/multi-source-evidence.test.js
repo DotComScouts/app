@@ -247,3 +247,49 @@ test('25 labelled multilingual corpus keeps signal types separate', () => {
     }
   }
 });
+
+
+test('26 negated failure statements do not count as problem evidence', () => {
+  const evidence = classifyEvidence(record({ text: "The MCP server does not crash and is not broken anymore." }));
+  assert.equal(evidence.problem, false);
+});
+
+test('27 negated solution requests do not count as demand intent', () => {
+  const evidence = classifyEvidence(record({ text: "We don't need a tool and are not looking for a solution." }));
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('28 urgency is a separate signal and does not manufacture demand', () => {
+  const evidence = classifyEvidence(record({ text: "Our deployment is blocked and this is urgent." }));
+  assert.equal(evidence.urgency, true);
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('29 budget language strengthens an explicit demand into buying intent', () => {
+  const evidence = classifyEvidence(record({ text: "Looking for a paid solution. Budget is available and we are willing to pay." }));
+  assert.equal(evidence.demandIntent, true);
+  assert.equal(evidence.budgetSignal, true);
+  assert.equal(evidence.buyingIntent, true);
+});
+
+test('30 budget mention alone is not demand or buying intent', () => {
+  const evidence = classifyEvidence(record({ text: "Our annual software budget was approved." }));
+  assert.equal(evidence.budgetSignal, true);
+  assert.equal(evidence.demandIntent, false);
+  assert.equal(evidence.buyingIntent, false);
+});
+
+test('31 workaround statements are distinguished from explicit demand', () => {
+  const evidence = classifyEvidence(record({ text: "We use a manual workaround because the API timeout keeps happening." }));
+  assert.equal(evidence.problem, true);
+  assert.equal(evidence.workaroundSignal, true);
+  assert.equal(evidence.demandIntent, false);
+});
+
+test('32 promotional urgency and budget language are excluded', () => {
+  const evidence = classifyEvidence(record({ text: "Sponsored webinar: urgent offer, register now and get special pricing." }));
+  assert.equal(evidence.promotion, true);
+  assert.equal(evidence.urgency, false);
+  assert.equal(evidence.budgetSignal, false);
+  assert.equal(evidence.buyingIntent, false);
+});
