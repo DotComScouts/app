@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.33: market-source corroboration, source-diversified trend scoring and stricter single-repository admission; language, CSV and availability workflows preserved; Master V98 remains unchanged -->
+<!-- DotComScouts Beta 98.34: broader qualified domain candidate pool, explicit candidate shortfall reporting, complete source progress labels and source list; four languages preserved -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -466,7 +466,7 @@ async function fetchAlgoliaStories(){
  if(!successfulQueries)throw Error('Alle Algolia-Abfragen fehlgeschlagen'+(queryErrors.length?': '+queryErrors.join('; '):''));
  const result=[...out.values()];result._meta={successfulQueries,totalQueries:queries.length,queryErrors};return result;
 }
-// Beta 98.33: collect five independent public sources and feed quality-filtered product evidence
+// Beta 98.34: collect five independent public sources and feed quality-filtered product evidence
 // back into trend discovery. Raw hits, tutorials, promotions and weak matches remain excluded.
 let devCommunityFallbackLoaded=false;
 function classifyShadowEvidence(record){
