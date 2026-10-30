@@ -441,6 +441,7 @@ async function fetchAlgoliaStories(){
 }
 // Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
 // Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
+let devCommunityFallbackLoaded=false;
 function classifyShadowEvidence(record){
  const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
  const has=pattern=>pattern.test(text);
@@ -486,7 +487,6 @@ function normalizeShadowEvidence(records,query){
  }
  return out.sort((a,b)=>b.relevance-a.relevance);
 }
-let devCommunityFallbackLoaded=false;
 async function collectShadowMarketEvidence(terms){
  devCommunityFallbackLoaded=false;
  const candidates=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,3);
