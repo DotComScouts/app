@@ -545,7 +545,7 @@ async function collectShadowMarketEvidence(terms){
   }]
  ];
  const queryErrors=[];
- const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Shadow · '+name,async()=>{
+ const jobs=sourceJobs.map(([name,fetchQuery])=>runSource(name,async()=>{
   const all=[];
   for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){
    const detail={source:name,query,error:error?.message||String(error)};
