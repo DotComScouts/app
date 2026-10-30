@@ -339,14 +339,15 @@ function addEvidence(map,raw,source,score,comments,url,title,time,kind){
  const evidenceSource=source||'Hacker News';
  const isHN=evidenceSource==='Hacker News'||evidenceSource==='Hacker News Search';
  const term=normalizeTerm(raw);if(!term||term.length<4||term.length>24||isGenericTerm(raw))return;
- if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),sourceFamilies:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
+ if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,supplementaryMentions:0,supplementaryActivity:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),sourceFamilies:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
  const x=map.get(term);x.mentions++;x.sources.add(evidenceSource);x.sourceFamilies.add(isHN?'Hacker News':evidenceSource);x.kinds.add(kind||'named');if(url&&!seenSources.has(url))x.newSourceMentions=(x.newSourceMentions||0)+1;
  if(isHN){x.hnMentions++;x.score+=Math.max(0,Number(score)||0);x.comments+=Math.max(0,Number(comments)||0);x.bestScore=Math.max(x.bestScore,Number(score)||0);x.bestComments=Math.max(x.bestComments,Number(comments)||0)}
- if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
+ else if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
+ else {x.supplementaryMentions++;x.supplementaryActivity=Math.max(x.supplementaryActivity,Number(score)||0)}
  x.latest=Math.max(x.latest,Number(time)||0);
  if(x.stories.length<10)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
 }
-function findTerms(stories,githubRepos=[]){
+function findTerms(stories,githubRepos=[],supplementaryRecords=[]){
  const map=new Map();
  for(const s of stories){
   const local=new Set();
@@ -363,27 +364,48 @@ function findTerms(stories,githubRepos=[]){
   if(Number(r.stargazers_count||0)<5)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
  }
+ // Additional public APIs are active discovery sources, not comparison-only feeds.
+ for(const record of supplementaryRecords||[]){
+  if(!record||!record.title||!record.source||!record.url)continue;
+  const candidates=candidatePhrases({title:String(record.title)});
+  if(record.kind==='package'||record.kind==='model'){
+   const raw=String(record.title).split('/').pop().replace(/[-_]+/g,' ').trim();
+   if(looksLikeName(raw))candidates.push({term:raw,kind:'product'});
+  }
+  const local=new Set();
+  for(const candidate of candidates){
+   const raw=String(candidate.term||'').trim(),key=normalizeTerm(raw);
+   if(!key||local.has(key))continue;local.add(key);
+   const activity=Number(record.activity)||0,comments=Number(record.comments)||Number(record.answers)||0;
+   addEvidence(map,raw,record.source,activity,comments,record.url,record.title,Date.parse(record.observedAt||'')/1000,candidate.kind||record.kind||'product');
+  }
+ }
  const now=Date.now()/1000;
  return [...map.values()].filter(x=>{
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
    const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=8;
-   x.signalType=(hnConfirmed||crossSource)?'Mehrfachsignal':'Frühsignal';
-   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
-   return (hnConfirmed||crossSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
+   const supplementaryCross=x.supplementaryMentions>=1&&x.sourceFamilies.size>=2;
+   const repeatedSupplementary=x.supplementaryMentions>=2&&x.supplementaryActivity>=12;
+   const strongSupplementary=x.supplementaryMentions===1&&x.supplementaryActivity>=20&&[...x.kinds].some(k=>['launch','product','repo'].includes(k));
+   x.signalType=(hnConfirmed||crossSource||supplementaryCross)?'Mehrfachsignal':'Frühsignal';
+   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':strongSupplementary?'Frühsignal: starkes Einzelsignal aus '+[...x.sources].join(', '):repeatedSupplementary?'Frühsignal: wiederholte Zusatzquellen-Signale':'Noch schwaches Signal';
+   return (hnConfirmed||crossSource||strongLaunch||strongRepo||supplementaryCross||repeatedSupplementary||strongSupplementary)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
  }).map(x=>{
    const ageDays=Math.max(0,(now-x.latest)/86400);
    // Bounded 0–100 score: engagement helps, but recency cannot overwhelm all other evidence.
    const sourcePoints=x.sourceFamilies.size>=2?32:0;
+   const supplementaryPoints=Math.min(18,Math.max(0,x.supplementaryMentions)*5);
    const repetitionPoints=Math.min(24,Math.max(0,x.hnMentions-1)*12);
    const hnPoints=Math.min(18,Math.log1p(x.bestScore)*5);
    const commentPoints=Math.min(14,Math.log1p(x.bestComments)*4);
    const starPoints=Math.min(16,Math.log1p(x.stars)*3.7);
+   const activityPoints=Math.min(14,Math.log1p(x.supplementaryActivity)*2.5);
    const recencyPoints=16*Math.exp(-ageDays/5);
    const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
    const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.stars<20)?12:0;
-   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
+   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+supplementaryPoints+repetitionPoints+hnPoints+commentPoints+starPoints+activityPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
    x.term=String(x.term).replace(/[^a-zA-Z0-9]/g,'');
    x.sourceLabel=[...x.sources].join(' + ');
    x.confirmation=x.signalReason;
@@ -439,8 +461,8 @@ async function fetchAlgoliaStories(){
  if(!successfulQueries)throw Error('Alle Algolia-Abfragen fehlgeschlagen'+(queryErrors.length?': '+queryErrors.join('; '):''));
  const result=[...out.values()];result._meta={successfulQueries,totalQueries:queries.length,queryErrors};return result;
 }
-// Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
-// Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
+// Beta 98.32: collect the five additional public sources as active trend-discovery inputs.
+// Their records are normalized, quality-gated and merged into the shared trend candidate pool.
 let devCommunityFallbackLoaded=false;
 function classifyShadowEvidence(record){
  const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
@@ -489,7 +511,8 @@ function normalizeShadowEvidence(records,query){
 }
 async function collectShadowMarketEvidence(terms){
  devCommunityFallbackLoaded=false;
- const candidates=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,3);
+ const dynamic=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,2);
+ const candidates=[...new Set([...dynamic,'AI agent','open source','developer tools'])].slice(0,4);
  if(!candidates.length)return {count:0,sourceCounts:[],note:'Keine geeigneten Trendbegriffe für ergänzende Quellen.'};
  const safeJson=async(url,headers={Accept:'application/json'})=>{
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
@@ -545,12 +568,12 @@ async function collectShadowMarketEvidence(terms){
   }]
  ];
  const queryErrors=[];
- const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Shadow · '+name,async()=>{
+ const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Zusatzquelle · '+name,async()=>{
   const all=[];
   for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){
    const detail={source:name,query,error:error?.message||String(error)};
    queryErrors.push(detail);
-   appendStatus('Shadow · '+name+' · '+query+': '+detail.error);
+   appendStatus('Zusatzquelle · '+name+' · '+query+': '+detail.error);
   }}
   return all;
  }));
@@ -587,23 +610,23 @@ async function collectShadowMarketEvidence(terms){
   const errors=queryErrors.filter(item=>item.source===name).length;
   return name+' '+rawCount+' roh/'+items.length+' eindeutig, '+relevant+' relevant'+(errors?', '+errors+' Abfragefehler':'')+(cats?' ['+cats+']':'');
  });
- const note='Shadow-Vergleich: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
+ const note='Aktive Zusatzquellen: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Qualifizierte Zusatzquellen-Signale fließen in TrendScore und Kandidatenauswahl ein.';
  appendStatus(note);
  const summary={count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,records:evidence,rawCount:rawEvidence.length,duplicateCount,successfulQueries,totalQueries:sourceJobs.length*candidates.length,queryErrorCount:queryErrors.length,note};shadowMarketSummary=summary;drawShadowMarketPanel(summary);return summary;
 }
 function getLengthRange(){const v=$('length').value;return [3,v==='max5'?5:v==='max10'?10:8]}
 function drawShadowMarketPanel(summary=shadowMarketSummary){
  const t={
- de:{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:'Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Zusatzquellen erzeugen keine eigenen Domain-Kandidaten und verändern weder TrendScore noch Rangfolge, Sprachrisiko oder Verfügbarkeitsprüfung. Direkte Produktbelege können als zusätzliche Quellenherkunft in der Ergebnis-CSV erscheinen.'},
- en:{source:'Sources successful',records:'Unique records',problems:'Problem reports',demand:'Solution seeking',findings:'Selected findings',relevant:'Sorted by topic relevance',empty:'No matching records in this run.',initial:'Results from the additional sources will appear here after the next search.',noData:'No market data loaded yet.',failed:'Failed',partial:'Partial',ok:'Successful',category:{problem:'Problem',demand:'Solution seeking',product:'Product/project',tutorial:'Tutorial',promotion:'Promotion',discussion:'Discussion',other:'Other'},disclaimer:'Note: These are early, heuristically classified signals. Hits, engagement and individual problem reports do not prove market size, willingness to pay or commercial success. Additional sources do not create domain candidates or change TrendScore, ranking, language risk or availability checks. Direct product evidence may appear as additional source provenance in the results CSV.'},
- es:{source:'Fuentes correctas',records:'Registros únicos',problems:'Informes de problemas',demand:'Búsqueda de soluciones',findings:'Hallazgos seleccionados',relevant:'Ordenados por relevancia temática',empty:'No hay registros coincidentes en esta búsqueda.',initial:'Los resultados de las cinco fuentes adicionales aparecerán aquí tras la próxima búsqueda.',noData:'Todavía no se han cargado datos de mercado.',failed:'Error',partial:'Parcial',ok:'Correcto',category:{problem:'Problema',demand:'Búsqueda de soluciones',product:'Producto/proyecto',tutorial:'Tutorial',promotion:'Promoción',discussion:'Debate',other:'Otros'},disclaimer:'Nota: Son señales tempranas clasificadas mediante heurísticas. Los resultados, la interacción y los informes individuales no demuestran el tamaño del mercado, la disposición a pagar ni el éxito comercial. Las fuentes adicionales no generan candidatos de dominio ni modifican TrendScore, clasificación, riesgo lingüístico o comprobaciones de disponibilidad. Los resultados directos de productos pueden aparecer como fuentes adicionales en el CSV.'},
- fr:{source:'Sources réussies',records:'Résultats uniques',problems:'Signalements de problèmes',demand:'Recherche de solution',findings:'Résultats sélectionnés',relevant:'Triés par pertinence thématique',empty:'Aucun résultat correspondant lors de cette recherche.',initial:'Les résultats des cinq sources supplémentaires apparaîtront ici après la prochaine recherche.',noData:'Aucune donnée de marché chargée.',failed:'Échec',partial:'Partiel',ok:'Réussi',category:{problem:'Problème',demand:'Recherche de solution',product:'Produit/projet',tutorial:'Tutoriel',promotion:'Promotion',discussion:'Discussion',other:'Autre'},disclaimer:'Remarque : il s’agit de signaux précoces classés par heuristique. Les résultats, interactions et signalements individuels ne prouvent ni la taille du marché, ni la volonté de payer, ni le succès commercial. Les sources supplémentaires ne créent pas de candidats de domaine et ne modifient ni TrendScore, ni le classement, ni le risque linguistique, ni les vérifications de disponibilité. Les preuves directes de produits peuvent apparaître comme sources supplémentaires dans le CSV.'}
+ de:{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:'Hinweis: Diese Daten sind frühe, heuristisch klassifizierte Signale. Treffer, Resonanz und einzelne Problemberichte sind kein Beleg für Marktgröße, Zahlungsbereitschaft oder Geschäftserfolg. Zusatzquellen können eigene Domain-Kandidaten erzeugen und fließen nach quellenabhängigen Qualitätskriterien in TrendScore und Rangfolge ein. Sprachrisiko und Verfügbarkeit werden anschließend wie bisher geprüft.'},
+ en:{source:'Sources successful',records:'Unique records',problems:'Problem reports',demand:'Solution seeking',findings:'Selected findings',relevant:'Sorted by topic relevance',empty:'No matching records in this run.',initial:'Results from the additional sources will appear here after the next search.',noData:'No market data loaded yet.',failed:'Failed',partial:'Partial',ok:'Successful',category:{problem:'Problem',demand:'Solution seeking',product:'Product/project',tutorial:'Tutorial',promotion:'Promotion',discussion:'Discussion',other:'Other'},disclaimer:'Note: These are early, heuristically classified signals. Hits, engagement and individual problem reports do not prove market size, willingness to pay or commercial success. Additional sources can create domain candidates and contribute to TrendScore and ranking under source-specific quality criteria. Language risk and availability are then checked as before.'},
+ es:{source:'Fuentes correctas',records:'Registros únicos',problems:'Informes de problemas',demand:'Búsqueda de soluciones',findings:'Hallazgos seleccionados',relevant:'Ordenados por relevancia temática',empty:'No hay registros coincidentes en esta búsqueda.',initial:'Los resultados de las cinco fuentes adicionales aparecerán aquí tras la próxima búsqueda.',noData:'Todavía no se han cargado datos de mercado.',failed:'Error',partial:'Parcial',ok:'Correcto',category:{problem:'Problema',demand:'Búsqueda de soluciones',product:'Producto/proyecto',tutorial:'Tutorial',promotion:'Promoción',discussion:'Debate',other:'Otros'},disclaimer:'Nota: Son señales tempranas clasificadas mediante heurísticas. Los resultados, la interacción y los informes individuales no demuestran el tamaño del mercado, la disposición a pagar ni el éxito comercial. Las fuentes adicionales pueden generar candidatos de dominio y contribuir a TrendScore y clasificación según criterios de calidad específicos. Después se comprueban el riesgo lingüístico y la disponibilidad como hasta ahora.'},
+ fr:{source:'Sources réussies',records:'Résultats uniques',problems:'Signalements de problèmes',demand:'Recherche de solution',findings:'Résultats sélectionnés',relevant:'Triés par pertinence thématique',empty:'Aucun résultat correspondant lors de cette recherche.',initial:'Les résultats des cinq sources supplémentaires apparaîtront ici après la prochaine recherche.',noData:'Aucune donnée de marché chargée.',failed:'Échec',partial:'Partiel',ok:'Réussi',category:{problem:'Problème',demand:'Recherche de solution',product:'Produit/projet',tutorial:'Tutoriel',promotion:'Promotion',discussion:'Discussion',other:'Autre'},disclaimer:'Remarque : il s’agit de signaux précoces classés par heuristique. Les résultats, interactions et signalements individuels ne prouvent ni la taille du marché, ni la volonté de payer, ni le succès commercial. Les sources supplémentaires peuvent générer leurs propres candidats de domaine et contribuer au TrendScore et au classement selon des critères de qualité spécifiques. Le risque linguistique et la disponibilité sont ensuite vérifiés comme auparavant.'}
  }[currentLang]||null;
  const panelText={
- de:{eyebrow:'BETA 98.31 · GEMEINSAME MARKTBEOBACHTUNG',title:'Zusammengeführte Marktbeobachtung',intro:'Relevante Fundstellen aus allen Zusatzquellen in einer gemeinsamen Übersicht. Einzelne Quellen werden nur in den technischen Details angezeigt.'},
- en:{eyebrow:'BETA 98.31 · COMBINED MARKET MONITOR',title:'Combined market monitor',intro:'Relevant findings from all additional sources in one shared view. Individual sources are shown only in the technical details.'},
- es:{eyebrow:'BETA 98.31 · OBSERVACIÓN DE MERCADO UNIFICADA',title:'Observación de mercado unificada',intro:'Hallazgos relevantes de todas las fuentes adicionales en una sola vista. Las fuentes individuales solo aparecen en los detalles técnicos.'},
- fr:{eyebrow:'BETA 98.31 · VEILLE DE MARCHÉ UNIFIÉE',title:'Veille de marché unifiée',intro:'Résultats pertinents de toutes les sources supplémentaires dans une vue commune. Les sources individuelles ne figurent que dans les détails techniques.'}
+ de:{eyebrow:'BETA 98.32 · AKTIVE MARKTBEOBACHTUNG',title:'Aktive Marktbeobachtung',intro:'Die Zusatzquellen liefern eigene Trendkandidaten und Bestätigungssignale. Herkunft und Qualität bleiben in den Ergebnissen und technischen Details nachvollziehbar.'},
+ en:{eyebrow:'BETA 98.32 · ACTIVE MARKET MONITOR',title:'Active market monitor',intro:'Additional sources contribute their own trend candidates and corroborating signals. Provenance and quality remain traceable in results and technical details.'},
+ es:{eyebrow:'BETA 98.32 · OBSERVACIÓN ACTIVA DEL MERCADO',title:'Observación activa del mercado',intro:'Las fuentes adicionales aportan candidatos propios y señales de corroboración. El origen y la calidad siguen siendo trazables.'},
+ fr:{eyebrow:'BETA 98.32 · VEILLE DE MARCHÉ ACTIVE',title:'Veille de marché active',intro:'Les sources supplémentaires proposent leurs propres candidats et des signaux de corroboration. La provenance et la qualité restent traçables.'}
  }[currentLang]||null;
  if(panelText){$('marketEvidenceEyebrow').textContent=panelText.eyebrow;$('marketEvidenceTitle').textContent=panelText.title;$('marketEvidenceIntro').textContent=panelText.intro;}
  const L=t||{source:'Quellen erfolgreich',records:'Eindeutige Belege',problems:'Problemberichte',demand:'Lösungssuche',findings:'Ausgewählte Fundstellen',relevant:'Nach Themenbezug sortiert',empty:'Keine passenden Fundstellen in diesem Lauf.',initial:'Nach dem nächsten Suchlauf erscheinen hier die Ergebnisse der Zusatzquellen.',noData:'Noch keine Marktdaten geladen.',failed:'Fehler',partial:'Teilweise',ok:'Erfolgreich',category:{problem:'Problem',demand:'Lösungssuche',product:'Produkt/Projekt',tutorial:'Tutorial',promotion:'Werbung',discussion:'Diskussion',other:'Sonstiges'},disclaimer:''};
@@ -889,7 +912,7 @@ async function run(){
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
    const githubEligibleCount=githubRepos.filter(r=>looksLikeName(String(r.name||'').replace(/[-_]+/g,' ').trim())&&Number(r.stargazers_count||0)>=8).length;
    trendTerms=findTerms(storyList,githubRepos);
-   try{await collectShadowMarketEvidence(trendTerms)}catch(shadowError){appendStatus('Ergänzende Shadow-Quellen konnten nicht vollständig gestartet werden: '+(shadowError?.message||String(shadowError))+'. Die normale Suche läuft weiter.')}
+   try{await collectShadowMarketEvidence(trendTerms);trendTerms=findTerms(storyList,githubRepos,shadowEvidence)}catch(sourceError){appendStatus('Zusatzquellen konnten nicht vollständig integriert werden: '+(sourceError?.message||String(sourceError))+'. Die übrigen Quellen laufen weiter.')}
    const githubSignals=trendTerms.filter(t=>t.githubMentions>0).length;
    const algoliaSignals=trendTerms.filter(t=>t.sources.has('Hacker News Search')).length;
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
