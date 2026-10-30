@@ -733,8 +733,8 @@ function trendVariants(term){
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
  const suffixes=['forge','works','studio','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit'];
- const genericRoots=new Set(['auto','open','web','code','data','dev','app','agent','cloud','smart','super','best','fast','free']);
- const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=4&&!genericRoots.has(x)))];
+ const suffixExcludedRoots=new Set(['auto','open','web','code','data','dev','app','agent','cloud','smart','super','best','fast','free']);
+ const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=4&&!suffixExcludedRoots.has(x)))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
    // Longer suffixes remain available when the user selects a longer name range.
