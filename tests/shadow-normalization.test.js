@@ -48,7 +48,7 @@ test('shadow normalizer preserves distinct query URLs and drops empty records', 
 test('per-record relevance is scored against its own query, not the union of candidate queries', () => {
   const result = normalizeShadowEvidence([
     {source:'Hugging Face',query:'AI agent',title:'AI agent workflow model',url:'https://huggingface.co/acme/agent'},
-    {source:'npm Registry',query:'quantum battery',title:'Quantum battery simulator',url:'https://www.npmjs.com/package/quantum-battery'}
+    {source:'npm Registry',query:'quantum battery',title:'quantum battery simulator',url:'https://www.npmjs.com/package/quantum-battery'}
   ], 'AI agents quantum battery');
   assert.equal(result.length, 2);
   assert.equal(result.find(x => x.source === 'Hugging Face').relevance, 100);
