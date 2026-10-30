@@ -445,7 +445,7 @@ function normalizeShadowEvidence(records,query){
  for(const raw of records||[]){
   const title=String(raw.title||'').trim(),description=String(raw.description||'').trim();
   if(!title)continue;
-  const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
+  const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
   const words=new Set(text.match(/[a-z0-9]{2,}/g)||[]);
   // Score against the exact query that produced this record, not the union of all candidate terms.
   const recordTokens=tokenize(raw.query||query);
