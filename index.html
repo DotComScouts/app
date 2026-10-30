@@ -425,7 +425,7 @@ async function fetchAlgoliaStories(){
 // Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
 // Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
 function classifyShadowEvidence(record){
- const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
+ const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
  const has=pattern=>pattern.test(text);
  if(has(/\\b(webinar|register now|register here|save your seat|sponsored by|sponsored content|paid promotion|advertisement|paid partnership|book a demo|use code|limited time offer|jetzt anmelden|jetzt registrieren|kostenloses webinar|werbung|anuncio patrocinado|reg[ií]strate ahora|inscr[ií]bete ahora)\\b/))return 'promotion';
  if(has(/\\b(crash(?:es|ed|ing)?|bug report|broken|error(?: message)?|fails? to connect|fails? when|does not work|doesn't work|not working|data loss|workaround|pain point|bottleneck|production issue|struggling with|cost reduction|token cost|latency problem|st[uü]rzt ab|funktioniert nicht|fehlermeldung|verbindungsfehler|datenverlust|problem bei|fehler bei|l[aä]sst sich nicht verbinden|no funciona|falla al conectar|error de conexi[oó]n|p[eé]rdida de datos)\\b/))return 'problem';
@@ -440,7 +440,7 @@ function normalizeShadowEvidence(records,query){
  const uniqueTokens=tokenize(query);
  const seen=new Map(),out=[];
  const canonicalUrl=value=>{
-  try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|ref|source)$/i.test(k))u.searchParams.delete(k);u.hostname=u.hostname.toLowerCase();return u.toString().replace(/\\/$/,'')}catch{return ''}
+  try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|ref|source)$/i.test(k))u.searchParams.delete(k);u.hostname=u.hostname.toLowerCase();return u.toString().replace(/\/$/,'')}catch{return ''}
  };
  for(const raw of records||[]){
   const title=String(raw.title||'').trim(),description=String(raw.description||'').trim();
