@@ -836,42 +836,76 @@ function riskBadge(r){
 }
 
 function buildCandidates(){
- const count=Number($('count').value)||60, buckets=[], local=new Set(), skipSeen=$('seenMode').value==='skip';
- // Build the full pool first; the seen cache must never silently reduce the requested quota.
+ const count=Number($('count').value)||60,skipSeen=$('seenMode').value==='skip';
  const variants=trendTerms.slice().sort((a,b)=>{
   const strength=x=>(x.sourceFamilies?.size>=2?55:0)+(x.hnMentions>=2?30:0)+(x.marketMentions>0?24:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?8:0)+(Number(x.trendScore)||0);
   return strength(b)-strength(a);
  });
+ const pools={original:[],inspired:[],creation:[]},allNames=new Set();
+ // Reserve all original trend names before generating alternatives.
  for(const term of variants){
-  const original=normalizeTerm(term.term);
-  if(!original||!fitsOriginal(original)||!/^[a-z0-9]+$/.test(original)||local.has(original))continue;
+  const name=normalizeTerm(term.term);
+  if(!name||!fitsOriginal(name)||!/^[a-z0-9]+$/.test(name)||allNames.has(name))continue;
+  allNames.add(name);
   const best=term.bestStory||term.stories[0]||{};
   const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
-  const bucket=[];local.add(original);bucket.push({name:original,type:'Originaltrend',...meta,trendKey:original});
-  const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name)
-   .filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n));
-  // Keep no more than two alternatives per original trend. All original names
-  // are distributed before derived variants are considered.
-  for(const n of choices.slice(0,2)){local.add(n);bucket.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
-  if(bucket.length)buckets.push(bucket);
+  pools.original.push([{name,type:'Originaltrend',...meta,trendKey:name}]);
  }
- const selected=[],selectedNames=new Set();
- let includeSeen=false;
- const fill=()=>{
-  const rounds=Math.max(0,...buckets.map(bucket=>bucket.length));
-  for(let round=0;round<rounds&&selected.length<count;round++){
-   for(const bucket of buckets){
-    const candidate=bucket[round];
-    if(!candidate||selectedNames.has(candidate.name))continue;
-    if(skipSeen&&!includeSeen&&seen.has(candidate.name))continue;
-    selected.push(candidate);selectedNames.add(candidate.name);
-    if(selected.length>=count)break;
+ for(const term of variants){
+  const original=normalizeTerm(term.term);
+  if(!original||!pools.original.some(bucket=>bucket[0].name===original))continue;
+  const best=term.bestStory||term.stories[0]||{};
+  const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
+  const inspired=[];
+  for(const name of trendVariants(term.term)){
+   if(name===original||!fits(name)||!goodNameShape(name)||allNames.has(name))continue;
+   allNames.add(name);inspired.push({name,type:'Trend-inspiriert',...meta,trendKey:original});
+   if(inspired.length>=4)break;
+  }
+  if(inspired.length)pools.inspired.push(inspired);
+  const parts=splitProductName(term.term).parts,root=splitProductName(term.term).full,words=new Set(),creations=[];
+  for(const story of (term.stories||[])){
+   const title=String(story.title||'').toLowerCase();
+   for(const word of title.match(/[a-z]{3,}/g)||[]){
+    if(parts.includes(word)||stopWords.has(word)||generic.has(word)||commonWords.has(word)||stopTitles.has(word)||knownBrands.has(word)||badWords.has(word))continue;
+    words.add(word);
    }
   }
+  for(const word of words){
+   const stem=root.slice(0,Math.min(4,root.length));
+   for(const raw of [stem+word,word+root.slice(0,3),root.slice(0,3)+word]){
+    const name=raw.toLowerCase();
+    if(name.length<3||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')continue;
+    allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original});
+    if(creations.length>=6)break;
+   }
+   if(creations.length>=6)break;
+  }
+  if(creations.length)pools.creation.push(creations);
+ }
+ const selected=[],selectedNames=new Set();
+ const take=(buckets,limit,includeSeen)=>{
+  let added=0;const rounds=Math.max(0,...buckets.map(bucket=>bucket.length));
+  for(let round=0;round<rounds&&added<limit&&selected.length<count;round++){
+   for(const bucket of buckets){
+    const item=bucket[round];
+    if(!item||selectedNames.has(item.name)||(skipSeen&&!includeSeen&&seen.has(item.name)))continue;
+    selected.push(item);selectedNames.add(item.name);added++;
+    if(added>=limit||selected.length>=count)break;
+   }
+  }
+  return added;
  };
- // First pass: unseen candidates only. Second pass: reuse cached names if needed.
- fill();
- if(selected.length<count&&skipSeen){includeSeen=true;fill();}
+ const originalGoal=Math.round(count*.4),inspiredBase=Math.round(count*.4),creationBase=count-originalGoal-inspiredBase;
+ const originals=take(pools.original,originalGoal,false);
+ const inspiredGoal=inspiredBase+originalGoal-originals;
+ const inspired=take(pools.inspired,inspiredGoal,false);
+ take(pools.creation,creationBase+inspiredGoal-inspired,false);
+ if(selected.length<count&&skipSeen){
+  take(pools.original,Math.max(0,originalGoal-selected.filter(x=>x.type==='Originaltrend').length),true);
+  take(pools.inspired,Math.max(0,inspiredGoal-selected.filter(x=>x.type==='Trend-inspiriert').length),true);
+  take(pools.creation,count-selected.length,true);
+ }
  return selected.slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
 }
 function drawTrendCandidates(){
