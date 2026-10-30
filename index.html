@@ -888,7 +888,7 @@ function buildCandidates(){
    const name=String(raw||'').toLowerCase().replace(/[^a-z]/g,'');
    if(!name||name.length<5||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')return;
    // Avoid opaque blends: both source components must contribute at least three letters.
-   if(root&&concept&&!name.includes(root.slice(0,3))&&!name.includes(concept.slice(0,3)))return;
+   if(root&&concept&&(!name.includes(root.slice(0,3))||!name.includes(concept.slice(0,3))))return;
    allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original,_quality:nameQuality(name)});
   };
   for(const root of roots){
