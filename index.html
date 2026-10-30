@@ -368,7 +368,7 @@ function findTerms(stories,githubRepos=[]){
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
-   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=10;
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=8;
    x.signalType=(hnConfirmed||crossSource)?'Mehrfachsignal':'Frühsignal';
    x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
    return (hnConfirmed||crossSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
