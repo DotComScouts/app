@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.32: consolidated source evidence, trend-only candidate generation and diversified trend variants; language and CSV workflows preserved; Master V98 remains unchanged -->
+<!-- DotComScouts Beta 98.33: market-source corroboration, source-diversified trend scoring and stricter single-repository admission; language, CSV and availability workflows preserved; Master V98 remains unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -345,7 +345,7 @@ function addEvidence(map,raw,source,score,comments,url,title,time,kind){
  x.latest=Math.max(x.latest,Number(time)||0);
  if(x.stories.length<10)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
 }
-function findTerms(stories,githubRepos=[]){
+function findTerms(stories,githubRepos=[],marketRecords=[]){
  const map=new Map();
  for(const s of stories){
   const local=new Set();
@@ -362,34 +362,58 @@ function findTerms(stories,githubRepos=[]){
   if(Number(r.stargazers_count||0)<8)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
  }
+ // Independent market sources may corroborate a candidate or reveal a product name.
+ // Only explicit product records with a strong query match are admitted; tutorials,
+ // promotions, opinions and generic discussions never become trends.
+ for(const r of marketRecords){
+  if((Number(r.relevance)||0)<60||!['product','problem','demand'].includes(r.category))continue;
+  const source=String(r.source||'').trim();if(!source)continue;
+  const candidates=[];
+  if(r.category==='product'&&['npm Registry','Hugging Face'].includes(source)){
+   const raw=String(r.title||'').replace(/^@[^/]+\\//,'').split('/').pop().replace(/^@/,'').replace(/[-_]+/g,' ').trim();
+   const activity=Number(r.activity)||0;
+   const enoughActivity=source==='Hugging Face'?activity>=100:activity>=0.15;
+   if(enoughActivity&&looksLikeName(raw))candidates.push({term:raw,kind:'market-product'});
+  }
+  if(r.category==='product'&&['DEV Community','Bluesky'].includes(source)){
+   for(const candidate of candidatePhrases({title:String(r.title||'')}))candidates.push(candidate);
+  }
+  for(const candidate of candidates){
+   addEvidence(map,candidate.term,source,Number(r.activity)||0,Number(r.comments)||Number(r.answers)||0,r.url,r.title,Date.parse(r.observedAt||'')/1000,candidate.kind||'market-product');
+   const item=map.get(normalizeTerm(candidate.term));if(item){item.marketMentions=(item.marketMentions||0)+1;item.marketActivity=Math.max(item.marketActivity||0,Number(r.activity)||0);}
+  }
+ }
  const now=Date.now()/1000;
  return [...map.values()].filter(x=>{
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
-   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=15;
-   x.signalType=(hnConfirmed||crossSource)?'Mehrfachsignal':'Frühsignal';
-   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:crossSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
-   return (hnConfirmed||crossSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=30;
+   const marketCrossSource=x.marketMentions>=1&&x.sourceFamilies.size>=2;
+   const multiSource=crossSource||marketCrossSource;
+   x.signalType=(hnConfirmed||multiSource)?'Mehrfachsignal':'Frühsignal';
+   x.signalReason=hnConfirmed?`Mehrfachsignal: ${x.hnMentions} HN-Beiträge`:multiSource?`Mehrfachsignal: ${[...x.sources].join(' + ')}`:strongLaunch?'Frühsignal: einzelner Show-HN-Launch mit Resonanz':strongRepo?'Frühsignal: junges GitHub-Repository mit Sternen':'Noch schwaches Signal';
+   return (hnConfirmed||multiSource||strongLaunch||strongRepo)&&!isGenericTerm(x.term)&&!knownBrands.has(normalizeTerm(x.term))&&!badWords.has(normalizeTerm(x.term));
  }).map(x=>{
    const ageDays=Math.max(0,(now-x.latest)/86400);
    // Bounded 0–100 score: engagement helps, but recency cannot overwhelm all other evidence.
-   const sourcePoints=x.sourceFamilies.size>=2?32:0;
-   const repetitionPoints=Math.min(24,Math.max(0,x.hnMentions-1)*12);
+   const sourcePoints=Math.min(36,Math.max(0,x.sourceFamilies.size-1)*14);
+   const repetitionPoints=Math.min(18,Math.max(0,x.hnMentions-1)*9);
    const hnPoints=Math.min(18,Math.log1p(x.bestScore)*5);
    const commentPoints=Math.min(14,Math.log1p(x.bestComments)*4);
    const starPoints=Math.min(16,Math.log1p(x.stars)*3.7);
-   const recencyPoints=16*Math.exp(-ageDays/5);
-   const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
-   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.stars<25)?12:0;
-   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
+   const marketPoints=Math.min(12,Math.log1p(x.marketActivity||0)*2.2);
+   const recencyPoints=14*Math.exp(-ageDays/5);
+   const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.marketMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
+   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.marketMentions===0&&x.stars<30)?18:0;
+   x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+marketPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
    x.term=String(x.term).replace(/[^a-zA-Z0-9]/g,'');
    x.sourceLabel=[...x.sources].join(' + ');
    x.confirmation=x.signalReason;
    x.bestStory=x.stories.slice().sort((a,b)=>(b.score+b.comments)-(a.score+a.comments))[0]||null;
    return x;
  }).sort((a,b)=>{
-   const tier=x=>x.sourceFamilies.size>=2?3:(x.hnMentions>=2?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=25?1:0));
+   const tier=x=>x.sourceFamilies.size>=2?3:(x.hnMentions>=2?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=30?1:0));
    return tier(b)-tier(a)||b.trendScore-a.trendScore||b.sources.size-a.sources.size||b.mentions-a.mentions||(Number(b.newSourceMentions)||0)-(Number(a.newSourceMentions)||0);
  }).slice(0,60);
 }
@@ -895,7 +919,9 @@ async function run(){
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
    const githubEligibleCount=githubRepos.filter(r=>looksLikeName(String(r.name||'').replace(/[-_]+/g,' ').trim())&&Number(r.stargazers_count||0)>=8).length;
    trendTerms=findTerms(storyList,githubRepos);
-   try{await collectShadowMarketEvidence(trendTerms)}catch(shadowError){appendStatus('Ergänzende Shadow-Quellen konnten nicht vollständig gestartet werden: '+(shadowError?.message||String(shadowError))+'. Die normale Suche läuft weiter.')}
+   try{await collectShadowMarketEvidence(trendTerms)}catch(shadowError){appendStatus('Ergänzende Marktquellen konnten nicht vollständig gestartet werden: '+(shadowError?.message||String(shadowError))+'. Die normale Suche läuft weiter.')}
+   // Rebuild the trend pool with independent market-source evidence before generating domains.
+   trendTerms=findTerms(storyList,githubRepos,shadowEvidence);
    const githubSignals=trendTerms.filter(t=>t.githubMentions>0).length;
    const algoliaSignals=trendTerms.filter(t=>t.sources.has('Hacker News Search')).length;
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
@@ -1382,7 +1408,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.32</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.33</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
@@ -1398,5 +1424,5 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 @media(max-width:620px) and (orientation:landscape){.status{height:6.2rem;max-height:6.2rem}}
 @media(min-width:621px){.status{height:6.5rem;max-height:6.5rem}}
 </style>
-<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.32</div>Beta 98.32: aktive Marktbeobachtung, vollständigerer Domain-Prüfumfang und erweiterte Auswahl bis 120 · Sprachversionen und CSV-Export unverändert · Master V98 bleibt unverändert</div>
+<div class="version-label"><div class="footer-brand">DotComScouts Beta 98.33</div>Beta 98.33: unabhängige Marktquellen fließen nach Qualitätsfilter in Trends und Score ein · Ein-Repository-Frühsignale strenger gefiltert · Sprachversionen, CSV und Verfügbarkeitsprüfung erhalten</div>
 </body></html>
