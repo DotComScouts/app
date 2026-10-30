@@ -570,13 +570,13 @@ function drawShadowMarketPanel(summary=shadowMarketSummary){
  $('marketSourceLabel').textContent=L.source;$('marketRecordLabel').textContent=L.records;$('marketProblemLabel').textContent=L.problems;$('marketDemandLabel').textContent=L.demand;$('marketFindingsTitle').textContent=L.findings;$('marketRelevantNote').textContent=L.relevant;$('marketDisclaimer').textContent=L.disclaimer;
  if(!summary){$('marketSourceN').textContent='–';$('marketRecordN').textContent='–';$('marketProblemN').textContent='–';$('marketDemandN').textContent='–';$('marketSourceGrid').innerHTML='<div class="market-evidence-empty">'+esc(L.initial)+'</div>';$('marketEvidenceList').innerHTML='<div class="market-evidence-empty">'+esc(L.noData)+'</div>';return}
  const records=summary.records||[],sources=summary.sourceCounts||[];
- const count=category=>records.filter(x=>x.category===category).length;
+ const count=category=>records.filter(x=>x.category===category&&(x.relevance||0)>=50).length;
  $('marketSourceN').textContent=sources.filter(x=>x.status==='fulfilled'&&x.queryErrorCount===0).length+'/'+sources.length;
  $('marketRecordN').textContent=String(records.length);
  $('marketProblemN').textContent=String(count('problem'));
  $('marketDemandN').textContent=String(count('demand'));
  $('marketSourceGrid').innerHTML=sources.map(s=>{const state=s.status!=='fulfilled'?L.failed:s.queryErrorCount?L.partial:L.ok;const n=s.count==null?'–':s.count;return '<div class="market-source"><strong>'+esc(s.source)+'</strong><span>'+esc(state)+' · '+n+' '+(currentLang==='en'?'hits':currentLang==='es'?'resultados':currentLang==='fr'?'résultats':'Treffer')+(s.queryErrorCount?' · '+s.queryErrorCount+' '+(currentLang==='en'?'errors':currentLang==='es'?'errores':currentLang==='fr'?'erreurs':'Fehler'):'')+'</span></div>'}).join('');
- const top=[...records].sort((a,b)=>(b.relevance||0)-(a.relevance||0)||(b.activity||0)-(a.activity||0)).slice(0,12);
+ const top=records.filter(x=>(x.relevance||0)>=50).sort((a,b)=>(b.relevance||0)-(a.relevance||0)||(b.activity||0)-(a.activity||0)).slice(0,12);
  $('marketEvidenceList').innerHTML=top.length?top.map(x=>{const category=L.category[x.category]||x.category||'—';const meta=[x.source,x.author||'',x.observedAt?new Date(x.observedAt).toLocaleDateString(currentLang):'',(x.relevance||0)+'% '+(currentLang==='en'?'relevance':currentLang==='es'?'relevancia':currentLang==='fr'?'pertinence':'Relevanz'),x.activity?((currentLang==='en'?'engagement ':currentLang==='es'?'interacciones ':currentLang==='fr'?'interactions ':'Resonanz ')+x.activity):''].filter(Boolean).join(' · ');return '<article class="market-evidence-item"><span class="market-category">'+esc(category)+'</span><h3>'+(x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+esc(x.title)+'</a>':esc(x.title))+'</h3><div class="meta">'+esc(meta)+'</div></article>'}).join(''):'<div class="market-evidence-empty">'+esc(L.empty)+'</div>';
 }
 
