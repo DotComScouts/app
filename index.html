@@ -941,7 +941,7 @@ async function run(){
    const algoliaCount=algoliaUniqueCount;
    const algoliaOverlap=storyList.filter(s=>(s._sources||[]).includes('Hacker News Search')&&(s._sources||[]).includes('Hacker News')).length;
    const newGitHubCount=githubRepos.filter(r=>r.html_url&&!seenSources.has(r.html_url)).length;
-   const githubEligibleCount=githubRepos.filter(r=>looksLikeName(String(r.name||'').replace(/[-_]+/g,' ').trim())&&Number(r.stargazers_count||0)>=8).length;
+   const githubEligibleCount=githubRepos.filter(r=>{const raw=String(r.name||'').replace(/[-_]+/g,' ').trim(),stars=Number(r.stargazers_count||0),forks=Number(r.forks_count||0),age=(Date.now()-Date.parse(r.created_at||''))/86400000,n=normalizeTerm(raw);return Number.isFinite(age)&&age>=0&&age<=30&&looksLikeName(raw)&&(stars>=25||(stars>=15&&forks>=3)||storyList.some(st=>candidatePhrases(st).some(c=>normalizeTerm(c.term)===n)));}).length;
    trendTerms=findTerms(storyList,githubRepos);
    try{await collectShadowMarketEvidence(trendTerms)}catch(shadowError){appendStatus('Ergänzende Marktquellen konnten nicht vollständig gestartet werden: '+(shadowError?.message||String(shadowError))+'. Die normale Suche läuft weiter.')}
    // Rebuild the trend pool with independent market-source evidence before generating domains.
