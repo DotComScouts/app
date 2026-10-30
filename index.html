@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.38: Beta 98.37 candidate improvements plus bounded source requests to prevent indefinite loading; four languages preserved -->
+<!-- DotComScouts Beta 98.39: Beta 98.37 candidate improvements plus bounded source requests to prevent indefinite loading; four languages preserved -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -299,7 +299,7 @@ function exportSourceDiagnostics(){
  downloadCsv(rows,'DotComScouts-source-diagnostics.csv');
 }
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
-function downloadCsv(rows,filename){const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function downloadCsv(rows,filename){const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
 
 const stopWords=new Set('about above after again against all also among another any are around article articles based because been before being below between both build builds built business businesses can could data day days developer developers does doing down each early even every first from future get getting give gives going good great hacker hackers has have here how into just keep last latest like link links live made make many market may more most much must new news next not now number only open other our over people per post posts product products project projects read real really recent release releases report research right same say says security should show since some something start starts story stories such tech technology than that their them then there these they thing things this those through time today top trend trends two under up use used using very via want was way well were what when where which while who why will with work working world would year years you your'.split(/\s+/));
 const generic=new Set('ai api app apps browser browsers model models open source opensource software tool tools platform platforms system systems agent agents workflow workflows code coding developer developers data cloud server servers startup startups game games gaming voice search engine automation automate digital online web mobile computer computers network networks security privacy identity battery batteries energy solar finance fintech crypto token tokens bitcoin blockchain payment payments pay sales sale lead leads team teams care health legal law learn learning education write writing image video media content creator creators plugin plugins extension extensions build building run running test testing guide how make use best fast free small super efficient native self hosted selfhosted local llm llms assistant assistants company companies launch launches launched release releases released update updates announcement announces introducing introduction official funding raised raises raising million billion series seed venture capital founder founders benchmark benchmarks performance results review reviews comparison vs versus why what when where how who all most some many every first latest today future world years year day days work jobs job market labor labour replacement replacing intelligence intelligent artificial'.split(/\s+/));
@@ -1446,7 +1446,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.38</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.39</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
