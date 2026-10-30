@@ -20,11 +20,11 @@ test('normal trend run invokes the five additional sources in shadow mode', () =
 test('shadow-source failures are isolated and do not abort the ordinary search', () => {
   assert.match(html, /Promise\.allSettled\(jobs\)/);
   assert.match(html, /catch\(shadowError\).*Die normale Suche läuft weiter/s);
-  assert.match(html, /const sourceJobs=\\[/);
+  assert.ok(html.includes('const sourceJobs=['), 'source jobs are declared');
   for (const source of ['Hugging Face','npm Registry','Stack Exchange','DEV Community','Bluesky']) {
     assert.ok(html.includes("['" + source + "',async query=>"), 'missing shadow source job: ' + source);
   }
-  assert.match(html, /runSource\\('Shadow · '\\+name/);
+  assert.ok(html.includes("runSource('Shadow · '+name"), 'each source uses the shared isolated runner');
 });
 
 test('shadow evidence does not directly alter ranking or domain-check results', () => {
