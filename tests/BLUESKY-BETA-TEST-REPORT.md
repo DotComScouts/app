@@ -71,7 +71,7 @@ Ein Suchwunsch ist kein bestätigter Fehler. Downloads, Popularität, Likes und 
 
 ## Regressionstests
 
-Die deterministische Node.js-Suite umfasst jetzt **74 Tests: 74 bestanden, 0 fehlgeschlagen**. Sie prüft:
+Die deterministische Node.js-Suite umfasst jetzt **75 Tests: 75 bestanden, 0 fehlgeschlagen**. Sie prüft:
 - API-Fehler, leere und fehlerhafte Antworten sowie Wiederherstellung der Bedienelemente
 - Trennung von Problem, Nachfrage, Produktinventar, Veröffentlichung, Werbung und Diskussion
 - englische, deutsche und spanische Testbeispiele
@@ -147,6 +147,6 @@ Die Stichprobe ist klein, technisch eng umrissen und durch GitHub-Issue-Suche se
 
 - Problem-Erkennung ergänzt um reale Formulierungen wie „timed out“, „hangs indefinitely“, „not enforced“ und „slow to respond“.
 - Ein neues Signal featureRequest trennt explizite Funktionswünsche von allgemeiner Lösungssuche. Feature-Wünsche werden **nicht** automatisch als Nachfrage oder Kaufabsicht gezählt.
-- Sechs reproduzierbare Realwelt-Testfälle wurden in tests/real-world-evidence.test.js aufgenommen und in die CI-Suite integriert.
+- Sechs reproduzierbare Realwelt-Testfälle sowie ein Negationstest für verneinte Feature-Wünsche wurden in tests/real-world-evidence.test.js aufgenommen und in die CI-Suite integriert.
 
-Aktueller CI-Lauf: **74/74 deterministische Tests bestanden**; Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich: https://github.com/DotComScouts/app/actions/runs/41027367155
+Aktueller CI-Lauf: **75/75 deterministische Tests bestanden**; Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich: https://github.com/DotComScouts/app/actions/runs/41027547157
