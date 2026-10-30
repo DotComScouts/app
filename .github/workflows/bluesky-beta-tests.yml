@@ -62,11 +62,9 @@ jobs:
         run: node --test tests/source-api-smoke.test.js
 
   bluesky-browser-smoke:
-    # Diagnostic only: checks the deployed GitHub Pages UI and CORS path without blocking deterministic tests.
+    # Diagnostic only: exercises the current beta HTML locally against public APIs.
     continue-on-error: true
     runs-on: ubuntu-latest
-    env:
-      DOTCOMSCOUTS_TEST_URL: https://dotcomscouts.github.io/app/
     steps:
       - name: Check out beta branch
         uses: actions/checkout@v4
@@ -78,5 +76,5 @@ jobs:
         run: npm install --no-save --no-package-lock playwright@1.56.0
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
-      - name: Test deployed panels and normal-flow shadow integration in Chromium
+      - name: Test beta panels and normal-flow shadow integration in Chromium
         run: node tests/bluesky-browser-smoke.cjs
