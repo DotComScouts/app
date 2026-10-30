@@ -659,24 +659,13 @@ function trendVariants(term){
  // Compact source-derived variants are especially important for short or coined trend names
  // (e.g. LYNX): ordinary long suffixes often produce no candidates within the selected length.
  // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
- const compactRoots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ const usableRoot=x=>/^[a-z]{3,}$/.test(x)&&/[aeiou]/.test(x)&&!/[bcdfghjklmnpqrstvwxyz]{3}/.test(x);
+ const compactRoots=[...new Set((parts.length>=2?parts:[full,...parts]).filter(usableRoot))];
  const compactEndings=['io','ai','ly','ify','lab','go'];
  for(const root of compactRoots){
   for(const ending of compactEndings){
    const n=root+ending;
    if(n.length>=min&&n.length<=max)add(n,84,root.slice(0,Math.min(3,root.length)));
-  }
- }
- // For multi-part names, reverse compact blends can retain more of the original idea
- // while still fitting short .com names.
- if(parts.length>=2){
-  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=2&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
-  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
-   if(i===j)continue;
-   const a=meaningful[i],b=meaningful[j];
-   for(const n of [a+b.slice(0,3),a.slice(0,Math.min(4,a.length))+b.slice(-Math.min(3,b.length)),b+a.slice(0,Math.min(3,a.length))]){
-    if(n.length>=min&&n.length<=max)add(n,82,a.slice(0,Math.min(3,a.length)));
-   }
   }
  }
  // Short-domain fallback: when the selected maximum is 5 characters, normal root+suffix
@@ -700,21 +689,10 @@ function trendVariants(term){
    }
   }
  }
- // Prefer source-derived blends before generic root+suffix patterns. These keep a
- // recognizable link to the product/topic while creating more distinctive candidates.
- if(parts.length>=2){
-  const meaningful=parts.filter(p=>/^[a-z]+$/.test(p)&&p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
-  for(let i=0;i<meaningful.length;i++)for(let j=0;j<meaningful.length;j++){
-   if(i===j)continue;
-   const a=meaningful[i],b=meaningful[j];
-   const blends=[a.slice(0,Math.min(4,a.length))+b.slice(Math.min(2,b.length)),a.slice(0,Math.min(3,a.length))+b.slice(-Math.min(3,b.length)),a.slice(0,Math.min(2,a.length))+b];
-   for(const blend of blends)add(blend,88,a.slice(0,2));
-  }
- }
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
  const suffixes=['forge','works','studio','scout','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit','wise','path'];
- const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ const roots=[...new Set((parts.length>=2?parts:[full,...parts]).filter(usableRoot))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
    // Longer suffixes remain available when the user selects a longer name range.
@@ -724,7 +702,7 @@ function trendVariants(term){
  // A few natural compounds can reverse the order when the source has a clear second word.
  // This avoids blindly attaching the same suffix to every product name.
  if(parts.length>=2){
-  const meaningful=parts.filter(p=>p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p));
+  const meaningful=parts.filter(usableRoot).filter(p=>!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p)&&!badWords.has(p));
   if(meaningful.length>=2){
    add(meaningful[meaningful.length-1]+meaningful[0],72,meaningful[meaningful.length-1]);
    for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
