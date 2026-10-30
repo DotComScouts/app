@@ -436,8 +436,8 @@ function classifyShadowEvidence(record){
  return 'other';
 }
 function normalizeShadowEvidence(records,query){
- const tokens=String(query||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').match(/[a-z0-9]{2,}/g)||[];
- const uniqueTokens=[...new Set(tokens)];
+ const tokenize=value=>[...new Set(String(value||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').match(/[a-z0-9]{2,}/g)||[])];
+ const uniqueTokens=tokenize(query);
  const seen=new Map(),out=[];
  const canonicalUrl=value=>{
   try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|ref|source)$/i.test(k))u.searchParams.delete(k);u.hostname=u.hostname.toLowerCase();return u.toString().replace(/\\/$/,'')}catch{return ''}
@@ -447,8 +447,10 @@ function normalizeShadowEvidence(records,query){
   if(!title)continue;
   const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
   const words=new Set(text.match(/[a-z0-9]{2,}/g)||[]);
-  const matched=uniqueTokens.filter(t=>words.has(t));
-  const relevance=uniqueTokens.length?Math.round(100*matched.length/uniqueTokens.length):0;
+  // Score against the exact query that produced this record, not the union of all candidate terms.
+  const recordTokens=tokenize(raw.query||query);
+  const matched=recordTokens.filter(t=>words.has(t));
+  const relevance=recordTokens.length?Math.round(100*matched.length/recordTokens.length):0;
   const url=canonicalUrl(raw.url);
   const key=url?'url:'+url:'text:'+text.replace(/\\s+/g,' ').trim();
   const record={...raw,title,description,url:raw.url||'',canonicalUrl:url,matchedTerms:matched,relevance,category:classifyShadowEvidence(raw),normalizedText:text.replace(/\\s+/g,' ').trim(),observedAt:Number.isFinite(Date.parse(raw.observedAt))?new Date(raw.observedAt).toISOString():null};
@@ -458,7 +460,7 @@ function normalizeShadowEvidence(records,query){
    existing.queries=[...new Set([...(existing.queries||[existing.query]).filter(Boolean),raw.query].filter(Boolean))];
    existing.authors=[...new Set([...(existing.authors||[existing.author]).filter(Boolean),raw.author].filter(Boolean))];
    existing.duplicateCount=(existing.duplicateCount||0)+1;
-   if(relevance>existing.relevance){existing.relevance=relevance;existing.matchedTerms=matched}
+   if(relevance>existing.relevance){existing.relevance=relevance;existing.matchedTerms=matched;existing.query=raw.query||existing.query}
    continue;
   }
   record.sources=[raw.source];record.queries=raw.query?[raw.query]:[];record.authors=raw.author?[raw.author]:[];record.duplicateCount=0;seen.set(key,record);out.push(record);
@@ -520,7 +522,13 @@ async function collectShadowMarketEvidence(terms){
  const authors=new Set(evidence.flatMap(x=>x.authors||[]).filter(Boolean));
  const duplicateCount=rawEvidence.length-evidence.length;
  const ok=sourceCounts.filter(x=>x.status==='fulfilled').length;
- const note='Shadow-Vergleich: '+ok+'/5 Quellen erfolgreich; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Begriffstreffer, '+authors.size+' identifizierbare Autoren. Kategorien: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Keine Auswirkung auf die reguläre Bewertung.';
+ const perSource=sourceJobs.map(([name])=>{
+  const items=evidence.filter(item=>(item.sources||[item.source]).includes(name));
+  const relevant=items.filter(item=>item.relevance>=50).length;
+  const cats=categories.filter(k=>items.some(item=>item.category===k)).map(k=>k+':'+items.filter(item=>item.category===k).length).join('/');
+  return name+' '+items.length+' eindeutig, '+relevant+' relevant'+(cats?' ['+cats+']':'');
+ });
+ const note='Shadow-Vergleich: '+ok+'/5 Quellen erfolgreich; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
  appendStatus(note);
  return {count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,note};
 }
