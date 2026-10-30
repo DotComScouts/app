@@ -424,90 +424,105 @@ async function fetchAlgoliaStories(){
 }
 // Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
 // Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
+function classifyShadowEvidence(record){
+ const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
+ const has=pattern=>pattern.test(text);
+ if(has(/\\b(webinar|register now|register here|save your seat|sponsored by|sponsored content|paid promotion|advertisement|paid partnership|book a demo|use code|limited time offer|jetzt anmelden|jetzt registrieren|kostenloses webinar|werbung|anuncio patrocinado|reg[ií]strate ahora|inscr[ií]bete ahora)\\b/))return 'promotion';
+ if(has(/\\b(crash(?:es|ed|ing)?|bug report|broken|error(?: message)?|fails? to connect|fails? when|does not work|doesn't work|not working|data loss|workaround|pain point|bottleneck|production issue|struggling with|cost reduction|token cost|latency problem|st[uü]rzt ab|funktioniert nicht|fehlermeldung|verbindungsfehler|datenverlust|problem bei|fehler bei|l[aä]sst sich nicht verbinden|no funciona|falla al conectar|error de conexi[oó]n|p[eé]rdida de datos)\\b/))return 'problem';
+ if(has(/\\b(looking for|need a tool|we need (?:a |an )?(?:tool|solution|way to)|seeking (?:a |an )?(?:tool|solution)|searching for|any recommendations|does anyone know|is there a tool|what can i use|what should we use|suche nach einer l[oö]sung|suche ein tool|kennt jemand ein tool|wir brauchen eine l[oö]sung|gibt es ein tool|busco una herramienta|necesito una soluci[oó]n|alguien conoce una herramienta)\\b/))return 'demand';
+ if(has(/\\b(we launched|launched a new|new open-source|new tool|new product|new framework|new library|now available|released|release notes|we built|i built|available on github|introducing|wir haben .* ver[oö]ffentlicht|neu ver[oö]ffentlicht|jetzt verf[uü]gbar|neues open-source-tool|ich habe .* entwickelt|wir ver[oö]ffentlichen|hemos lanzado|nueva herramienta|ya disponible|lanzamos)\\b/))return 'product';
+ if(has(/\\b(tutorial|how to|step-by-step|guide|walkthrough|getting started|beginner guide|anleitung|schritt f[uü]r schritt|einf[uü]hrung|gu[ií]a|tutorial paso a paso)\\b/))return 'tutorial';
+ if(has(/\\b(hot take|unpopular opinion|my opinion|i think|i feel|what do you think|thoughts\\?|meiner meinung nach|ich finde|was denkt ihr|opino que|que opinan)\\b/))return 'discussion';
+ return 'other';
+}
 function normalizeShadowEvidence(records,query){
- const tokens=String(query||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').match(/[a-z0-9]{2,}/g)||[];
+ const tokens=String(query||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').match(/[a-z0-9]{2,}/g)||[];
  const uniqueTokens=[...new Set(tokens)];
  const seen=new Map(),out=[];
  const canonicalUrl=value=>{
-  try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|ref|source)$/i.test(k))u.searchParams.delete(k);u.hostname=u.hostname.toLowerCase();return u.toString().replace(/\/$/,'')}catch{return ''}
+  try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_.+|fbclid|gclid|ref|source)$/i.test(k))u.searchParams.delete(k);u.hostname=u.hostname.toLowerCase();return u.toString().replace(/\\/$/,'')}catch{return ''}
  };
  for(const raw of records||[]){
   const title=String(raw.title||'').trim(),description=String(raw.description||'').trim();
   if(!title)continue;
-  const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
   const words=new Set(text.match(/[a-z0-9]{2,}/g)||[]);
   const matched=uniqueTokens.filter(t=>words.has(t));
   const relevance=uniqueTokens.length?Math.round(100*matched.length/uniqueTokens.length):0;
   const url=canonicalUrl(raw.url);
-  const key=url?'url:'+url:'text:'+text.replace(/\s+/g,' ').trim();
-  const record={...raw,title,description,url:raw.url||'',canonicalUrl:url,matchedTerms:matched,relevance,normalizedText:text.replace(/\s+/g,' ').trim(),observedAt:Number.isFinite(Date.parse(raw.observedAt))?new Date(raw.observedAt).toISOString():null};
+  const key=url?'url:'+url:'text:'+text.replace(/\\s+/g,' ').trim();
+  const record={...raw,title,description,url:raw.url||'',canonicalUrl:url,matchedTerms:matched,relevance,category:classifyShadowEvidence(raw),normalizedText:text.replace(/\\s+/g,' ').trim(),observedAt:Number.isFinite(Date.parse(raw.observedAt))?new Date(raw.observedAt).toISOString():null};
   if(seen.has(key)){
    const existing=seen.get(key);
    existing.sources=[...new Set([...(existing.sources||[existing.source]),raw.source])];
+   existing.queries=[...new Set([...(existing.queries||[existing.query]).filter(Boolean),raw.query].filter(Boolean))];
+   existing.authors=[...new Set([...(existing.authors||[existing.author]).filter(Boolean),raw.author].filter(Boolean))];
    existing.duplicateCount=(existing.duplicateCount||0)+1;
    if(relevance>existing.relevance){existing.relevance=relevance;existing.matchedTerms=matched}
    continue;
   }
-  record.sources=[raw.source];record.duplicateCount=0;seen.set(key,record);out.push(record);
+  record.sources=[raw.source];record.queries=raw.query?[raw.query]:[];record.authors=raw.author?[raw.author]:[];record.duplicateCount=0;seen.set(key,record);out.push(record);
  }
  return out.sort((a,b)=>b.relevance-a.relevance);
 }
 async function collectShadowMarketEvidence(terms){
  const candidates=[...new Set((terms||[]).map(x=>String(x.term||'').trim()).filter(x=>x.length>=3))].slice(0,3);
  if(!candidates.length)return {count:0,sourceCounts:[],note:'Keine geeigneten Trendbegriffe für ergänzende Quellen.'};
- const query=candidates[0];
  const safeJson=async(url,headers={Accept:'application/json'})=>{
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
-  try{
-   const response=await fetch(url,{headers,signal:controller.signal});
-   if(!response.ok)throw new Error('HTTP '+response.status);
-   return await response.json();
-  }catch(error){
-   if(error?.name==='AbortError')throw new Error('Zeitüberschreitung nach 12 Sekunden');
-   throw error;
-  }finally{clearTimeout(timer);}
+  try{const response=await fetch(url,{headers,signal:controller.signal});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json()}
+  catch(error){if(error?.name==='AbortError')throw new Error('Zeitüberschreitung nach 12 Sekunden');throw error}
+  finally{clearTimeout(timer)}
  };
- const jobs=[
-  runSource('Shadow · Hugging Face',async()=>{
+ const sourceJobs=[
+  ['Hugging Face',async query=>{
    const data=await safeJson('https://huggingface.co/api/models?'+new URLSearchParams({search:query,limit:'10',sort:'downloads',direction:'-1'}));
    if(!Array.isArray(data))throw new Error('Unerwartetes Antwortformat');
-   return data.map(x=>({source:'Hugging Face',title:x.id||x.modelId||'',url:x.id?'https://huggingface.co/'+x.id:'',observedAt:new Date().toISOString(),kind:'model',activity:Number(x.downloads)||0}));
-  }),
-  runSource('Shadow · npm Registry',async()=>{
+   return data.map(x=>({source:'Hugging Face',query,title:x.id||x.modelId||'',description:x.pipeline_tag||'',url:x.id?'https://huggingface.co/'+x.id:'',observedAt:x.lastModified||new Date().toISOString(),kind:'model',activity:Number(x.downloads)||0,author:x.id?.split('/')[0]||''}));
+  }],
+  ['npm Registry',async query=>{
    const data=await safeJson('https://registry.npmjs.org/-/v1/search?'+new URLSearchParams({text:query,size:'10'}));
    if(!Array.isArray(data.objects))throw new Error('Unerwartetes Antwortformat');
-   return data.objects.map(o=>o.package||{}).filter(x=>x.name).map(x=>({source:'npm Registry',title:x.name,url:x.links?.npm||'https://www.npmjs.com/package/'+encodeURIComponent(x.name),observedAt:x.date||new Date().toISOString(),kind:'package',activity:Number(x.score?.detail?.popularity)||0,description:x.description||''}));
-  }),
-  runSource('Shadow · Stack Exchange',async()=>{
-   const params=new URLSearchParams({site:'stackoverflow',q:query,sort:'creation',order:'desc',pagesize:'10',fromdate:String(Math.floor(Date.now()/1000-365*86400),)});
+   return data.objects.map(o=>o.package||{}).filter(x=>x.name).map(x=>({source:'npm Registry',query,title:x.name,url:x.links?.npm||'https://www.npmjs.com/package/'+encodeURIComponent(x.name),observedAt:x.date||new Date().toISOString(),kind:'package',activity:Number(x.score?.detail?.popularity)||0,description:x.description||'',author:x.publisher?.username||x.publisher?.email||''}));
+  }],
+  ['Stack Exchange',async query=>{
+   const params=new URLSearchParams({site:'stackoverflow',q:query,sort:'creation',order:'desc',pagesize:'10',fromdate:String(Math.floor(Date.now()/1000-365*86400))});
    const data=await safeJson('https://api.stackexchange.com/2.3/search/advanced?'+params);
    if(data.error_message)throw new Error(data.error_message);
-   return (data.items||[]).map(x=>({source:'Stack Exchange',title:x.title||'',url:x.link||'',observedAt:x.creation_date?new Date(x.creation_date*1000).toISOString():new Date().toISOString(),kind:'question',activity:Number(x.score)||0,answers:Number(x.answer_count)||0}));
-  }),
-  runSource('Shadow · DEV Community',async()=>{
+   return (data.items||[]).map(x=>({source:'Stack Exchange',query,title:x.title||'',url:x.link||'',observedAt:x.creation_date?new Date(x.creation_date*1000).toISOString():new Date().toISOString(),kind:'question',activity:Number(x.score)||0,answers:Number(x.answer_count)||0,author:x.owner?.user_id?String(x.owner.user_id):x.owner?.display_name||''}));
+  }],
+  ['DEV Community',async query=>{
    const tag=query.toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,30);
    if(!tag)throw new Error('Kein gültiger Tag aus dem Trendbegriff ableitbar');
    const data=await safeJson('https://dev.to/api/articles?'+new URLSearchParams({tag,per_page:'10',top:'30'}));
    if(!Array.isArray(data))throw new Error('Unerwartetes Antwortformat');
-   return data.map(x=>({source:'DEV Community',title:x.title||'',url:x.url||'',observedAt:x.published_at||new Date().toISOString(),kind:'article',activity:Number(x.public_reactions_count)||0,comments:Number(x.comments_count)||0,description:x.description||''}));
-  }),
-  runSource('Shadow · Bluesky',async()=>{
+   return data.map(x=>({source:'DEV Community',query,title:x.title||'',url:x.url||'',observedAt:x.published_at||new Date().toISOString(),kind:'article',activity:Number(x.public_reactions_count)||0,comments:Number(x.comments_count)||0,description:x.description||'',author:x.user?.username||''}));
+  }],
+  ['Bluesky',async query=>{
    const data=await safeJson('https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?'+new URLSearchParams({q:query,sort:'latest',limit:'10'}));
    if(!Array.isArray(data.posts))throw new Error('Unerwartetes Antwortformat');
-   return data.posts.map(x=>({source:'Bluesky',title:x.record?.text||'',url:'https://bsky.app/profile/'+(x.author?.handle||'')+'/post/'+(x.uri||'').split('/').pop(),observedAt:x.record?.createdAt||new Date().toISOString(),kind:'post',activity:(Number(x.likeCount)||0)+(Number(x.repostCount)||0)+(Number(x.replyCount)||0),author:x.author?.handle||''}));
-  })
+   return data.posts.map(x=>({source:'Bluesky',query,title:x.record?.text||'',url:'https://bsky.app/profile/'+(x.author?.handle||'')+'/post/'+(x.uri||'').split('/').pop(),observedAt:x.record?.createdAt||new Date().toISOString(),kind:'post',activity:(Number(x.likeCount)||0)+(Number(x.repostCount)||0)+(Number(x.replyCount)||0),author:x.author?.handle||''}));
+  }]
  ];
+ const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Shadow · '+name,async()=>{
+  const all=[];
+  for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){appendStatus('Shadow · '+name+' · '+query+': '+(error?.message||String(error))) }}
+  return all;
+ }));
  const settled=await Promise.allSettled(jobs);
- const sourceCounts=settled.map((r,i)=>({source:['Hugging Face','npm Registry','Stack Exchange','DEV Community','Bluesky'][i],count:r.status==='fulfilled'?r.value.length:null,status:r.status,error:r.status==='rejected'?(r.reason?.message||String(r.reason)) : ''}));
+ const sourceCounts=settled.map((r,i)=>({source:sourceJobs[i][0],count:r.status==='fulfilled'?r.value.length:null,status:r.status,error:r.status==='rejected'?(r.reason?.message||String(r.reason)):''}));
  const rawEvidence=settled.flatMap(r=>r.status==='fulfilled'?r.value:[]);
- const evidence=normalizeShadowEvidence(rawEvidence,query);
+ const evidence=normalizeShadowEvidence(rawEvidence,candidates.join(' '));
  shadowEvidence=evidence;
- const ok=sourceCounts.filter(x=>x.status==='fulfilled').length;
- const duplicateCount=rawEvidence.length-evidence.length;
+ const categories=['problem','demand','product','tutorial','promotion','discussion','other'];
+ const categoryCounts=Object.fromEntries(categories.map(category=>[category,evidence.filter(x=>x.category===category).length]));
  const relevantCount=evidence.filter(x=>x.relevance>=50).length;
- const note='Shadow-Quellen: '+ok+'/5 erfolgreich, '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Begriffstreffer; Suchbegriff: '+query+'. Ergebnisse verändern die Bewertung noch nicht.';
+ const authors=new Set(evidence.flatMap(x=>x.authors||[]).filter(Boolean));
+ const duplicateCount=rawEvidence.length-evidence.length;
+ const ok=sourceCounts.filter(x=>x.status==='fulfilled').length;
+ const note='Shadow-Vergleich: '+ok+'/5 Quellen erfolgreich; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Begriffstreffer, '+authors.size+' identifizierbare Autoren. Kategorien: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Keine Auswirkung auf die reguläre Bewertung.';
  appendStatus(note);
- return {count:evidence.length,sourceCounts,note};
+ return {count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,note};
 }
 function getLengthRange(){const v=$('length').value;return [3,v==='max5'?5:v==='max10'?10:8]}
 function fits(n){const [a,b]=getLengthRange();return n.length>=a&&n.length<=b}
