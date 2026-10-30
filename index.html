@@ -435,7 +435,7 @@ function normalizeShadowEvidence(records,query){
   const title=String(raw.title||'').trim(),description=String(raw.description||'').trim();
   if(!title)continue;
   const text=(title+' '+description).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
-  const words=new Set(text.match(/[a-z0-9]{3,}/g)||[]);
+  const words=new Set(text.match(/[a-z0-9]{2,}/g)||[]);
   const matched=uniqueTokens.filter(t=>words.has(t));
   const relevance=uniqueTokens.length?Math.round(100*matched.length/uniqueTokens.length):0;
   const url=canonicalUrl(raw.url);
