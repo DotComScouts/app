@@ -347,16 +347,6 @@ function addEvidence(map,raw,source,score,comments,url,title,time,kind){
  x.latest=Math.max(x.latest,Number(time)||0);
  if(x.stories.length<10)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
 }
- const evidenceSource=source||'Hacker News';
- const isHN=evidenceSource==='Hacker News'||evidenceSource==='Hacker News Search';
- const term=normalizeTerm(raw);if(!term||term.length<4||term.length>24||isGenericTerm(raw))return;
- if(!map.has(term))map.set(term,{term:raw,normalized:term,mentions:0,hnMentions:0,githubMentions:0,score:0,comments:0,stars:0,stories:[],sources:new Set(),sourceFamilies:new Set(),latest:0,kinds:new Set(),bestScore:0,bestComments:0});
- const x=map.get(term);x.mentions++;x.sources.add(evidenceSource);x.sourceFamilies.add(isHN?'Hacker News':evidenceSource);x.kinds.add(kind||'named');if(url&&!seenSources.has(url))x.newSourceMentions=(x.newSourceMentions||0)+1;
- if(isHN){x.hnMentions++;x.score+=Math.max(0,Number(score)||0);x.comments+=Math.max(0,Number(comments)||0);x.bestScore=Math.max(x.bestScore,Number(score)||0);x.bestComments=Math.max(x.bestComments,Number(comments)||0)}
- if(evidenceSource==='GitHub'){x.githubMentions++;x.stars=Math.max(x.stars,Number(score)||0)}
- x.latest=Math.max(x.latest,Number(time)||0);
- if(x.stories.length<10)x.stories.push({source:evidenceSource,title,url,id:null,score:Number(score)||0,comments:Number(comments)||0});
-}
 function findTerms(stories,githubRepos=[],supplementaryRecords=[]){
  const map=new Map();
  for(const s of stories){
