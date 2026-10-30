@@ -461,8 +461,8 @@ async function fetchAlgoliaStories(){
  if(!successfulQueries)throw Error('Alle Algolia-Abfragen fehlgeschlagen'+(queryErrors.length?': '+queryErrors.join('; '):''));
  const result=[...out.values()];result._meta={successfulQueries,totalQueries:queries.length,queryErrors};return result;
 }
-// Beta 98.28: collect the five new public sources during the ordinary trend run, but keep them in shadow mode.
-// Their evidence is normalized and logged; it does NOT change trend ranking or domain generation until comparison tests approve it.
+// Beta 98.32: collect the five additional public sources as active trend-discovery inputs.
+// Their records are normalized, quality-gated and merged into the shared trend candidate pool.
 let devCommunityFallbackLoaded=false;
 function classifyShadowEvidence(record){
  const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
@@ -610,7 +610,7 @@ async function collectShadowMarketEvidence(terms){
   const errors=queryErrors.filter(item=>item.source===name).length;
   return name+' '+rawCount+' roh/'+items.length+' eindeutig, '+relevant+' relevant'+(errors?', '+errors+' Abfragefehler':'')+(cats?' ['+cats+']':'');
  });
- const note='Aktive Zusatzquellen: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
+ const note='Aktive Zusatzquellen: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Qualifizierte Zusatzquellen-Signale fließen in TrendScore und Kandidatenauswahl ein.';
  appendStatus(note);
  const summary={count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,records:evidence,rawCount:rawEvidence.length,duplicateCount,successfulQueries,totalQueries:sourceJobs.length*candidates.length,queryErrorCount:queryErrors.length,note};shadowMarketSummary=summary;drawShadowMarketPanel(summary);return summary;
 }
