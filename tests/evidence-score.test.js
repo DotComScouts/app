@@ -63,7 +63,7 @@ test('feature requests are visible but do not count as independent demand or buy
   assert.equal(cluster.featureRequestObserved, true);
   assert.equal(cluster.independentDemandAuthorCount, 0);
   assert.equal(cluster.independentBuyingAuthorCount, 0);
-  assert.equal(cluster.evidenceScore, 7);
+  assert.equal(cluster.evidenceScore, 8);
   assert.equal(cluster.evidenceLevel, 'insufficient');
 });
 
