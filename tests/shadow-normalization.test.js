@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const start = html.indexOf('function normalizeShadowEvidence(');
 const end = html.indexOf('async function collectShadowMarketEvidence(', start);
 assert.ok(start >= 0 && end > start, 'normalizer function is present');
-const normalizeShadowEvidence = vm.runInNewContext('(' + html.slice(start, end).trim() + ')');
+const normalizeShadowEvidence = vm.runInNewContext('(' + html.slice(start, end).trim() + ')', { URL });
 
 test('shadow normalizer computes deterministic term-overlap relevance', () => {
   const result = normalizeShadowEvidence([
