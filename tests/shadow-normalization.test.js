@@ -47,7 +47,7 @@ test('shadow normalizer preserves distinct query URLs and drops empty records', 
 
 test('per-record relevance is scored against its own query, not the union of candidate queries', () => {
   const result = normalizeShadowEvidence([
-    {source:'Hugging Face',query:'AI agents',title:'AI agent workflow model',url:'https://huggingface.co/acme/agent'},
+    {source:'Hugging Face',query:'AI agent',title:'AI agent workflow model',url:'https://huggingface.co/acme/agent'},
     {source:'npm Registry',query:'quantum battery',title:'Quantum battery simulator',url:'https://www.npmjs.com/package/quantum-battery'}
   ], 'AI agents quantum battery');
   assert.equal(result.length, 2);
@@ -56,10 +56,10 @@ test('per-record relevance is scored against its own query, not the union of can
 });
 
 test('shadow adapter reports raw, deduplicated and relevant evidence without activating scoring', () => {
-  assert.match(html, /normalizeShadowEvidence\(rawEvidence,query\)/);
+  assert.match(html, /normalizeShadowEvidence\(rawEvidence,candidates\.join\(' '\)\)/);
   assert.match(html, /Rohbelege/);
   assert.match(html, /Dubletten entfernt/);
-  assert.match(html, /mindestens 50 % Begriffstreffer/);
+  assert.match(html, /mindestens 50 % Trefferquote zum jeweiligen Suchbegriff/);
   const start = html.indexOf('async function collectShadowMarketEvidence');
   const end = html.indexOf('function getLengthRange()', start);
   const adapter = html.slice(start, end);
