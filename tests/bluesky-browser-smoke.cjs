@@ -59,9 +59,9 @@ async function main() {
       timeout: 45000
     });
 
-    assert.ok((await page.locator('div.version-label').innerText()).includes('Beta 98.29'),
+    assert.ok((await page.locator('div.version-label').innerText()).includes('Beta 98.30'),
       'local beta fixture should serve Beta 98.29');
-    assert.ok((await page.locator('div.version-label').innerText()).includes('Shadow-Integration 98.29'),
+    assert.ok((await page.locator('div.version-label').innerText()).includes('zusammengeführte Marktbeobachtung'),
       'local beta fixture should advertise the normal-flow shadow integration');
 
     const coreStateBefore = {
@@ -85,9 +85,13 @@ async function main() {
     assert.equal(await page.locator('#domainProgress').innerText(), coreStateBefore.domainProgress,
       'experimental sources must not change core domain-availability progress');
 
-    // Exercise the ordinary search button against the local beta fixture. Stop as soon as the five
-    // shadow adapters finish so this smoke test does not run the full domain-availability loop.
-    await page.locator('#count').selectOption({ label: '40' });
+    // Source diagnostics are intentionally collapsed in the normal interface; open them for this test.
+    assert.equal(await page.locator('.source-diagnostics').getAttribute('open'), null,
+      'technical source diagnostics should be collapsed by default');
+    await page.locator('.source-diagnostics > summary').click();
+
+    // Exercise the ordinary search button and stop as soon as the five shadow adapters finish.
+    await page.locator('#count').selectOption({ label: '60' });
     await page.locator('#start').click();
     await page.waitForFunction(() => {
       const expected = ['Shadow · Hugging Face', 'Shadow · npm Registry', 'Shadow · Stack Exchange',
@@ -114,7 +118,7 @@ async function main() {
 
     assert.equal(pageErrors.length, 0,
       `uncaught browser errors: ${pageErrors.join('; ')}`);
-    console.log('Browser smoke test passed: all five shadow sources are consolidated in one visible panel, the standalone panels are hidden, and core domain/trend state remained unchanged.');
+    console.log('Browser smoke test passed: all five shadow sources are consolidated in one visible panel, per-source diagnostics are collapsed by default, standalone panels are hidden, and core domain/trend state remained unchanged.');
   } finally {
     if (browser) await browser.close();
     if (server) await new Promise(resolve => server.close(resolve));
