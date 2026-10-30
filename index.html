@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.34: broader qualified domain candidate pool, explicit candidate shortfall reporting, complete source progress labels and source list; four languages preserved -->
+<!-- DotComScouts Beta 98.37: exact requested domain count with seen-cache fallback, stronger trend diversity, capped variants, stricter GitHub qualification and source-diversity diagnostics; four languages preserved -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -363,8 +363,15 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
   if(!recognizable&&!strongDistinctive)continue;
   // Recent repositories with meaningful adoption can be useful product leads even
   // when their names are plain words rather than CamelCase or coined spellings.
-  if(stars<8)continue;
+  const forks=Number(r.forks_count||0);
+  const repoAgeDays=Math.max(0,(Date.now()-Date.parse(r.created_at||''))/86400000);
+  const establishedSignal=stars>=25||(stars>=15&&forks>=3);
+  const crossReferenced=stories.some(st=>candidatePhrases(st).some(c=>normalizeTerm(c.term)===normalized));
+  if(!establishedSignal&&!crossReferenced)continue;
+  if(!Number.isFinite(repoAgeDays)||repoAgeDays>30)continue;
+  if(!recognizable&&!strongDistinctive)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
+  const repoEvidence=map.get(normalized);if(repoEvidence)repoEvidence.githubForks=Math.max(repoEvidence.githubForks||0,forks);
  }
  // Independent market sources may corroborate a candidate or reveal a product name.
  // Only explicit product records with a strong query match are admitted; tutorials,
@@ -396,7 +403,7 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
    const hnConfirmed=x.hnMentions>=2 && (x.bestScore>=3||x.bestComments>=3);
    const crossSource=x.sourceFamilies.size>=2&&((x.hnMentions>=1&&(x.bestScore>=2||x.bestComments>=2||x.stars>=8))||(x.githubMentions>=1&&x.stars>=8));
    const strongLaunch=x.hnMentions===1&&x.kinds.has('launch')&&(x.bestScore>=8||x.bestComments>=8);
-   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&x.stars>=15;
+   const strongRepo=x.hnMentions===0&&x.githubMentions>=1&&(x.stars>=25||(x.stars>=15&&Number(x.githubForks||0)>=3));
    const marketCrossSource=x.marketMentions>=1&&x.sourceFamilies.size>=2;
    const multiSource=crossSource||marketCrossSource;
    x.signalType=(hnConfirmed||multiSource)?'Mehrfachsignal':'Frühsignal';
@@ -413,7 +420,7 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
    const marketPoints=Math.min(12,Math.log1p(x.marketActivity||0)*2.2);
    const recencyPoints=14*Math.exp(-ageDays/5);
    const loneLaunchPenalty=(x.hnMentions===1&&x.githubMentions===0&&x.marketMentions===0&&x.bestScore<15&&x.bestComments<10)?18:0;
-   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.marketMentions===0&&x.stars<30)?8:0;
+   const weakRepoPenalty=(x.hnMentions===0&&x.githubMentions===1&&x.marketMentions===0&&x.stars<40&&Number(x.githubForks||0)<5)?14:0;
    x.trendScore=Math.max(1,Math.min(100,Math.round(sourcePoints+repetitionPoints+hnPoints+commentPoints+starPoints+marketPoints+recencyPoints-loneLaunchPenalty-weakRepoPenalty)));
    x.term=String(x.term).replace(/[^a-zA-Z0-9]/g,'');
    x.sourceLabel=[...x.sources].join(' + ');
@@ -421,7 +428,7 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
    x.bestStory=x.stories.slice().sort((a,b)=>(b.score+b.comments)-(a.score+a.comments))[0]||null;
    return x;
  }).sort((a,b)=>{
-   const tier=x=>x.sourceFamilies.size>=2?3:(x.hnMentions>=2?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=30?1:0));
+   const tier=x=>x.sourceFamilies.size>=2?4:(x.hnMentions>=2?3:(x.marketMentions>=1?2:(x.bestScore>=15||x.bestComments>=10||x.stars>=40?1:0)));
    return tier(b)-tier(a)||b.trendScore-a.trendScore||b.sources.size-a.sources.size||b.mentions-a.mentions||(Number(b.newSourceMentions)||0)-(Number(a.newSourceMentions)||0);
  }).slice(0,60);
 }
@@ -818,36 +825,43 @@ function riskBadge(r){
 }
 
 function buildCandidates(){
- const count=Number($('count').value)||60, buckets=[], local=new Set();
- // Round-robin selection gives each distinct trend a place before taking another variant
- // from an already represented trend. No invented or trend-free names enter this pipeline.
+ const count=Number($('count').value)||60, buckets=[], local=new Set(), skipSeen=$('seenMode').value==='skip';
+ // Build the full pool first; the seen cache must never silently reduce the requested quota.
  const variants=trendTerms.slice().sort((a,b)=>{
-  const strength=x=>(x.sources?.size>=2?40:0)+(x.hnMentions>=2?25:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?10:0)+(Number(x.trendScore)||0);
+  const strength=x=>(x.sourceFamilies?.size>=2?55:0)+(x.hnMentions>=2?30:0)+(x.marketMentions>0?24:0)+(x.bestScore>=15?12:0)+(x.bestComments>=10?10:0)+(x.stars>=25?8:0)+(Number(x.trendScore)||0);
   return strength(b)-strength(a);
  });
  for(const term of variants){
   const original=normalizeTerm(term.term);
-  if(!original||!fitsOriginal(original)||!/^[a-z0-9]+$/.test(original)||local.has(original)||($('seenMode').value==='skip'&&seen.has(original)))continue;
+  if(!original||!fitsOriginal(original)||!/^[a-z0-9]+$/.test(original)||local.has(original))continue;
   const best=term.bestStory||term.stories[0]||{};
   const meta={trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
   const bucket=[];local.add(original);bucket.push({name:original,type:'Originaltrend',...meta,trendKey:original});
   const choices=trendVariants(term.term).map(x=>typeof x==='string'?x:x.name)
-   .filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n)&&!( $('seenMode').value==='skip'&&seen.has(n)));
-  for(const n of choices){local.add(n);bucket.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
+   .filter(n=>n&&n!==original&&fits(n)&&goodNameShape(n)&&!local.has(n));
+  // Keep no more than two alternatives per original trend. All original names
+  // are distributed before derived variants are considered.
+  for(const n of choices.slice(0,2)){local.add(n);bucket.push({name:n,type:'Trend-inspiriert',...meta,trendKey:original});}
   if(bucket.length)buckets.push(bucket);
  }
  const selected=[],selectedNames=new Set();
- for(let round=0;selected.length<count;round++){
-  let added=false;
-  for(const bucket of buckets){
-   const candidate=bucket[round];
-   if(!candidate||selectedNames.has(candidate.name))continue;
-   selected.push(candidate);selectedNames.add(candidate.name);added=true;
-   if(selected.length>=count)break;
+ let includeSeen=false;
+ const fill=()=>{
+  const rounds=Math.max(0,...buckets.map(bucket=>bucket.length));
+  for(let round=0;round<rounds&&selected.length<count;round++){
+   for(const bucket of buckets){
+    const candidate=bucket[round];
+    if(!candidate||selectedNames.has(candidate.name))continue;
+    if(skipSeen&&!includeSeen&&seen.has(candidate.name))continue;
+    selected.push(candidate);selectedNames.add(candidate.name);
+    if(selected.length>=count)break;
+   }
   }
-  if(!added)break;
- }
- return selected.filter(x=>fits(x.name)).slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
+ };
+ // First pass: unseen candidates only. Second pass: reuse cached names if needed.
+ fill();
+ if(selected.length<count&&skipSeen){includeSeen=true;fill();}
+ return selected.slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
 }
 function drawTrendCandidates(){
  const el=$('trendCandidates');if(!el)return;
@@ -935,11 +949,14 @@ async function run(){
    const githubSignals=trendTerms.filter(t=>t.githubMentions>0).length;
    const algoliaSignals=trendTerms.filter(t=>t.sources.has('Hacker News Search')).length;
    $('trendN').textContent=trendTerms.length;drawTrendCandidates();
+   const sourceMix=new Map();for(const t of trendTerms)for(const family of (t.sourceFamilies||new Set()))sourceMix.set(family,(sourceMix.get(family)||0)+1);
+   const sourceMixText=[...sourceMix.entries()].sort((a,b)=>b[1]-a[1]).map(([name,n])=>name+': '+n).join(' · ');
+   appendStatus('Quellenvielfalt: '+sourceMix.size+' unabhängige Quellenfamilien · '+sourceMixText);
    setStatus(st('step1done',{base:baseHNCount,alg:algoliaCount,sq:algoliaMeta.successfulQueries,tq:algoliaMeta.totalQueries,overlap:algoliaOverlap,as:algoliaSignals,repos:githubRepos.length,eligible:githubEligibleCount,gs:githubSignals,total:trendTerms.length})+(algoliaMeta.queryErrors?.length?' Algolia query errors: '+algoliaMeta.queryErrors.join(' | '):'')+hnNote+githubNote+algoliaNote);
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
   appendStatus(st('step2'));
-  const requestedCount=Number($('count').value)||60;candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?st('noCandidates'):st('noCandidatesOther'));if(candidates.length<requestedCount)appendStatus(st('candidateShortfall',{requested:requestedCount,actual:candidates.length}));
+  const requestedCount=Number($('count').value)||60;candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?st('noCandidates'):st('noCandidatesOther'));if(candidates.length<requestedCount)appendStatus(st('candidateShortfall',{requested:requestedCount,actual:candidates.length})+' Es fehlen eigenständige Kandidaten; es werden keine Dubletten künstlich erzeugt.');else if($('seenMode').value==='skip'){const fresh=candidates.filter(c=>!seen.has(c.name)).length;const reused=candidates.length-fresh;if(reused)appendStatus('Ziel erreicht: '+candidates.length+' Domains ('+fresh+' neue und '+reused+' bereits geprüfte Funde als Nachfüllung).');}
   appendStatus(st('candidate',candidates.length));updateDomainProgress(0,candidates.length,'running');
   let avail=0,delay=Number($('delay').value);let checked=0,successfulChecks=0;
   for(let i=0;i<candidates.length;i++){
@@ -1418,7 +1435,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.36</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.37</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
