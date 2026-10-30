@@ -60,9 +60,9 @@ async function main() {
     });
 
     assert.ok((await page.locator('div.version-label').innerText()).includes('Beta 98.28'),
-      'deployed test site should serve Beta 98.28');
+      'local beta fixture should serve Beta 98.28');
     assert.ok((await page.locator('div.version-label').innerText()).includes('Shadow-Integration 98.28'),
-      'deployed test site should advertise the normal-flow shadow integration');
+      'local beta fixture should advertise the normal-flow shadow integration');
 
     const coreStateBefore = {
       results: await page.locator('#results').innerText(),
@@ -129,7 +129,7 @@ async function main() {
     assert.equal(await page.locator('#domainProgress').innerText(), coreStateBefore.domainProgress,
       'experimental sources must not change core domain-availability progress');
 
-    // Exercise the ordinary search button against the deployed origin. Stop as soon as the five
+    // Exercise the ordinary search button against the local beta fixture. Stop as soon as the five
     // shadow adapters finish so this smoke test does not run the full domain-availability loop.
     await page.locator('#count').selectOption({ label: '40' });
     await page.locator('#start').click();
@@ -144,8 +144,12 @@ async function main() {
         return status !== 'Läuft' && status !== 'Running';
       });
     }, { timeout: 90000 });
-    await page.locator('#stop').click();
+    const statusLog = await page.locator('#status').innerText();
+    const comparisonLine = statusLog.split('\\n').find(line => line.includes('Shadow-Vergleich:'));
+    assert.ok(comparisonLine, 'normal trend flow should emit a source comparison summary');
+    console.log('SHADOW COMPARISON RESULT: ' + comparisonLine);
     const shadowRows = await page.locator('#sourceRows').innerText();
+    await page.locator('#stop').click();
     for (const name of ['Shadow · Hugging Face', 'Shadow · npm Registry', 'Shadow · Stack Exchange',
       'Shadow · DEV Community', 'Shadow · Bluesky']) {
       assert.ok(shadowRows.includes(name), 'normal trend run should invoke ' + name);
