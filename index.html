@@ -646,8 +646,8 @@ function trendVariants(term){
  // (e.g. LYNX): ordinary long suffixes often produce no candidates within the selected length.
  // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
  const compactRoots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
- const compactEndings=['io','ai','ora','era','iva','ova','ena','aro','ivo','ify','ly','app','lab','go','one'];
- for(const root of compactRoots){
+ const compactEndings=['io','ify','lab','one'];
+ for(const root of compactRoots.filter(x=>x.length>=4)){
   for(const ending of compactEndings){
    const n=root+ending;
    if(n.length>=min&&n.length<=max)add(n,84,root.slice(0,Math.min(3,root.length)));
@@ -700,7 +700,7 @@ function trendVariants(term){
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
  const suffixes=['forge','works','studio','scout','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit','wise','path','nova','wave','peak','loop','dash','byte','mesh','mint','beam','bloom','grove','haven','vector','nexus','vertex','rocket','beacon','bridge','kernel','factor','venture'];
- const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
+ const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=4))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
    // Longer suffixes remain available when the user selects a longer name range.
