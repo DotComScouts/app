@@ -150,3 +150,14 @@ Die Stichprobe ist klein, technisch eng umrissen und durch GitHub-Issue-Suche se
 - Sechs reproduzierbare Realwelt-Testfälle sowie ein Negationstest für verneinte Feature-Wünsche wurden in tests/real-world-evidence.test.js aufgenommen und in die CI-Suite integriert.
 
 Aktueller CI-Lauf: **75/75 deterministische Tests bestanden**; Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich: https://github.com/DotComScouts/app/actions/runs/41027547157
+
+
+## Aktueller Stand: Evidence-Strength-Scoring – 30.10.2026
+
+Die Klassifikationsbibliothek berechnet jetzt pro Problemcluster einen transparenten `evidenceScore` von 0 bis 100. Berücksichtigt werden unabhängige Problemberichte, explizite Lösungssuche, Bestätigung über mehrere Quellen, explizite Zahlungsbereitschaft und Dringlichkeit. Feature-Wünsche werden separat erfasst und erzeugen allein keine Nachfragepunkte. Wiederholungen derselben Person und URL-Dubletten erhöhen die unabhängigen Zähler nicht.
+
+Der Wert misst ausschließlich die Stärke der beobachteten Belege. Er ist **keine** validierte Wahrscheinlichkeit für Umsatz oder Markterfolg. Die Schwellenwerte sind vorläufige Sortierhilfen. Die Logik bleibt in der isolierten Bibliothek und ist nicht mit der produktiven Trendbewertung verbunden.
+
+Neue Regressionstests decken Einzelautor-Wiederholungen, unabhängige Mehrquellen-Belege, Feature-Wünsche ohne Nachfrage, Promotion-Ausschluss und URL-Deduplizierung ab.
+
+**Aktuelle Verifikation:** 80/80 deterministische Tests bestanden. Browser-Smoke, API-Baseline und Live-API-Smoke ebenfalls erfolgreich. CI-Lauf 187: https://github.com/DotComScouts/app/actions/runs/41028193635
