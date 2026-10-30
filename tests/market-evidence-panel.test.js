@@ -19,7 +19,7 @@ test('Beta 98.29 exposes the five live shadow sources in a dedicated market evid
 });
 
 test('the five legacy standalone source panels are consolidated into the shared market view', () => {
-  assert.match(html, /#hfBetaPanel,#npmBetaPanel,#stackBetaPanel,#devtoBetaPanel,#blueskyBetaPanel\\{display:none!important\\}/);
+  assert.ok(html.includes('#hfBetaPanel,#npmBetaPanel,#stackBetaPanel,#devtoBetaPanel,#blueskyBetaPanel{display:none!important}'));
   assert.match(html, /Gemeinsame Marktbeobachtung/);
   assert.match(html, /Alle fünf Zusatzquellen in einer gemeinsamen Übersicht/);
 });
