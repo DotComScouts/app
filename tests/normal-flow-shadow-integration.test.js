@@ -33,6 +33,10 @@ test('shadow evidence does not directly alter ranking or domain-check results', 
   assert.ok(start >= 0 && end > start, 'shadow adapter function boundaries found');
   const adapter = html.slice(start, end);
   assert.match(adapter, /shadowEvidence\s*=\s*evidence/);
+  assert.match(adapter, /queryErrors\\.push\\(detail\\)/);
+  assert.match(adapter, /queryErrorCount/);
+  assert.match(adapter, /successfulQueries/);
+  assert.match(adapter, /rawCount/);
   assert.doesNotMatch(adapter, /trendScore\s*=|results\.push\(|checkAvail\(/);
   assert.match(adapter, /Keine Auswirkung auf die reguläre Bewertung/);
 });
