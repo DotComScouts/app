@@ -428,6 +428,8 @@ function classifyShadowEvidence(record){
  const text=(String(record.title||'')+' '+String(record.description||'')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
  const has=pattern=>pattern.test(text);
  if(has(/\\b(webinar|register now|register here|save your seat|sponsored by|sponsored content|paid promotion|advertisement|paid partnership|book a demo|use code|limited time offer|jetzt anmelden|jetzt registrieren|kostenloses webinar|werbung|anuncio patrocinado|reg[ií]strate ahora|inscr[ií]bete ahora)\\b/))return 'promotion';
+ // Registry/model records are product inventory evidence, not automatically proof of a launch or demand.
+ if(record.kind==='package'||record.kind==='model')return 'product';
  if(has(/\\b(crash(?:es|ed|ing)?|bug report|broken|error(?: message)?|fails? to connect|fails? when|does not work|doesn't work|not working|data loss|workaround|pain point|bottleneck|production issue|struggling with|cost reduction|token cost|latency problem|st[uü]rzt ab|funktioniert nicht|fehlermeldung|verbindungsfehler|datenverlust|problem bei|fehler bei|l[aä]sst sich nicht verbinden|no funciona|falla al conectar|error de conexi[oó]n|p[eé]rdida de datos)\\b/))return 'problem';
  if(has(/\\b(looking for|need a tool|we need (?:a |an )?(?:tool|solution|way to)|seeking (?:a |an )?(?:tool|solution)|searching for|any recommendations|does anyone know|is there a tool|what can i use|what should we use|suche nach einer l[oö]sung|suche ein tool|kennt jemand ein tool|wir brauchen eine l[oö]sung|gibt es ein tool|busco una herramienta|necesito una soluci[oó]n|alguien conoce una herramienta)\\b/))return 'demand';
  if(has(/\\b(we launched|launched a new|new open-source|new tool|new product|new framework|new library|now available|released|release notes|we built|i built|available on github|introducing|wir haben .* ver[oö]ffentlicht|neu ver[oö]ffentlicht|jetzt verf[uü]gbar|neues open-source-tool|ich habe .* entwickelt|wir ver[oö]ffentlichen|hemos lanzado|nueva herramienta|ya disponible|lanzamos)\\b/))return 'product';
@@ -506,13 +508,18 @@ async function collectShadowMarketEvidence(terms){
    return data.posts.map(x=>({source:'Bluesky',query,title:x.record?.text||'',url:'https://bsky.app/profile/'+(x.author?.handle||'')+'/post/'+(x.uri||'').split('/').pop(),observedAt:x.record?.createdAt||new Date().toISOString(),kind:'post',activity:(Number(x.likeCount)||0)+(Number(x.repostCount)||0)+(Number(x.replyCount)||0),author:x.author?.handle||''}));
   }]
  ];
+ const queryErrors=[];
  const jobs=sourceJobs.map(([name,fetchQuery])=>runSource('Shadow · '+name,async()=>{
   const all=[];
-  for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){appendStatus('Shadow · '+name+' · '+query+': '+(error?.message||String(error))) }}
+  for(const query of candidates){try{all.push(...await fetchQuery(query))}catch(error){
+   const detail={source:name,query,error:error?.message||String(error)};
+   queryErrors.push(detail);
+   appendStatus('Shadow · '+name+' · '+query+': '+detail.error);
+  }}
   return all;
  }));
  const settled=await Promise.allSettled(jobs);
- const sourceCounts=settled.map((r,i)=>({source:sourceJobs[i][0],count:r.status==='fulfilled'?r.value.length:null,status:r.status,error:r.status==='rejected'?(r.reason?.message||String(r.reason)):''}));
+ const sourceCounts=settled.map((r,i)=>({source:sourceJobs[i][0],count:r.status==='fulfilled'?r.value.length:null,status:r.status,error:r.status==='rejected'?(r.reason?.message||String(r.reason)):'',queryErrorCount:queryErrors.filter(x=>x.source===sourceJobs[i][0]).length}));
  const rawEvidence=settled.flatMap(r=>r.status==='fulfilled'?r.value:[]);
  const evidence=normalizeShadowEvidence(rawEvidence,candidates.join(' '));
  shadowEvidence=evidence;
@@ -522,13 +529,16 @@ async function collectShadowMarketEvidence(terms){
  const authors=new Set(evidence.flatMap(x=>x.authors||[]).filter(Boolean));
  const duplicateCount=rawEvidence.length-evidence.length;
  const ok=sourceCounts.filter(x=>x.status==='fulfilled').length;
+ const successfulQueries=sourceJobs.length*candidates.length-queryErrors.length;
  const perSource=sourceJobs.map(([name])=>{
+  const rawCount=rawEvidence.filter(item=>item.source===name).length;
   const items=evidence.filter(item=>(item.sources||[item.source]).includes(name));
   const relevant=items.filter(item=>item.relevance>=50).length;
   const cats=categories.filter(k=>items.some(item=>item.category===k)).map(k=>k+':'+items.filter(item=>item.category===k).length).join('/');
-  return name+' '+items.length+' eindeutig, '+relevant+' relevant'+(cats?' ['+cats+']':'');
+  const errors=queryErrors.filter(item=>item.source===name).length;
+  return name+' '+rawCount+' roh/'+items.length+' eindeutig, '+relevant+' relevant'+(errors?', '+errors+' Abfragefehler':'')+(cats?' ['+cats+']':'');
  });
- const note='Shadow-Vergleich: '+ok+'/5 Quellen erfolgreich; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
+ const note='Shadow-Vergleich: '+ok+'/5 Adapter abgeschlossen; '+successfulQueries+'/'+(sourceJobs.length*candidates.length)+' Einzelabfragen erfolgreich'+(queryErrors.length?' ('+queryErrors.length+' Teilfehler)':'')+'; '+candidates.length+' Suchbegriffe; '+rawEvidence.length+' Rohbelege, '+evidence.length+' eindeutige Belege ('+duplicateCount+' Dubletten entfernt), '+relevantCount+' mit mindestens 50 % Trefferquote zum jeweiligen Suchbegriff, '+authors.size+' identifizierbare Autoren. Kategorien gesamt: '+categories.map(k=>k+' '+categoryCounts[k]).join(', ')+'. Quellenvergleich: '+perSource.join('; ')+'. Keine Auswirkung auf die reguläre Bewertung.';
  appendStatus(note);
  return {count:evidence.length,sourceCounts,categoryCounts,uniqueAuthors:authors.size,note};
 }
