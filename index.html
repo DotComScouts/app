@@ -330,7 +330,7 @@ function candidatePhrases(story){
  }
  // Capture names only when a title has an explicit launch cue. Avoid mining arbitrary
  // CamelCase technology words from unrelated headlines (e.g. iPad or JavaScript).
- const cue=title.match(/\b(?:Introducing|Meet|Announcing|Launch(?:es|ed|ing)?|New product:?|I built|We built|I made|We made)\s+([A-Z][A-Za-z0-9]*(?:[- ][A-Z][A-Za-z0-9]*){0,2})/);
+ const cue=title.match(/\b(?:Introducing|Meet|Announcing|Launch(?:es|ed|ing)?|New product:?|I built|We built|I made|We made|Just launched|Now available|Now launching|Open[- ]sourced)\s+([A-Z][A-Za-z0-9]*(?:[- ][A-Z][A-Za-z0-9]*){0,2})/i);
  if(cue)push(cue[1],'launch');
  return out;
 }
@@ -356,10 +356,14 @@ function findTerms(stories,githubRepos=[],marketRecords=[]){
  }
  for(const r of githubRepos){
   const raw=String(r.name||'').replace(/[-_]+/g,' ').trim();
-  if(!looksLikeName(raw))continue;
-  // A recent repository with meaningful early adoption is a product lead even if its name
-  // has not yet appeared verbatim in Hacker News. It is labeled as an early signal below.
-  if(Number(r.stargazers_count||0)<8)continue;
+  const stars=Number(r.stargazers_count||0);
+  const normalized=normalizeTerm(raw);
+  const recognizable=looksLikeName(raw);
+  const strongDistinctive=stars>=15&&normalized.length>=4&&normalized.length<=24&&goodNameShape(normalized)&&!isGenericTerm(raw)&&!knownBrands.has(normalized)&&!badWords.has(normalized);
+  if(!recognizable&&!strongDistinctive)continue;
+  // Recent repositories with meaningful adoption can be useful product leads even
+  // when their names are plain words rather than CamelCase or coined spellings.
+  if(stars<8)continue;
   addEvidence(map,raw,'GitHub',r.stargazers_count,0,r.html_url,r.full_name||r.name,Date.parse(r.created_at||'')/1000,'repo');
  }
  // Independent market sources may corroborate a candidate or reveal a product name.
@@ -674,8 +678,9 @@ function trendVariants(term){
  // (e.g. LYNX): ordinary long suffixes often produce no candidates within the selected length.
  // Keep the source stem recognizable and use pronounceable endings rather than random syllables.
  const compactRoots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=3))];
- const compactEndings=['io','ify','lab','one','go','up','ly','hq','pro','dev','app','kit','hub'];
- for(const root of compactRoots.filter(x=>x.length>=4)){
+ const compactEndings=['io','ify','lab','hq'];
+ const genericRoots=new Set(['auto','open','web','code','data','dev','app','agent','cloud','smart','super','best','fast','free']);
+ for(const root of compactRoots.filter(x=>x.length>=4&&!genericRoots.has(x))){
   for(const ending of compactEndings){
    const n=root+ending;
    if(n.length>=min&&n.length<=max)add(n,84,root.slice(0,Math.min(3,root.length)));
@@ -727,8 +732,9 @@ function trendVariants(term){
  }
  // Use only recognizable, meaningful compounds. Never truncate an arbitrary substring
  // or append made-up endings such as "lio" / "cio" merely to satisfy the length filter.
- const suffixes=['forge','works','studio','scout','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit','wise','path','nova','wave','peak','loop','dash','byte','mesh','mint','beam','bloom','grove','haven','vector','nexus','vertex','rocket','beacon','bridge','kernel','factor','venture'];
- const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=4))];
+ const suffixes=['forge','works','studio','signal','craft','pilot','atlas','spark','shift','logic','foundry','field','orbit'];
+ const genericRoots=new Set(['auto','open','web','code','data','dev','app','agent','cloud','smart','super','best','fast','free']);
+ const roots=[...new Set([full,...parts].filter(x=>/^[a-z]+$/.test(x)&&x.length>=4&&!genericRoots.has(x)))];
  for(const root of roots){
   for(const [i,suffix] of suffixes.entries()){
    // Longer suffixes remain available when the user selects a longer name range.
@@ -741,7 +747,7 @@ function trendVariants(term){
   const meaningful=parts.filter(p=>p.length>=3&&!stopWords.has(p)&&!generic.has(p)&&!knownBrands.has(p));
   if(meaningful.length>=2){
    add(meaningful[meaningful.length-1]+meaningful[0],72,meaningful[meaningful.length-1]);
-   for(const suffix of ['lab','kit','hub']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
+   for(const suffix of ['forge','works','studio']) add(meaningful[meaningful.length-1]+suffix,68,meaningful[meaningful.length-1]);
   }
  }
  return candidates.sort((a,b)=>{const ao=a.name===normalizeTerm(term),bo=b.name===normalizeTerm(term);if(ao!==bo)return ao?-1:1;const suffixPenalty=n=>/(hub|base|nest|ops|kit|lab|flow|stack|mate)$/.test(n)?3:0;return (nameQuality(b.name)-suffixPenalty(b.name))-(nameQuality(a.name)-suffixPenalty(a.name))||a.name.length-b.name.length||b.score-a.score||a.name.localeCompare(b.name)}).map(x=>x.name);
@@ -1412,7 +1418,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.35</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.36</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
