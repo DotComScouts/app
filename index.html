@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.42: Tiered original, trend-inspired and trend-creation candidate generation; localized labels and bounded source requests -->
+<!-- DotComScouts Beta 98.44: stronger source-grounded naming, ranked concepts and capped trend creations -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -846,17 +846,15 @@ function buildCandidates(){
   const best=term.bestStory||term.stories?.[0]||{};
   return {trend:term.term,trendScore:term.trendScore,mentions:term.mentions,source:best.title||term.term,sourceUrl:best.url||'',sourceLabel:term.sourceLabel,confirmation:term.confirmation,signalType:term.signalType};
  };
- // Exact source names remain a separate tier; numeric names need independent corroboration.
+ // Originaltrend is reserved for the exact, source-derived product or project name.
  for(const term of variants){
   const name=normalizeTerm(term.term),letters=name.replace(/[0-9]/g,'');
   const corroborated=(term.sourceFamilies?.size||0)>=2||Number(term.hnMentions)>=2||Number(term.bestScore)>=8||Number(term.stars)>=25;
   if(!name||!fitsOriginal(name)||!/^[a-z0-9]+$/.test(name)||allNames.has(name))continue;
   if(!goodNameShape(letters)||(/[0-9]/.test(name)&&!corroborated))continue;
-  allNames.add(name);
-  pools.original.push([{name,type:'Originaltrend',...metaFor(term),trendKey:name}]);
+  allNames.add(name);pools.original.push([{name,type:'Originaltrend',...metaFor(term),trendKey:name}]);
  }
- // Keep inspired variants, but prevent one source trend from dominating the result set.
- // Also cap repeated generic endings across the complete run.
+ // Variants must remain pronounceable and tied to a qualifying original trend.
  for(const term of variants){
   const original=normalizeTerm(term.term);
   if(!original||!pools.original.some(bucket=>bucket[0].name===original))continue;
@@ -864,52 +862,51 @@ function buildCandidates(){
   for(const name of trendVariants(term.term)){
    if(name===original||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name))continue;
    const suffix=(name.match(/(ify|io|hq|lab|hub|kit|flow|works|studio|forge|pilot|atlas|spark|shift|logic|field|orbit)$/)||[])[0]||'';
-   if(suffix&&['ify','io','hq','lab'].includes(suffix)&&(suffixUse.get(suffix)||0)>=4)continue;
+   if(suffix&&['ify','io','hq','lab'].includes(suffix)&&(suffixUse.get(suffix)||0)>=6)continue;
    allNames.add(name);inspired.push({name,type:'Trend-inspiriert',...meta,trendKey:original});
    if(suffix)suffixUse.set(suffix,(suffixUse.get(suffix)||0)+1);
-   if(inspired.length>=4)break;
+   if(inspired.length>=6)break;
   }
   if(inspired.length)pools.inspired.push(inspired);
-  // Trend creations now use both launch headlines and GitHub repository descriptions.
-  // Descriptive source language supplies concepts; the trend root keeps the connection traceable.
+  // Rank source concepts across titles/descriptions instead of taking arbitrary first words.
   const parts=splitProductName(term.term).parts.filter(w=>w.length>=3&&!stopWords.has(w)&&!generic.has(w)&&!commonWords.has(w)&&!knownBrands.has(w)&&!badWords.has(w));
   const roots=[...new Set(parts)].filter(w=>goodNameShape(w));
-  const conceptSet=new Set();
+  const conceptCounts=new Map();
   for(const story of (term.stories||[])){
    const text=[story.title||'',story.description||''].join(' ').replace(/<[^>]*>/g,' ').toLowerCase();
+   const local=new Set();
    for(const word of text.match(/[a-z]{4,}/g)||[]){
     if(parts.includes(word)||stopWords.has(word)||generic.has(word)||commonWords.has(word)||stopTitles.has(word)||knownBrands.has(word)||badWords.has(word))continue;
     if(isGenericTerm(word)||!goodNameShape(word))continue;
-    conceptSet.add(word);
+    local.add(word);
    }
+   for(const word of local)conceptCounts.set(word,(conceptCounts.get(word)||0)+1);
   }
-  const concepts=[...conceptSet].slice(0,24),creations=[];
+  const concepts=[...conceptCounts.keys()].sort((a,b)=>((conceptCounts.get(b)-conceptCounts.get(a))*3)+(nameQuality(b)-nameQuality(a))||a.localeCompare(b)).slice(0,10);
+  const creations=[];
   const addCreation=(raw,root,concept)=>{
    const name=String(raw||'').toLowerCase().replace(/[^a-z]/g,'');
    if(!name||name.length<5||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||allNames.has(name)||languageRisk(name).status==='red')return;
-   // Avoid opaque blends: both source components must contribute at least three letters.
-   if(root&&concept&&(!name.includes(root.slice(0,3))||!name.includes(concept.slice(0,3))))return;
-   allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original,_quality:nameQuality(name)});
+   if(!name.startsWith(root.slice(0,3))||!name.includes(concept.slice(0,3)))return;
+   if(root===concept||root.includes(concept)||concept.includes(root)||/(.{3,})\1/.test(name))return;
+   const quality=nameQuality(name)+(root.slice(-1)===concept[0]?-2:0)+(conceptCounts.get(concept)>1?2:0);
+   if(quality<7)return;
+   allNames.add(name);creations.push({name,type:'Trend-Kreation',...meta,trendKey:original,_quality:quality});
   };
   for(const root of roots){
    for(const concept of concepts){
     if(root===concept)continue;
     const full=root+concept;
     if(full.length<=getLengthRange()[1])addCreation(full,root,concept);
-    // Brandable portmanteaus preserve recognizable portions of both source concepts.
     const max=getLengthRange()[1];
     for(let rootLen=Math.min(root.length,4);rootLen>=3;rootLen--){
-     const remaining=max-rootLen;
-     if(remaining<3)continue;
-     const conceptLen=Math.min(concept.length,remaining);
-     if(conceptLen<3)continue;
+     const remaining=max-rootLen,conceptLen=Math.min(concept.length,remaining);
+     if(remaining<3||conceptLen<3)continue;
      addCreation(root.slice(0,rootLen)+concept.slice(0,conceptLen),root,concept);
     }
-    if(creations.length>=8)break;
    }
-   if(creations.length>=8)break;
   }
-  if(creations.length)pools.creation.push(creations.sort((a,b)=>b._quality-a._quality).map(({_quality,...item})=>item));
+  if(creations.length)pools.creation.push(creations.sort((a,b)=>b._quality-a._quality||a.name.localeCompare(b.name)).slice(0,2).map(({_quality,...item})=>item));
  }
  const selected=[],selectedNames=new Set();
  const take=(buckets,limit,includeSeen)=>{
@@ -924,20 +921,16 @@ function buildCandidates(){
   }
   return added;
  };
- const originalGoal=Math.round(count*.4),inspiredGoalBase=Math.round(count*.4),creationGoal=count-originalGoal-inspiredGoalBase;
+ const originalGoal=Math.round(count*.4),inspiredGoal=Math.round(count*.4),creationGoal=Math.min(12,count-originalGoal-inspiredGoal);
  const originals=take(pools.original,originalGoal,false);
- const inspiredGoal=inspiredGoalBase+originalGoal-originals;
- const inspired=take(pools.inspired,inspiredGoal,false);
- const creations=take(pools.creation,creationGoal+inspiredGoal-inspired,false);
- // Roll unused tier capacity forward only into independently sourced, quality-filtered candidates.
- if(selected.length<count){
-  take(pools.inspired,count-selected.length,false);
-  if(selected.length<count)take(pools.creation,count-selected.length,false);
- }
+ take(pools.inspired,inspiredGoal+(originalGoal-originals),false);
+ // Creations are a deliberately small third tier and never pad a weak result set.
+ take(pools.creation,creationGoal,false);
+ // Roll unused capacity forward to other source-backed candidates only.
+ if(selected.length<count)take(pools.inspired,count-selected.length,false);
  if(selected.length<count&&skipSeen){
   take(pools.original,count-selected.length,true);
   if(selected.length<count)take(pools.inspired,count-selected.length,true);
-  if(selected.length<count)take(pools.creation,count-selected.length,true);
  }
  return selected.slice(0,count).map(x=>({...x,languageRisk:languageRisk(x.name)}));
 }
@@ -1526,7 +1519,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.43</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.44</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
