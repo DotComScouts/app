@@ -14,6 +14,8 @@ test('Beta 98.29 exposes the five live shadow sources in a dedicated market evid
   }
   assert.match(html, /function drawShadowMarketPanel/);
   assert.match(html, /shadowMarketSummary=summary;drawShadowMarketPanel\(summary\)/);
+  assert.match(html, /records\.filter\(x=>x\.category===category&&\(x\.relevance\|\|0\)>=50\)/);
+  assert.match(html, /records\.filter\(x=>\(x\.relevance\|\|0\)>=50\)/);
 });
 
 test('market evidence panel is localized in all four supported interface languages', () => {
