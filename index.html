@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<!-- DotComScouts Beta 98.44: stronger source-grounded naming, ranked concepts and capped trend creations -->
+<!-- DotComScouts Beta 98.46: parallel experimental name generator lab; production generator unchanged -->
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827"><title>DotComScouts – Freie .com-Domains</title>
@@ -81,6 +81,16 @@
 
 .market-evidence-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.market-evidence-kpi{background:#0e1729;border:1px solid var(--line);border-radius:10px;padding:10px}.market-evidence-kpi strong{display:block;font-size:20px}.market-evidence-kpi span{font-size:11px;color:var(--muted)}.market-source-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:10px 0}.market-source{background:#0e1729;border:1px solid var(--line);border-radius:9px;padding:8px;min-width:0}.market-source strong{display:block;font-size:12px;overflow-wrap:anywhere}.market-source span{display:block;font-size:11px;color:var(--muted);margin-top:3px}.market-evidence-list{display:grid;gap:8px;margin-top:10px}.market-evidence-item{border:1px solid var(--line);background:#10192b;border-radius:10px;padding:10px;min-width:0}.market-evidence-item h3{font-size:13px;margin:5px 0;line-height:1.4;overflow-wrap:anywhere}.market-evidence-item .meta{font-size:11px;color:var(--muted);line-height:1.5}.market-evidence-item a{overflow-wrap:anywhere}.market-category{display:inline-block;border:1px solid #35516c;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:750;color:#c2e6ff}.market-evidence-empty{border:1px dashed #35435d;border-radius:10px;padding:14px;color:var(--muted);font-size:12px}.market-disclaimer{font-size:11px;color:var(--muted);line-height:1.5;margin-top:12px}#marketSourceGrid{display:none!important}#hfBetaPanel,#npmBetaPanel,#stackBetaPanel,#devtoBetaPanel,#blueskyBetaPanel{display:none!important}
 @media(max-width:620px){.market-evidence-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.market-source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Beta 98.46: side-by-side name generator experiment */
+.generator-lab{border:1px solid #35516c;background:#10192b;border-radius:11px;padding:12px;margin-top:12px}
+.generator-lab[hidden]{display:none}.generator-lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.generator-lab-col{min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px;background:#0d1729}
+.generator-lab-col h3{font-size:13px;margin:0 0 7px}.generator-lab-col p{font-size:11px;line-height:1.45}
+.generator-lab-list{display:grid;gap:6px}.generator-lab-item{display:flex;justify-content:space-between;gap:8px;padding:6px 7px;border-radius:7px;background:#142238;font-size:12px}
+.generator-lab-item strong{overflow-wrap:anywhere}.generator-lab-item span{color:var(--muted);white-space:nowrap;font-size:11px}
+.generator-lab-meta{font-size:11px;color:var(--muted);margin-top:9px}
+@media(max-width:620px){.generator-lab-grid{grid-template-columns:1fr}}
 </style></head>
 <body><main>
 <header><div class="language-switch"><label for="languageSelect" class="sr-only">Sprache / Language / Idioma / Langue</label><select id="languageSelect" aria-label="Sprache auswählen"><option value="de">🇩🇪 Deutsch</option><option value="en">🇬🇧 English</option><option value="es">🇪🇸 Español</option><option value="fr">🇫🇷 Français</option></select></div><div class="brandline"><span class="brandmark">D</span><span class="brandtitle">DotComScouts</span></div><div class="brandclaim">Discover trends <span class="arrow">→</span> Find your next .com</div><h1>Freie .com-Domains finden</h1><p class="sub">DotComScouts verbindet frühe Marktsignale mit kreativen Namensideen. So entdeckst Du freie .com-Domains, die aktuelle Trends aufgreifen oder das Potenzial für eine starke Marke mitbringen.</p></header>
@@ -136,6 +146,17 @@
 <p class="sub">Frühsignale sind Hinweise auf neue Produkte, aber noch kein Beleg für einen wachsenden globalen Trend. Ein Mehrfachsignal ist belastbarer, bleibt aber prüfbedürftig.</p>
 <div id="trendCandidates" class="signal-list"><div class="empty-signal"><span class="empty-dot"></span>Noch keine Trendkandidaten analysiert.</div></div>
 </details></section>
+<section class="panel" id="generatorLabPanel" aria-labelledby="generatorLabTitle">
+ <div class="sectionhead"><div><div class="eyebrow">BETA 98.46 · EXPERIMENTELL</div><h2 id="generatorLabTitle">Namensgenerator im Paralleltest</h2><span class="sectionnote">Gleiche Trendsignale · zwei unabhängige Namenslisten</span></div></div>
+ <p class="sub" id="generatorLabIntro">Der bisherige Generator bleibt unverändert. Die experimentelle Variante bildet neue Kunstnamen aus erkennbaren Wortstämmen und Themenbegriffen. Diese Vorschläge werden nicht live auf Verfügbarkeit geprüft und nicht in den regulären Ergebnissen oder CSV-Export übernommen.</p>
+ <div class="generator-lab" id="generatorLab" hidden>
+  <div class="generator-lab-grid">
+   <div class="generator-lab-col"><h3 id="generatorLabOldTitle">Bisheriger Generator</h3><div class="generator-lab-list" id="generatorLabOld"></div></div>
+   <div class="generator-lab-col"><h3 id="generatorLabNewTitle">Experimenteller Generator</h3><div class="generator-lab-list" id="generatorLabNew"></div></div>
+  </div>
+  <div class="generator-lab-meta" id="generatorLabMeta"></div>
+ </div>
+</section>
 <section class="panel how-panel"><div class="eyebrow">TRANSPARENT & NACHVOLLZIEHBAR</div><h2>So arbeitet die Suche</h2><div class="how-grid"><div><span class="stepno">01</span><strong>Neue Signale finden</strong><p>Je nach Suchmodus wertet DotComScouts öffentliche Tech- und Entwicklerquellen aus: Hacker News und Algolia, GitHub-Projekte sowie Hugging Face, npm, Stack Exchange, DEV Community und Bluesky.</p></div><div><span class="stepno">02</span><strong>Namen bewerten</strong><p>Aktualität, Resonanz und Signale aus mehreren Quellen werden stärker gewichtet als ein einzelner Fund. Eine automatisierte Vorprüfung markiert mögliche sprachliche Risiken in Deutsch, Englisch, Französisch und Spanisch – sie ersetzt keine gründliche Sprach- oder Markenprüfung.</p></div><div><span class="stepno">03</span><strong>.com prüfen</strong><p>Die .com-Verfügbarkeit wird live abgefragt und kann sich jederzeit ändern. Vor einer Registrierung erneut prüfen und Marken- sowie Namensrechte separat recherchieren. Ein freier Name ist weder eine Nachfrageprognose noch eine Garantie für Wiederverkaufswert.</p></div></div><p class="foot">Die Suche deckt nicht das gesamte Internet ab. Trendwerte sind interne Orientierungshilfen, keine objektiven Marktprognosen. Originalnamen ohne ausreichende Bestätigung werden nicht als Kaufkandidaten priorisiert. Verfügbarkeit, Nachfrage und rechtliche Nutzbarkeit müssen vor einer Registrierung eigenständig geprüft werden. Öffentliche Quellen: <a href="https://github.com/HackerNews/API" target="_blank" rel="noopener">Hacker News API</a> · <a href="https://docs.github.com/en/rest/search/search" target="_blank" rel="noopener">GitHub Search API</a> · <a href="https://hn.algolia.com/api" target="_blank" rel="noopener">Algolia Hacker News Search</a> · <a href="https://huggingface.co/docs/hub/en/api" target="_blank" rel="noopener">Hugging Face</a> · <a href="https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md" target="_blank" rel="noopener">npm Registry</a> · <a href="https://api.stackexchange.com/docs" target="_blank" rel="noopener">Stack Exchange</a> · <a href="https://developers.forem.com/api" target="_blank" rel="noopener">DEV Community</a> · <a href="https://docs.bsky.app/docs/api/app-bsky-feed-search-posts" target="_blank" rel="noopener">Bluesky</a>.</p></section>
 
 <section class="panel" id="hfBetaPanel" aria-labelledby="hfBetaTitle">
@@ -837,6 +858,72 @@ function riskBadge(r){
  return `<span class="risk-pill ${cls}"><span class="risk-dot"></span>${esc(riskText)}</span>${risk.status!=='green'?`<span class="risk-note">${esc(reason)}</span>`:''}`;
 }
 
+function buildExperimentalNames(baseline){
+ const maxLength=getLengthRange()[1],baselineNames=new Set((baseline||[]).map(x=>x.name)),seenNames=new Set();
+ const ranked=trendTerms.slice().sort((a,b)=>(Number(b.trendScore)||0)-(Number(a.trendScore)||0));
+ const out=[];
+ const vowels=/[aeiouy]/g;
+ const phoneticScore=name=>{
+  const v=(name.match(vowels)||[]).length,clusters=(name.match(/[bcdfghjklmnpqrstvwxz]{3,}/g)||[]).length;
+  let score=0;
+  if(v>=2&&v<=4)score+=3;
+  if(name.length>=5&&name.length<=8)score+=2;
+  if(!clusters)score+=2;
+  if(!/(.)\\1{2,}/.test(name))score+=1;
+  if(/^[a-z]+$/.test(name)&&!/[qxj]{2}/.test(name))score+=1;
+  if(/[aeiouy]$/.test(name))score+=1;
+  return score;
+ };
+ for(const term of ranked){
+  const root=normalizeTerm(term.term).replace(/[^a-z]/g,'');
+  if(root.length<4)continue;
+  const stories=term.stories||[];
+  const words=new Map();
+  for(const story of stories){
+   const text=[story.title||'',story.description||''].join(' ').toLowerCase().replace(/<[^>]*>/g,' ');
+   for(const word of text.match(/[a-z]{4,}/g)||[]){
+    if(word===root||stopWords.has(word)||generic.has(word)||commonWords.has(word)||stopTitles.has(word)||knownBrands.has(word)||badWords.has(word)||isGenericTerm(word))continue;
+    words.set(word,(words.get(word)||0)+1);
+   }
+  }
+  const concepts=[...words.keys()].sort((a,b)=>(words.get(b)-words.get(a))||nameQuality(b)-nameQuality(a)).slice(0,12);
+  for(const concept of concepts){
+   const pairs=[
+    root.slice(0,Math.min(4,root.length))+concept.slice(-Math.min(3,concept.length)),
+    root.slice(-Math.min(3,root.length))+concept.slice(0,Math.min(4,concept.length)),
+    concept.slice(0,Math.min(3,concept.length))+root.slice(-Math.min(4,root.length)),
+    root.slice(0,Math.min(3,root.length))+concept.slice(0,Math.min(4,concept.length))
+   ];
+   for(const raw of pairs){
+    const name=raw.toLowerCase().replace(/[^a-z]/g,'');
+    if(name.length<5||name.length>maxLength||seenNames.has(name)||baselineNames.has(name)||!fits(name)||!goodNameShape(name)||isGenericTerm(name)||knownBrands.has(name)||badWords.has(name)||languageRisk(name).status==='red')continue;
+    const score=phoneticScore(name)+Math.max(0,Math.min(4,nameQuality(name)-5))+(words.get(concept)>1?1:0);
+    if(score<7)continue;
+    seenNames.add(name);
+    out.push({name,score,trend:term.term,concept,signal:Number(term.trendScore)||0});
+   }
+  }
+ }
+ return out.sort((a,b)=>b.score-a.score||b.signal-a.signal||a.name.localeCompare(b.name)).slice(0,24);
+}
+function renderGeneratorLab(baseline){
+ const panel=$('generatorLab'),wrap=$('generatorLabPanel');
+ if(!panel||!wrap)return;
+ const lang=currentLang||'de';
+ const labels={
+  de:{old:'Bisheriger Generator',fresh:'Experimenteller Generator',oldEmpty:'Keine regulären Kandidaten erzeugt.',newEmpty:'Noch keine ausreichend plausiblen experimentellen Namen.',meta:'Vergleich: {old} reguläre Kandidaten · {fresh} experimentelle Kandidaten. Die experimentellen Vorschläge sind nur ein Labortest; keine Live-Verfügbarkeitsprüfung.',intro:'Der bisherige Generator bleibt unverändert. Die experimentelle Variante bildet neue Kunstnamen aus erkennbaren Wortstämmen und Themenbegriffen. Diese Vorschläge werden nicht live auf Verfügbarkeit geprüft und nicht in den regulären Ergebnissen oder CSV-Export übernommen.'},
+  en:{old:'Current generator',fresh:'Experimental generator',oldEmpty:'No regular candidates generated.',newEmpty:'No experimental names met the plausibility threshold.',meta:'Comparison: {old} regular candidates · {fresh} experimental candidates. Experimental suggestions are lab-only; no live availability check.',intro:'The current generator remains unchanged. The experimental variant creates coined names from recognizable stems and topic concepts. These suggestions are not availability-checked and are excluded from regular results and CSV export.'},
+  es:{old:'Generador actual',fresh:'Generador experimental',oldEmpty:'No se generaron candidatos habituales.',newEmpty:'Ningún nombre experimental superó el umbral de plausibilidad.',meta:'Comparación: {old} candidatos habituales · {fresh} experimentales. Las sugerencias experimentales son solo de prueba; no se comprueba su disponibilidad.',intro:'El generador actual no cambia. La variante experimental crea nombres inventados a partir de raíces reconocibles y conceptos temáticos. No se comprueba su disponibilidad ni se incluyen en los resultados habituales o en el CSV.'},
+  fr:{old:'Générateur actuel',fresh:'Générateur expérimental',oldEmpty:'Aucun candidat habituel généré.',newEmpty:'Aucun nom expérimental n’a atteint le seuil de plausibilité.',meta:'Comparaison : {old} candidats habituels · {fresh} expérimentaux. Les suggestions expérimentales restent un test ; aucune disponibilité en direct.',intro:'Le générateur actuel reste inchangé. La variante expérimentale crée des noms inventés à partir de racines reconnaissables et de concepts thématiques. Leur disponibilité n’est pas vérifiée et ils sont exclus des résultats habituels et du CSV.'}
+ };
+ const t=labels[lang]||labels.de,exp=buildExperimentalNames(baseline);
+ $('generatorLabOldTitle').textContent=t.old;$('generatorLabNewTitle').textContent=t.fresh;$('generatorLabIntro').textContent=t.intro;
+ const render=(items,empty,scoreKey)=>items.length?items.slice(0,24).map(x=>'<div class="generator-lab-item"><strong>'+esc(x.name)+'.com</strong><span>'+esc(scoreKey==='score'?'Score '+x.score:(x.trend||''))+'</span></div>').join():'<p class="hint">'+empty+'</p>';
+ $('generatorLabOld').innerHTML=render(baseline||[],t.oldEmpty,'trend');
+ $('generatorLabNew').innerHTML=render(exp,t.newEmpty,'score');
+ $('generatorLabMeta').textContent=t.meta.replace('{old}',String((baseline||[]).length)).replace('{fresh}',String(exp.length));
+ panel.hidden=false;wrap.scrollIntoView?.({block:'nearest',behavior:'smooth'});
+}
 function buildCandidates(){
  const count=Number($('count').value)||60,skipSeen=$('seenMode').value==='skip';
  const variants=trendTerms.slice().sort((a,b)=>{
@@ -1042,7 +1129,7 @@ async function run(){
   } else {trendTerms=[];$('trendN').textContent='0'}
   if(stopRequested)throw Error('Vom Nutzer gestoppt');
   appendStatus(st('step2'));
-  const requestedCount=Number($('count').value)||60;$('candidateShortfallNotice').hidden=true;candidates=buildCandidates();if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?st('noCandidates'):st('noCandidatesOther'));if(candidates.length<requestedCount){const shortfall={requested:requestedCount,actual:candidates.length,missing:requestedCount-candidates.length};$('candidateShortfallCount').textContent=tr('shortfallCount')(shortfall);$('candidateShortfallText').textContent=tr('shortfallText')(shortfall);$('candidateShortfallNotice').hidden=false;appendStatus(st('candidateShortfall',shortfall)+' Es fehlen eigenständige Kandidaten; es werden keine Dubletten künstlich erzeugt.');}else if($('seenMode').value==='skip'){const fresh=candidates.filter(c=>!seen.has(c.name)).length;const reused=candidates.length-fresh;if(reused)appendStatus('Ziel erreicht: '+candidates.length+' Domains ('+fresh+' neue und '+reused+' bereits geprüfte Funde als Nachfüllung).');}
+  const requestedCount=Number($('count').value)||60;$('candidateShortfallNotice').hidden=true;candidates=buildCandidates();renderGeneratorLab(candidates);if(!candidates.length)throw Error(mode==='trend'&&!trendTerms.length?st('noCandidates'):st('noCandidatesOther'));if(candidates.length<requestedCount){const shortfall={requested:requestedCount,actual:candidates.length,missing:requestedCount-candidates.length};$('candidateShortfallCount').textContent=tr('shortfallCount')(shortfall);$('candidateShortfallText').textContent=tr('shortfallText')(shortfall);$('candidateShortfallNotice').hidden=false;appendStatus(st('candidateShortfall',shortfall)+' Es fehlen eigenständige Kandidaten; es werden keine Dubletten künstlich erzeugt.');}else if($('seenMode').value==='skip'){const fresh=candidates.filter(c=>!seen.has(c.name)).length;const reused=candidates.length-fresh;if(reused)appendStatus('Ziel erreicht: '+candidates.length+' Domains ('+fresh+' neue und '+reused+' bereits geprüfte Funde als Nachfüllung).');}
   appendStatus(st('candidate',candidates.length));updateDomainProgress(0,candidates.length,'running');
   let avail=0,delay=Number($('delay').value);let checked=0,successfulChecks=0;
   for(let i=0;i<candidates.length;i++){
@@ -1521,7 +1608,7 @@ npmEl('npmBetaClear').addEventListener('click',()=>{
 })();
 </script>
 
-<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.45</div></footer>
+<footer class="version-label"><div class="footer-brand">DotComScouts</div><div>Concept &amp; Creation by <a href="http://www.sanktmedia.com" target="_blank" rel="noopener noreferrer">sanktmedia.com</a></div><div>Developed with ChatGPT · Beta Version 98.46 · Name Generator Lab</div></footer>
 <style>
 .version-label{max-width:1050px;margin:0 auto;padding:12px 12px 14px;text-align:right;color:#64748b;font-size:10px;line-height:1.5;letter-spacing:.02em;opacity:.85;border-top:1px solid #2b3954}.version-label .footer-brand{font-size:13px;font-weight:800;letter-spacing:.04em;color:#c7d8ef;margin-bottom:3px}
 .version-label a{color:inherit;text-decoration:underline}
